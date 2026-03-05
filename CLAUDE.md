@@ -28,7 +28,7 @@ webjourney/
 ├── app/
 │   ├── globals.css          # Design system : variables CSS, thèmes clair/sombre, classes glass-card, btn-brutal, input-glass
 │   ├── layout.js            # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
-│   ├── page.js              # Page principale : liste des notes, CRUD, édition inline, grille responsive
+│   ├── page.js              # Page principale : notes CRUD, édition inline, tags colorés, recherche, filtrage
 │   ├── login/
 │   │   └── page.js          # Page connexion/inscription : formulaire email + mot de passe
 │   └── favicon.ico
@@ -56,11 +56,32 @@ webjourney/
 | `contenu`   | text         | Contenu de la note (optionnel)       |
 | `created_at`| timestamptz  | Date de création, `now()` par défaut |
 
+### Table `tags`
+
+| Colonne      | Type         | Description                          |
+|-------------|-------------|--------------------------------------|
+| `id`        | uuid (PK)   | Identifiant unique, `gen_random_uuid()` |
+| `user_id`   | uuid (FK)   | Référence vers `auth.users(id)`, cascade on delete |
+| `nom`       | text         | Nom du tag (requis)                  |
+| `couleur`   | text         | Code hexadécimal (ex: `#ef4444`)     |
+| `created_at`| timestamptz  | Date de création, `now()` par défaut |
+
+### Table `notes_tags` (liaison many-to-many)
+
+| Colonne    | Type       | Description                          |
+|-----------|-----------|--------------------------------------|
+| `note_id` | uuid (FK) | Référence vers `notes(id)`, cascade on delete |
+| `tag_id`  | uuid (FK) | Référence vers `tags(id)`, cascade on delete |
+
+Clé primaire composite : `(note_id, tag_id)`
+
 ### Row Level Security (RLS)
 
-- RLS activé sur la table `notes`
-- Policy unique : `auth.uid() = user_id` pour toutes les opérations (SELECT, INSERT, UPDATE, DELETE)
-- Chaque utilisateur ne voit et ne modifie que ses propres notes
+- RLS activé sur les 3 tables (`notes`, `tags`, `notes_tags`)
+- Table `notes` : `auth.uid() = user_id` pour toutes les opérations
+- Table `tags` : `auth.uid() = user_id` pour toutes les opérations
+- Table `notes_tags` : accès via jointure (l'utilisateur ne peut lier que ses propres notes et tags)
+- Chaque utilisateur ne voit et ne modifie que ses propres données
 
 ## Design system
 
@@ -83,12 +104,15 @@ Style **brutalism + glassmorphism** avec mode sombre/clair :
 - [x] Grille responsive (1 / 2 / 3 colonnes)
 - [x] Mode sombre / clair avec toggle et persistance
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs
+- [x] Recherche instantanée (titre + contenu, insensible aux accents et à la casse)
+- [x] Tags colorés : CRUD, 8 couleurs prédéfinies, panneau de gestion
+- [x] Assignation de tags aux notes (bouton +, dropdown, badges cliquables pour retirer)
+- [x] Filtrage par tag (cumulable avec la recherche textuelle)
+- [x] Duplication de notes avec copie des tags
 - [x] Déploiement Vercel en production
 
 ## Fonctionnalités à venir
 
-- [ ] Recherche / filtrage des notes
-- [ ] Tags ou catégories sur les notes
 - [ ] Tri des notes (date, titre)
 - [ ] Éditeur de contenu enrichi (Markdown)
 - [ ] Partage de notes
