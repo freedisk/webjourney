@@ -1,4 +1,5 @@
-import { Geist, Geist_Mono } from "next/font/google";
+// Layout principal de l'application
+import { Geist } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -6,22 +7,15 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata = {
-  title: "WebJourney",
-  description: "Premier test Next.js",
+  title: "WebJourney — Mes Notes",
+  description: "Application de notes personnelles",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="fr">
+      <body className={`${geistSans.variable} antialiased bg-gray-50 text-gray-900 min-h-screen`}>
         {children}
       </body>
     </html>
