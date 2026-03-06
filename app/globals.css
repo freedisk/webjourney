@@ -408,6 +408,12 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* Drawer slide-in depuis la droite */
+@keyframes drawerSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
 /* --- Accessibilité : réduire les animations --- */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import StatsDrawer from "@/components/StatsDrawer";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -83,6 +84,9 @@ export default function Home() {
 
   // --- Aide raccourcis clavier ---
   const [aideOuverte, setAideOuverte] = useState(false);
+
+  // --- Drawer statistiques ---
+  const [statsOuvert, setStatsOuvert] = useState(false);
 
   // --- Animation pulse épinglage ---
   const [pulseNoteId, setPulseNoteId] = useState(null);
@@ -1234,6 +1238,9 @@ export default function Home() {
           <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
             {utilisateur.email}
           </span>
+          <button onClick={() => setStatsOuvert(true)} className="btn-brutal ghost" style={{ fontSize: "0.9rem", padding: "0.35rem 0.55rem" }} title="Statistiques">
+            {"\uD83D\uDCCA"}
+          </button>
           <button onClick={toggleTheme} className="btn-brutal ghost" style={{ fontSize: "1rem", padding: "0.35rem 0.55rem" }}>
             {sombre ? "\u2600" : "\u263E"}
           </button>
@@ -1893,6 +1900,16 @@ export default function Home() {
 
       {/* Modale card view (portail) */}
       {viewMode === "card" && renderModale()}
+
+      {/* Drawer statistiques */}
+      <StatsDrawer
+        ouvert={statsOuvert}
+        onFermer={() => setStatsOuvert(false)}
+        notes={notes}
+        tags={tags}
+        notesTags={notesTags}
+        sombre={sombre}
+      />
 
       {/* Bouton aide raccourcis clavier */}
       <button

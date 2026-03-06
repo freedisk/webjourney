@@ -45,7 +45,8 @@ webjourney/
 │   │       └── route.js         # API Route server-side : appel Anthropic Claude pour résumé de notes (clé secrète)
 │   └── favicon.ico
 ├── components/
-│   └── MarkdownRenderer.js      # Composant de rendu Markdown (react-markdown + styles custom brutalism)
+│   ├── MarkdownRenderer.js      # Composant de rendu Markdown (react-markdown + styles custom brutalism)
+│   └── StatsDrawer.js           # Drawer statistiques (recharts, agrégations Supabase, chiffres clés)
 ├── lib/
 │   └── supabase.js              # Client Supabase initialisé avec NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY
 ├── public/                       # Assets statiques (file.svg, globe.svg, next.svg, vercel.svg, window.svg)
@@ -129,6 +130,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
 - [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2=card/list view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
+- [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
