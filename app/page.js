@@ -79,6 +79,9 @@ export default function Home() {
   const [triAscendant, setTriAscendant] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(false);
 
+  // --- Animation pulse épinglage ---
+  const [pulseNoteId, setPulseNoteId] = useState(null);
+
   // --- Résumé IA ---
   const [resumes, setResumes] = useState({});
 
@@ -535,6 +538,8 @@ export default function Home() {
       return;
     }
 
+    setPulseNoteId(note.id);
+    setTimeout(() => setPulseNoteId(null), 250);
     setSucces(nouvelleValeur ? "Note épinglée !" : "Note désépinglée.");
     await chargerNotes(utilisateur.id);
   }
@@ -874,7 +879,8 @@ export default function Home() {
 
     return (
       <div
-        className="flex flex-col h-full"
+        key={note.id}
+        className="flex flex-col h-full fade-in-fast"
         style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) }}
       >
         {/* Header détail */}
@@ -1330,7 +1336,7 @@ export default function Home() {
 
       {/* === CARD VIEW === */}
       {viewMode === "card" && (
-        <div className="flex-1 overflow-y-auto mx-3 mt-2 mb-3">
+        <div className="flex-1 overflow-y-auto mx-3 mt-2 mb-3 fade-in">
           {/* Barre recherche + filtres */}
           <div className="glass-card p-3 space-y-2 mb-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -1415,7 +1421,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {notesFiltrees.map((note) => {
+              {notesFiltrees.map((note, index) => {
                 const tagIds = notesTags[note.id] || [];
                 const tagsDeNote = tagIds.map(getTag).filter(Boolean);
                 const isDepliee = notesDepliees[note.id];
@@ -1424,11 +1430,12 @@ export default function Home() {
                 return (
                   <div
                     key={note.id}
-                    className="glass-card p-4 flex flex-col gap-2 cursor-pointer"
+                    className={"glass-card fade-slide-up p-4 flex flex-col gap-2 cursor-pointer" + (pulseNoteId === note.id ? " scale-pulse" : "")}
                     onClick={() => setNoteDetailId(note.id)}
                     style={{
                       backgroundColor: getCouleurFond(note.couleur),
                       borderColor: note.epinglee ? "var(--accent)" : undefined,
+                      animationDelay: `${index * 50}ms`,
                     }}
                   >
                     {/* Titre */}
@@ -1616,7 +1623,7 @@ export default function Home() {
 
       {/* === LIST VIEW (Split Panel) === */}
       {viewMode === "list" && (
-        <div className="split-container mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
+        <div className="split-container fade-in mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
 
           {/* === PANNEAU GAUCHE — Liste === */}
           <div className={"panel-left" + (mobileDetail ? " hidden-mobile" : "")}>

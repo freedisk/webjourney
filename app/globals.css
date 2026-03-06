@@ -125,8 +125,8 @@ body::before {
 }
 
 .btn-brutal:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px 0px var(--brutal-shadow);
+  transform: translate(-1px, -2px);
+  box-shadow: 5px 6px 0px 0px var(--brutal-shadow);
 }
 
 .btn-brutal:active {
@@ -350,7 +350,7 @@ body::before {
 }
 
 @keyframes modal-slide-up {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -364,4 +364,57 @@ body::before {
   letter-spacing: 0.08em;
   border: 1.5px solid var(--brutal-border);
   border-radius: 1px;
+}
+
+/* --- Animations de transition --- */
+
+/* Fade-in + slide-up pour les cards (stagger via animationDelay inline) */
+.fade-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeSlideUp 300ms ease-out forwards;
+}
+
+@keyframes fadeSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade-in simple (toggle view, panneau droit) */
+.fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade-in rapide pour le panneau droit */
+.fade-in-fast {
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Scale pulse pour épinglage */
+.scale-pulse {
+  animation: scalePulse 200ms ease-out;
+}
+
+@keyframes scalePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* --- Accessibilité : réduire les animations --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

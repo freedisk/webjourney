@@ -1,56 +1,59 @@
-Ajoute le support Markdown dans les notes.
+Ajoute des animations de transition à l'app.
 
-INSTALLATION :
-npm install react-markdown
+ANIMATIONS À IMPLÉMENTER :
 
-COMPORTEMENT :
-- En mode lecture (card, modale, panneau droit list view) : 
-  le contenu de la note est rendu en Markdown formaté
-- En mode édition : textarea brut inchangé (on écrit le Markdown en texte)
-- Si le contenu ne contient pas de Markdown → s'affiche normalement, 
-  aucune régression
+1. CARDS (card view)
+   - Apparition initiale de la grille : chaque card fade-in + slide-up 
+     au chargement (opacity 0→1, translateY 20px→0)
+   - Cards en stagger : délai progressif par index (index * 50ms)
+   - Durée : 300ms, easing : ease-out
 
-RENDU MARKDOWN À SUPPORTER :
-- **gras**, *italique*, ~~barré~~
-- # Titres H1, ## H2, ### H3
-- - listes à puces, 1. listes numérotées
-- `code inline` et blocs ```code```
-- > citations (blockquote)
-- --- séparateur horizontal
-- [lien](url)
+2. MODALE
+   - Ouverture : fade-in overlay + scale-up contenu (scale 0.95→1, opacity 0→1)
+   - Fermeture : inverse (scale 1→0.95, opacity 1→0)
+   - Durée : 200ms, easing : ease-out
 
-STYLE DU RENDU :
-- Cohérent avec le design brutalism + glassmorphism existant
-- Compatible mode sombre/clair
-- Titres Markdown plus grands mais pas énormes 
-  (H1 ~1.3em, H2 ~1.15em, H3 ~1.05em)
-- Blocs de code : fond sombre, police monospace, padding
-- Listes : indentées proprement
-- Blockquote : bordure gauche colorée, italique
-- Ne pas laisser les styles Markdown déborder hors de leur conteneur
+3. TOGGLE CARD/LIST VIEW
+   - Transition douce entre les deux modes (opacity 0→1)
+   - Durée : 200ms
+
+4. PANNEAU DROIT (list view)
+   - Quand une note est sélectionnée : fade-in du contenu (opacity 0→1)
+   - Durée : 150ms
+
+5. BOUTONS D'ACTION
+   - Hover : légère élévation (translateY -2px) + transition douce
+   - Durée : 150ms
+   - Déjà présents partiellement → vérifier et uniformiser
+
+6. NOTE ÉPINGLÉE
+   - Quand on épingle/désépingle : bref scale pulse (1→1.05→1)
+   - Durée : 200ms
+
+CONTRAINTES TECHNIQUES :
+- Utiliser uniquement CSS transitions et @keyframes
+- Pas de librairie d'animation (pas de framer-motion, pas de react-spring)
+- Respecter prefers-reduced-motion :
+  @media (prefers-reduced-motion: reduce) { 
+    * { animation: none !important; transition: none !important; } 
+  }
+- Les animations ne doivent pas bloquer les interactions
+- Pas de layout shift visible (réserver l'espace avant l'animation)
 
 IMPLÉMENTATION :
-- Installer react-markdown
-- Créer un composant MarkdownRenderer.js dans components/
-  · Reçoit en props : content (string)
-  · Retourne le contenu rendu via <ReactMarkdown>
-  · Applique les styles custom via prop components de ReactMarkdown
-- Utiliser MarkdownRenderer dans :
-  · L'aperçu de la card (mode lecture)
-  · NoteDetail.js (modale + panneau droit list view)
-- Le textarea d'édition reste inchangé partout
-
-AIDE VISUELLE OPTIONNELLE :
-- Dans le formulaire d'édition, ajouter une ligne de texte discret :
-  "Supporte le Markdown — **gras**, *italique*, # titre, - liste"
+- Ajouter les styles dans le fichier CSS global existant (globals.css)
+  ou via style inline si plus approprié
+- Classes CSS réutilisables : .fade-in, .slide-up, .scale-in
+- Pour le stagger des cards : style inline sur chaque card 
+  (animationDelay: `${index * 50}ms`)
 
 NE PAS MODIFIER :
 - Logique CRUD
 - Système de tags
+- Markdown
 - Notes épinglées
 - Couleurs de cards
 - Résumé IA
-- Auth et RLS
 
 Mettre à jour le CLAUDE.md et commiter :
-"Support Markdown — rendu formaté en lecture, react-markdown"
+"Animations de transition — fade-in cards, modale, list view, boutons"
