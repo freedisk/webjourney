@@ -54,6 +54,10 @@ export default function Home() {
   // Filtre par tag actif
   const [filtreTagId, setFiltreTagId] = useState(null);
 
+  // --- Résumé IA ---
+  // Map : noteId → { texte, chargement, erreur }
+  const [resumes, setResumes] = useState({});
+
   // Normaliser une chaîne : minuscule + sans accents (pour la recherche)
   function normaliser(str) {
     return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -350,6 +354,42 @@ export default function Home() {
   // Trouver un tag par son ID
   function getTag(tagId) {
     return tags.find((t) => t.id === tagId);
+  }
+
+  // === RÉSUMÉ IA ===
+
+  // Demander un résumé pour une note via l'API route
+  async function resumerNote(note) {
+    // Marquer le chargement pour cette note
+    setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: true, erreur: null } }));
+
+    try {
+      const res = await fetch("/api/resumer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ titre: note.titre, contenu: note.contenu }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: false, erreur: data.error || "Erreur inconnue" } }));
+        return;
+      }
+
+      setResumes((prev) => ({ ...prev, [note.id]: { texte: data.resume, chargement: false, erreur: null } }));
+    } catch {
+      setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: false, erreur: "Impossible de contacter le serveur." } }));
+    }
+  }
+
+  // Masquer le résumé d'une note
+  function masquerResume(noteId) {
+    setResumes((prev) => {
+      const copie = { ...prev };
+      delete copie[noteId];
+      return copie;
+    });
   }
 
   // Déconnexion
@@ -743,6 +783,49 @@ export default function Home() {
                           {note.contenu}
                         </p>
                       )}
+                      {/* Résumé IA (affiché temporairement) */}
+                      {resumes[note.id] && (
+                        <div
+                          className="mt-2 p-2"
+                          style={{
+                            background: "var(--accent-glow)",
+                            border: "1.5px solid var(--accent)",
+                            borderRadius: "2px",
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
+                              Résumé IA
+                            </p>
+                            {!resumes[note.id].chargement && (
+                              <button
+                                onClick={() => masquerResume(note.id)}
+                                style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
+                              >
+                                &times;
+                              </button>
+                            )}
+                          </div>
+                          {resumes[note.id].chargement ? (
+                            <p className="text-xs mt-1 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                              <span
+                                className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
+                                style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+                              />
+                              Résumé en cours...
+                            </p>
+                          ) : resumes[note.id].erreur ? (
+                            <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+                              {resumes[note.id].erreur}
+                            </p>
+                          ) : (
+                            <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                              {resumes[note.id].texte}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <p className="text-xs font-mono mt-3" style={{ color: "var(--text-muted)" }}>
                         {new Date(note.created_at).toLocaleDateString("fr-FR", {
                           day: "numeric",
@@ -797,6 +880,17 @@ export default function Home() {
                           style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
                         >
                           Dupliquer
+                        </button>
+
+                        {/* Bouton Résumer IA — désactivé si pas de contenu */}
+                        <button
+                          onClick={() => resumerNote(note)}
+                          disabled={!note.contenu || resumes[note.id]?.chargement}
+                          className="btn-brutal ghost disabled:opacity-30"
+                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem", color: "var(--accent)" }}
+                          title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                        >
+                          Résumer
                         </button>
 
                         {/* Bouton + pour ajouter un tag */}
