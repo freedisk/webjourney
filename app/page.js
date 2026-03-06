@@ -682,6 +682,18 @@ export default function Home() {
     await chargerNotes(utilisateur.id);
   }
 
+  // Copier le lien de partage d'une note déjà partagée
+  async function copierLienPartage(note) {
+    if (!note.share_token) return;
+    const lien = window.location.origin + "/share/" + note.share_token;
+    try {
+      await navigator.clipboard.writeText(lien);
+      setSucces("Lien copié !");
+    } catch {
+      setErreur("Impossible de copier le lien.");
+    }
+  }
+
   // Déconnexion
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -832,18 +844,35 @@ export default function Home() {
                 >
                   Copier
                 </button>
-                <button
-                  onClick={() => togglePartage(note)}
-                  className="btn-brutal ghost"
-                  style={{
-                    fontSize: "0.7rem",
-                    padding: "0.35rem 0.75rem",
-                    color: note.share_token ? "var(--success)" : "var(--text-muted)",
-                  }}
-                  title={note.share_token ? "Désactiver le partage" : "Partager"}
-                >
-                  {"\uD83D\uDD17"} {note.share_token ? "Partagée" : "Partager"}
-                </button>
+                {note.share_token ? (
+                  <>
+                    <button
+                      onClick={() => copierLienPartage(note)}
+                      className="btn-brutal ghost"
+                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }}
+                      title="Copier le lien de partage"
+                    >
+                      {"\uD83D\uDD17"} Copier le lien
+                    </button>
+                    <button
+                      onClick={() => togglePartage(note)}
+                      className="btn-brutal ghost"
+                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
+                      title="Désactiver le partage public"
+                    >
+                      Désactiver
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => togglePartage(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }}
+                    title="Partager cette note"
+                  >
+                    {"\uD83D\uDD17"} Partager
+                  </button>
+                )}
                 <button
                   onClick={() => resumerNote(note)}
                   disabled={!note.contenu || resumes[note.id]?.chargement}
@@ -1076,6 +1105,39 @@ export default function Home() {
             <>
               {renderTagsBadges(note)}
 
+              {note.share_token && (
+                <div
+                  className="flex items-center gap-2 mb-3"
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "var(--success)",
+                    background: "var(--success)" + "10",
+                    border: "1px solid var(--success)",
+                    borderRadius: "2px",
+                    padding: "0.35rem 0.6rem",
+                  }}
+                >
+                  <span>{"\uD83D\uDD17"} Partage actif</span>
+                  <button
+                    onClick={() => copierLienPartage(note)}
+                    style={{
+                      marginLeft: "auto",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      color: "var(--success)",
+                      background: "none",
+                      border: "1px solid var(--success)",
+                      borderRadius: "2px",
+                      padding: "0.15rem 0.4rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Copier le lien
+                  </button>
+                </div>
+              )}
+
               {note.contenu ? (
                 <div className="text-sm leading-relaxed">
                   <MarkdownRenderer content={note.contenu} />
@@ -1170,6 +1232,39 @@ export default function Home() {
             ) : (
               <>
                 {renderTagsBadges(note)}
+
+                {note.share_token && (
+                  <div
+                    className="flex items-center gap-2 mb-3"
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      color: "var(--success)",
+                      background: "var(--success)" + "10",
+                      border: "1px solid var(--success)",
+                      borderRadius: "2px",
+                      padding: "0.35rem 0.6rem",
+                    }}
+                  >
+                    <span>{"\uD83D\uDD17"} Partage actif</span>
+                    <button
+                      onClick={() => copierLienPartage(note)}
+                      style={{
+                        marginLeft: "auto",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        color: "var(--success)",
+                        background: "none",
+                        border: "1px solid var(--success)",
+                        borderRadius: "2px",
+                        padding: "0.15rem 0.4rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Copier le lien
+                    </button>
+                  </div>
+                )}
 
                 {note.contenu ? (
                   <div className="text-sm leading-relaxed">
@@ -1659,14 +1754,33 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Date */}
-                    <p className="text-xs font-mono mt-auto" style={{ color: "var(--text-muted)" }}>
-                      {new Date(note.created_at).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
+                    {/* Date + indicateur partage */}
+                    <div className="flex items-center gap-2 mt-auto">
+                      <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                        {new Date(note.created_at).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                      {note.share_token && (
+                        <span
+                          style={{
+                            fontSize: "0.55rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            color: "var(--success)",
+                            background: "var(--success)" + "15",
+                            border: "1px solid var(--success)",
+                            borderRadius: "2px",
+                            padding: "0.05rem 0.3rem",
+                          }}
+                        >
+                          {"\uD83D\uDD17"} Partage actif
+                        </span>
+                      )}
+                    </div>
 
                     {/* Boutons d'action */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-2" style={{ borderTop: "1px solid var(--panel-border)" }} onClick={(e) => e.stopPropagation()}>
@@ -1697,18 +1811,35 @@ export default function Home() {
                       >
                         Dupliquer
                       </button>
-                      <button
-                        onClick={() => togglePartage(note)}
-                        className="btn-brutal ghost"
-                        style={{
-                          fontSize: "0.6rem",
-                          padding: "0.2rem 0.5rem",
-                          color: note.share_token ? "var(--success)" : "var(--text-muted)",
-                        }}
-                        title={note.share_token ? "Désactiver le partage" : "Partager"}
-                      >
-                        {"\uD83D\uDD17"}
-                      </button>
+                      {note.share_token ? (
+                        <>
+                          <button
+                            onClick={() => copierLienPartage(note)}
+                            className="btn-brutal ghost"
+                            style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--success)" }}
+                            title="Copier le lien de partage"
+                          >
+                            {"\uD83D\uDD17"} Lien
+                          </button>
+                          <button
+                            onClick={() => togglePartage(note)}
+                            className="btn-brutal ghost"
+                            style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--danger)" }}
+                            title="Désactiver le partage"
+                          >
+                            {"\u00d7"} Partage
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => togglePartage(note)}
+                          className="btn-brutal ghost"
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--text-muted)" }}
+                          title="Partager"
+                        >
+                          {"\uD83D\uDD17"}
+                        </button>
+                      )}
                       <button
                         onClick={() => resumerNote(note)}
                         disabled={!note.contenu || resumes[note.id]?.chargement}

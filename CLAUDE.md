@@ -134,7 +134,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
 - [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2=card/list view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
-- [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
+- [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
