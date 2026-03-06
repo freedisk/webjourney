@@ -1198,27 +1198,94 @@ export default function Home() {
           style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) || "var(--modal-bg)" }}
         >
           {/* Header modale */}
-          <div className="modal-header">
-            {enEdition ? (
-              <input
-                type="text"
-                value={editionTitre}
-                onChange={(e) => setEditionTitre(e.target.value)}
-                className="input-glass"
-                style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
-              />
-            ) : (
-              <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
-                {note.titre}
-              </h2>
+          <div className="modal-header" style={{ flexDirection: "column", gap: "0.5rem" }}>
+            <div className="flex items-start justify-between gap-2 w-full">
+              {enEdition ? (
+                <input
+                  type="text"
+                  value={editionTitre}
+                  onChange={(e) => setEditionTitre(e.target.value)}
+                  className="input-glass"
+                  style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
+                />
+              ) : (
+                <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                  {note.titre}
+                </h2>
+              )}
+              <button
+                onClick={fermerModale}
+                className="btn-brutal ghost"
+                style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
+              >
+                &times;
+              </button>
+            </div>
+            {!enEdition && (
+              <div className="flex items-center gap-2 w-full">
+                {/* + Tag */}
+                <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
+                  <button
+                    onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem", color: "var(--accent)" }}
+                    title="Ajouter un tag"
+                  >
+                    + Tag
+                  </button>
+                  {dropdownTagNoteId === note.id && (
+                    <div
+                      className="absolute left-0 top-full mt-1"
+                      style={{
+                        background: "var(--modal-bg)",
+                        border: "2px solid var(--modal-border)",
+                        borderRadius: "2px",
+                        boxShadow: "4px 4px 0 var(--brutal-shadow)",
+                        padding: "0.4rem",
+                        minWidth: "120px",
+                        zIndex: 50,
+                      }}
+                    >
+                      {tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).length === 0 ? (
+                        <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+                          {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
+                        </p>
+                      ) : (
+                        tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).map((tag) => (
+                          <button
+                            key={tag.id}
+                            onClick={() => ajouterTagANote(note.id, tag.id)}
+                            className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
+                            style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
+                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          >
+                            <span style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }} />
+                            {tag.nom}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Supprimer */}
+                {confirmSuppId === note.id ? (
+                  <div className="flex items-center gap-1 ml-auto">
+                    <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>Supprimer ?</span>
+                    <button onClick={() => supprimerNote(note.id)} className="btn-brutal danger" style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem" }}>Oui</button>
+                    <button onClick={() => setConfirmSuppId(null)} className="btn-brutal ghost" style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem" }}>Non</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
+                    className="btn-brutal ghost ml-auto"
+                    style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem", color: "var(--danger)" }}
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </div>
             )}
-            <button
-              onClick={fermerModale}
-              className="btn-brutal ghost"
-              style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
-            >
-              &times;
-            </button>
           </div>
 
           {/* Body modale */}
@@ -1297,8 +1364,66 @@ export default function Home() {
           </div>
 
           {/* Footer modale */}
-          <div className="modal-footer">
-            {renderNoteActions(note)}
+          <div className="modal-footer space-y-2">
+            {enEdition ? (
+              <div className="flex items-center gap-2">
+                <button onClick={() => sauvegarderEdition(note.id)} className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                  Sauver
+                </button>
+                <button onClick={annulerEdition} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Ligne 1 — Épingler, Modifier, Dupliquer, Copier */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleEpingle(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.85rem", padding: "0.35rem 0.5rem", color: note.epinglee ? "var(--accent)" : "var(--text-muted)", lineHeight: 1 }}
+                    title={note.epinglee ? "Désépingler" : "Épingler"}
+                  >
+                    {"\uD83D\uDCCC"}
+                  </button>
+                  <button onClick={() => commencerEdition(note)} className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                    Modifier
+                  </button>
+                  <button onClick={() => dupliquerNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                    Dupliquer
+                  </button>
+                  <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                    Copier
+                  </button>
+                </div>
+                {/* Ligne 2 — Résumer, Partage */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => resumerNote(note)}
+                    disabled={!note.contenu || resumes[note.id]?.chargement}
+                    className="btn-brutal ghost disabled:opacity-30"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
+                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                  >
+                    Résumer
+                  </button>
+                  {note.share_token ? (
+                    <>
+                      <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Copier le lien de partage">
+                        {"\uD83D\uDD17"} Copier le lien
+                      </button>
+                      <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }} title="Désactiver le partage">
+                        Désactiver
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }} title="Partager cette note">
+                      {"\uD83D\uDD17"} Partager
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>,
