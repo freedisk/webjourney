@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -920,9 +921,9 @@ export default function Home() {
               {renderTagsBadges(note)}
 
               {note.contenu ? (
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
-                  {note.contenu}
-                </p>
+                <div className="text-sm leading-relaxed">
+                  <MarkdownRenderer content={note.contenu} />
+                </div>
               ) : (
                 <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
                   Aucun contenu
@@ -1302,6 +1303,9 @@ export default function Home() {
             </button>
           ))}
         </div>
+        <p className="text-xs mt-1" style={{ color: "var(--text-muted)", fontSize: "0.65rem" }}>
+          Supporte le Markdown — **gras**, *italique*, # titre, - liste
+        </p>
       </form>
 
       {/* Messages de feedback */}
@@ -1471,18 +1475,16 @@ export default function Home() {
                     {/* Contenu avec accordéon */}
                     {note.contenu && (
                       <div onClick={(e) => e.stopPropagation()}>
-                        <p
+                        <div
                           className="text-xs leading-relaxed"
                           style={{
-                            color: "var(--text-secondary)",
-                            whiteSpace: "pre-wrap",
                             overflow: "hidden",
                             maxHeight: isDepliee ? "none" : "4.5em",
                             transition: "max-height 0.3s ease",
                           }}
                         >
-                          {note.contenu}
-                        </p>
+                          <MarkdownRenderer content={note.contenu} />
+                        </div>
                         {contenuLong && (
                           <button
                             onClick={() => setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] }))}

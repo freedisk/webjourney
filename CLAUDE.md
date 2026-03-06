@@ -37,13 +37,15 @@ webjourney/
 ├── app/
 │   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, split panel, texture bruit
 │   ├── layout.js                # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
-│   ├── page.js                  # Page principale : list view split panel, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier
+│   ├── page.js                  # Page principale : card/list view toggle, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier, épinglage, Markdown
 │   ├── login/
 │   │   └── page.js              # Page connexion/inscription : formulaire email + mot de passe, toggle thème
 │   ├── api/
 │   │   └── resumer/
 │   │       └── route.js         # API Route server-side : appel Anthropic Claude pour résumé de notes (clé secrète)
 │   └── favicon.ico
+├── components/
+│   └── MarkdownRenderer.js      # Composant de rendu Markdown (react-markdown + styles custom brutalism)
 ├── lib/
 │   └── supabase.js              # Client Supabase initialisé avec NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY
 ├── public/                       # Assets statiques (file.svg, globe.svg, next.svg, vercel.svg, window.svg)
@@ -123,6 +125,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Copier une note dans le presse-papier (bouton dans le panneau détail, copie titre + contenu)
 - [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches, appliquée sur le détail et indicateur dans la liste, champ `couleur` TEXT nullable en base)
 - [x] Notes épinglées (champ `epinglee` BOOLEAN en base, tri prioritaire en tête de liste, toggle 📌 sur card/modale/list view, indicateur visuel)
+- [x] Support Markdown dans les notes (rendu formaté en lecture via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, aide visuelle dans le formulaire d'édition)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
