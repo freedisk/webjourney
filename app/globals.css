@@ -1,26 +1,180 @@
 @import "tailwindcss";
 
+/* --- Thème clair (défaut) --- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #f0eee6;
+  --bg-secondary: #e8e5db;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --text-muted: #888;
+  --accent: #5b2eff;
+  --accent-hover: #4718d9;
+  --accent-glow: rgba(91, 46, 255, 0.25);
+  --danger: #ff3b3b;
+  --danger-hover: #d42a2a;
+  --success: #00c853;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-shadow: rgba(0, 0, 0, 0.08);
+  --brutal-border: #1a1a1a;
+  --brutal-shadow: #1a1a1a;
+  --input-bg: rgba(255, 255, 255, 0.7);
+  --input-border: rgba(0, 0, 0, 0.15);
+  --noise-opacity: 0.03;
+}
+
+/* --- Thème sombre --- */
+.dark {
+  --bg-primary: #0e0e12;
+  --bg-secondary: #16161d;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0b0;
+  --text-muted: #606070;
+  --accent: #8b6fff;
+  --accent-hover: #a48bff;
+  --accent-glow: rgba(139, 111, 255, 0.3);
+  --danger: #ff5555;
+  --danger-hover: #ff7777;
+  --success: #44ff88;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --brutal-border: rgba(255, 255, 255, 0.2);
+  --brutal-shadow: rgba(139, 111, 255, 0.15);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --noise-opacity: 0.015;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* --- Base --- */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  transition: background 0.3s, color 0.3s;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Bruit de fond subtil pour la texture brutaliste */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* --- Card glass + brutal --- */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid var(--glass-border);
+  border-radius: 4px;
+  box-shadow:
+    4px 4px 0px 0px var(--brutal-shadow),
+    0 8px 32px var(--glass-shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.glass-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow:
+    6px 6px 0px 0px var(--brutal-shadow),
+    0 12px 40px var(--glass-shadow);
+}
+
+/* --- Bouton brutaliste --- */
+.btn-brutal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--brutal-border);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0px 0px var(--brutal-shadow);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-brutal:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px 0px var(--brutal-shadow);
+}
+
+.btn-brutal:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px 0px var(--brutal-shadow);
+}
+
+.btn-brutal.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-brutal.primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-brutal.danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.btn-brutal.danger:hover {
+  background: var(--danger-hover);
+}
+
+.btn-brutal.ghost {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* --- Input glass --- */
+.input-glass {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  border-radius: 2px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-glass:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.input-glass::placeholder {
+  color: var(--text-muted);
+}
+
+/* --- Tag/badge brutaliste --- */
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1.5px solid var(--brutal-border);
+  border-radius: 1px;
 }
