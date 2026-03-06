@@ -65,6 +65,8 @@ export default function Home() {
   const [confirmSuppTagId, setConfirmSuppTagId] = useState(null);
   const [dropdownTagNoteId, setDropdownTagNoteId] = useState(null);
   const dropdownRef = useRef(null);
+  const rechercheRef = useRef(null);
+  const titreRef = useRef(null);
   const [filtreTagId, setFiltreTagId] = useState(null);
 
   // --- Toggle Card / List ---
@@ -78,6 +80,9 @@ export default function Home() {
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [triAscendant, setTriAscendant] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(false);
+
+  // --- Aide raccourcis clavier ---
+  const [aideOuverte, setAideOuverte] = useState(false);
 
   // --- Animation pulse épinglage ---
   const [pulseNoteId, setPulseNoteId] = useState(null);
@@ -187,6 +192,90 @@ export default function Home() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [noteDetailId, editionId, editionTitre, editionContenu, editionCouleur]);
+
+  // Raccourcis clavier globaux
+  useEffect(() => {
+    function handleKeyDown(e) {
+      const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
+
+      // Échap — fermer aide, annuler édition (modale gérée séparément)
+      if (e.key === "Escape") {
+        if (aideOuverte) { setAideOuverte(false); return; }
+        if (!noteDetailId && editionId) { annulerEdition(); return; }
+        return;
+      }
+
+      // Ne pas intercepter si on tape dans un champ
+      if (isTyping) return;
+
+      // N → focus sur le champ titre nouvelle note
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        titreRef.current?.focus();
+        return;
+      }
+
+      // / → focus sur la recherche
+      if (e.key === "/") {
+        e.preventDefault();
+        rechercheRef.current?.focus();
+        return;
+      }
+
+      // 1 → Card View
+      if (e.key === "1") {
+        setViewMode("card");
+        annulerEdition();
+        return;
+      }
+
+      // 2 → List View
+      if (e.key === "2") {
+        setViewMode("list");
+        annulerEdition();
+        setNoteDetailId(null);
+        return;
+      }
+
+      // Raccourcis modale ouverte
+      if (noteDetailId && noteModale) {
+        if (e.key === "e" || e.key === "E") {
+          if (!editionId) { commencerEdition(noteModale); }
+          return;
+        }
+        if (e.key === "Delete") {
+          setConfirmSuppId(noteModale.id);
+          setEditionId(null);
+          return;
+        }
+      }
+
+      // Raccourcis list view — navigation ↑↓ + Entrée
+      if (viewMode === "list" && notesFiltrees.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          const currentIndex = notesFiltrees.findIndex((n) => n.id === selectedNoteId);
+          const nextIndex = currentIndex < notesFiltrees.length - 1 ? currentIndex + 1 : 0;
+          setSelectedNoteId(notesFiltrees[nextIndex].id);
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          const currentIndex = notesFiltrees.findIndex((n) => n.id === selectedNoteId);
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : notesFiltrees.length - 1;
+          setSelectedNoteId(notesFiltrees[prevIndex].id);
+          return;
+        }
+        if (e.key === "Enter" && selectedNoteId) {
+          setMobileDetail(true);
+          return;
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  });
 
   // Basculer le thème sombre/clair
   function toggleTheme() {
@@ -1257,6 +1346,7 @@ export default function Home() {
         </p>
         <div className="flex flex-wrap gap-2">
           <input
+            ref={titreRef}
             type="text"
             value={titre}
             onChange={(e) => setTitre(e.target.value)}
@@ -1342,6 +1432,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[200px]">
                 <input
+                  ref={rechercheRef}
                   type="text"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
@@ -1631,6 +1722,7 @@ export default function Home() {
             <div className="p-3 space-y-2" style={{ borderBottom: "1px solid var(--panel-border)", flexShrink: 0 }}>
               <div className="relative">
                 <input
+                  ref={rechercheRef}
                   type="text"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
@@ -1801,6 +1893,105 @@ export default function Home() {
 
       {/* Modale card view (portail) */}
       {viewMode === "card" && renderModale()}
+
+      {/* Bouton aide raccourcis clavier */}
+      <button
+        onClick={() => setAideOuverte(!aideOuverte)}
+        style={{
+          position: "fixed",
+          bottom: "1rem",
+          right: "1rem",
+          width: "2.2rem",
+          height: "2.2rem",
+          borderRadius: "50%",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "2px solid var(--glass-border)",
+          boxShadow: "3px 3px 0 var(--brutal-shadow)",
+          color: "var(--text-muted)",
+          fontSize: "1rem",
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9998,
+          transition: "transform 0.15s, box-shadow 0.15s",
+        }}
+        title="Raccourcis clavier"
+      >
+        ?
+      </button>
+
+      {/* Modale aide raccourcis */}
+      {aideOuverte && createPortal(
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setAideOuverte(false); }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "360px", backgroundColor: "var(--modal-bg)" }}
+          >
+            <div className="modal-header">
+              <h2 className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
+                Raccourcis clavier
+              </h2>
+              <button
+                onClick={() => setAideOuverte(false)}
+                className="btn-brutal ghost"
+                style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1 }}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: "0.75rem 1.25rem" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <tbody>
+                  {[
+                    ["N", "Nouvelle note"],
+                    ["/", "Rechercher"],
+                    ["1 / 2", "Card / List view"],
+                    ["\u00c9chap", "Fermer / Annuler"],
+                    ["\u2191 \u2193", "Naviguer (liste)"],
+                    ["Entr\u00e9e", "S\u00e9lectionner"],
+                    ["E", "\u00c9diter (modale)"],
+                    ["Suppr", "Supprimer (modale)"],
+                  ].map(([touche, action]) => (
+                    <tr key={touche} style={{ borderBottom: "1px solid var(--panel-border)" }}>
+                      <td
+                        style={{
+                          padding: "0.4rem 0.5rem",
+                          fontWeight: 800,
+                          fontSize: "0.75rem",
+                          fontFamily: "var(--font-mono), monospace",
+                          color: "var(--accent)",
+                          whiteSpace: "nowrap",
+                          width: "5rem",
+                        }}
+                      >
+                        {touche}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.4rem 0.5rem",
+                          fontSize: "0.75rem",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {action}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

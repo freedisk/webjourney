@@ -1,51 +1,51 @@
-Ajoute des animations de transition à l'app.
+Ajoute des raccourcis clavier à l'app.
 
-ANIMATIONS À IMPLÉMENTER :
+RACCOURCIS À IMPLÉMENTER :
 
-1. CARDS (card view)
-   - Apparition initiale de la grille : chaque card fade-in + slide-up 
-     au chargement (opacity 0→1, translateY 20px→0)
-   - Cards en stagger : délai progressif par index (index * 50ms)
-   - Durée : 300ms, easing : ease-out
+1. GLOBAUX (actifs partout sauf quand on est dans un champ de saisie)
+   - N          → ouvre le formulaire de création de nouvelle note
+   - /          → focus sur la barre de recherche
+   - Échap      → ferme la modale / annule l'édition en cours
+   - 1          → bascule en Card View
+   - 2          → bascule en List View
 
-2. MODALE
-   - Ouverture : fade-in overlay + scale-up contenu (scale 0.95→1, opacity 0→1)
-   - Fermeture : inverse (scale 1→0.95, opacity 1→0)
-   - Durée : 200ms, easing : ease-out
+2. MODALE OUVERTE
+   - Échap      → ferme la modale (déjà implémenté — vérifier et conserver)
+   - E          → passe en mode édition
+   - Suppr      → déclenche la confirmation de suppression
 
-3. TOGGLE CARD/LIST VIEW
-   - Transition douce entre les deux modes (opacity 0→1)
-   - Durée : 200ms
-
-4. PANNEAU DROIT (list view)
-   - Quand une note est sélectionnée : fade-in du contenu (opacity 0→1)
-   - Durée : 150ms
-
-5. BOUTONS D'ACTION
-   - Hover : légère élévation (translateY -2px) + transition douce
-   - Durée : 150ms
-   - Déjà présents partiellement → vérifier et uniformiser
-
-6. NOTE ÉPINGLÉE
-   - Quand on épingle/désépingle : bref scale pulse (1→1.05→1)
-   - Durée : 200ms
+3. LIST VIEW — PANNEAU GAUCHE
+   - ↑ / ↓      → naviguer entre les notes de la liste
+   - Entrée     → sélectionner la note surligné
 
 CONTRAINTES TECHNIQUES :
-- Utiliser uniquement CSS transitions et @keyframes
-- Pas de librairie d'animation (pas de framer-motion, pas de react-spring)
-- Respecter prefers-reduced-motion :
-  @media (prefers-reduced-motion: reduce) { 
-    * { animation: none !important; transition: none !important; } 
-  }
-- Les animations ne doivent pas bloquer les interactions
-- Pas de layout shift visible (réserver l'espace avant l'animation)
+- Utiliser useEffect + addEventListener('keydown') au niveau page
+- Toujours vérifier que l'événement ne vient pas d'un input/textarea/select
+  avant d'intercepter :
+  const isTyping = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)
+  if (isTyping) return
+- Nettoyer les listeners dans le return du useEffect (removeEventListener)
+- Un seul listener global — pas un par composant
+- Pas de conflit avec les raccourcis navigateur (éviter Ctrl+*, Alt+*)
 
-IMPLÉMENTATION :
-- Ajouter les styles dans le fichier CSS global existant (globals.css)
-  ou via style inline si plus approprié
-- Classes CSS réutilisables : .fade-in, .slide-up, .scale-in
-- Pour le stagger des cards : style inline sur chaque card 
-  (animationDelay: `${index * 50}ms`)
+UI — AIDE CONTEXTUELLE :
+- Bouton "?" discret dans le coin bas-droite de l'écran
+- Clic → ouvre une petite modale/tooltip listant tous les raccourcis
+- Même style que l'app (glassmorphism, mode sombre/clair)
+- Raccourci pour fermer cette aide : Échap
+
+FORMAT D'AFFICHAGE DES RACCOURCIS DANS L'AIDE :
+┌─────────────────────────────┐
+│ ⌨️ Raccourcis clavier        │
+├─────────────────────────────┤
+│ N          Nouvelle note     │
+│ /          Rechercher        │
+│ 1 / 2      Card / List view  │
+│ Échap      Fermer / Annuler  │
+│ ↑ ↓        Naviguer (liste)  │
+│ Entrée     Sélectionner      │
+│ E          Éditer (modale)   │
+└─────────────────────────────┘
 
 NE PAS MODIFIER :
 - Logique CRUD
@@ -54,6 +54,7 @@ NE PAS MODIFIER :
 - Notes épinglées
 - Couleurs de cards
 - Résumé IA
+- Animations
 
 Mettre à jour le CLAUDE.md et commiter :
-"Animations de transition — fade-in cards, modale, list view, boutons"
+"Raccourcis clavier — navigation, actions, aide contextuelle (?)"

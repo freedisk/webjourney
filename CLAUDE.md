@@ -128,6 +128,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Support Markdown dans les notes (rendu formaté en lecture sur cards, modale et list view via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, textarea brut en édition, aide visuelle dans le formulaire)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
+- [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2=card/list view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
