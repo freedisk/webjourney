@@ -6,6 +6,19 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+// Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
+const COULEURS_NOTES = [
+  { nom: "Aucune", hex: null },
+  { nom: "Jaune doux", hex: "#fef9c3", hexDark: "#3d3a20" },
+  { nom: "Vert menthe", hex: "#dcfce7", hexDark: "#1a3326" },
+  { nom: "Bleu ciel", hex: "#dbeafe", hexDark: "#1a2640" },
+  { nom: "Rose poudré", hex: "#fce7f3", hexDark: "#3d1a2e" },
+  { nom: "Lavande", hex: "#ede9fe", hexDark: "#2a1f4d" },
+  { nom: "Pêche", hex: "#ffedd5", hexDark: "#3d2a1a" },
+  { nom: "Gris perle", hex: "#f1f5f9", hexDark: "#1e2430" },
+  { nom: "Rouge crème", hex: "#fef2f2", hexDark: "#3d1f1f" },
+];
+
 // Couleurs prédéfinies pour les tags
 const COULEURS_TAGS = [
   { nom: "Rouge", hex: "#ef4444" },
@@ -24,6 +37,7 @@ export default function Home() {
   const [notes, setNotes] = useState([]);
   const [titre, setTitre] = useState("");
   const [contenu, setContenu] = useState("");
+  const [couleurNote, setCouleurNote] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [succes, setSucces] = useState(null);
@@ -33,6 +47,7 @@ export default function Home() {
   const [editionId, setEditionId] = useState(null);
   const [editionTitre, setEditionTitre] = useState("");
   const [editionContenu, setEditionContenu] = useState("");
+  const [editionCouleur, setEditionCouleur] = useState(null);
 
   // Confirmation de suppression
   const [confirmSuppId, setConfirmSuppId] = useState(null);
@@ -64,6 +79,14 @@ export default function Home() {
   // --- Résumé IA ---
   // Map : noteId → { texte, chargement, erreur }
   const [resumes, setResumes] = useState({});
+
+  // Obtenir la couleur de fond d'une note selon le thème actuel
+  function getCouleurFond(couleur) {
+    if (!couleur) return undefined;
+    const entry = COULEURS_NOTES.find((c) => c.hex === couleur);
+    if (entry && sombre) return entry.hexDark;
+    return couleur;
+  }
 
   // Normaliser une chaîne : minuscule + sans accents (pour la recherche)
   function normaliser(str) {
@@ -214,6 +237,7 @@ export default function Home() {
     const { error } = await supabase.from("notes").insert({
       titre: titre.trim(),
       contenu: contenu.trim(),
+      couleur: couleurNote,
       user_id: utilisateur.id,
     });
 
@@ -224,6 +248,7 @@ export default function Home() {
 
     setTitre("");
     setContenu("");
+    setCouleurNote(null);
     setSucces("Note ajoutée !");
     await chargerNotes(utilisateur.id);
   }
@@ -247,6 +272,7 @@ export default function Home() {
     const { data, error } = await supabase.from("notes").insert({
       titre: "Copie de — " + note.titre,
       contenu: note.contenu,
+      couleur: note.couleur,
       user_id: utilisateur.id,
     }).select();
 
@@ -272,6 +298,7 @@ export default function Home() {
     setEditionId(note.id);
     setEditionTitre(note.titre);
     setEditionContenu(note.contenu || "");
+    setEditionCouleur(note.couleur || null);
     setConfirmSuppId(null);
   }
 
@@ -279,6 +306,7 @@ export default function Home() {
     setEditionId(null);
     setEditionTitre("");
     setEditionContenu("");
+    setEditionCouleur(null);
   }
 
   // Fermer la modale avec protection contre la perte de modifications
@@ -287,7 +315,8 @@ export default function Home() {
       const note = notes.find((n) => n.id === noteDetailId);
       const titreModifie = note && editionTitre !== note.titre;
       const contenuModifie = note && editionContenu !== (note.contenu || "");
-      if (titreModifie || contenuModifie) {
+      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
+      if (titreModifie || contenuModifie || couleurModifiee) {
         if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
           return;
         }
@@ -303,7 +332,7 @@ export default function Home() {
 
     const { error } = await supabase
       .from("notes")
-      .update({ titre: editionTitre.trim(), contenu: editionContenu.trim() })
+      .update({ titre: editionTitre.trim(), contenu: editionContenu.trim(), couleur: editionCouleur })
       .eq("id", noteId);
 
     if (error) {
@@ -631,6 +660,41 @@ export default function Home() {
           className="input-glass"
           style={{ resize: "none" }}
         />
+        {/* Sélecteur de couleur de fond */}
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
+            Couleur de la note
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {COULEURS_NOTES.map((c) => (
+              <button
+                key={c.nom}
+                type="button"
+                onClick={() => setCouleurNote(c.hex)}
+                title={c.nom}
+                style={{
+                  width: "1.75rem",
+                  height: "1.75rem",
+                  borderRadius: "50%",
+                  background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                  border: couleurNote === c.hex
+                    ? "3px solid var(--accent)"
+                    : "2px solid var(--input-border)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.7rem",
+                  color: "var(--text-muted)",
+                  boxShadow: couleurNote === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                {c.hex === null && "×"}
+              </button>
+            ))}
+          </div>
+        </div>
         <button type="submit" className="btn-brutal primary">
           + Ajouter
         </button>
@@ -752,7 +816,10 @@ export default function Home() {
                 key={note.id}
                 className="glass-card p-5 flex flex-col justify-between"
                 onClick={() => { if (editionId !== note.id) setNoteDetailId(note.id); }}
-                style={{ cursor: editionId === note.id ? "default" : "pointer" }}
+                style={{
+                  cursor: editionId === note.id ? "default" : "pointer",
+                  backgroundColor: editionId === note.id ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur),
+                }}
               >
                 {/* Mode édition inline */}
                 {editionId === note.id ? (
@@ -778,6 +845,41 @@ export default function Home() {
                       className="input-glass"
                       style={{ resize: "none", overflow: "hidden" }}
                     />
+                    {/* Sélecteur couleur de fond */}
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+                        Couleur
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {COULEURS_NOTES.map((c) => (
+                          <button
+                            key={c.nom}
+                            type="button"
+                            onClick={() => setEditionCouleur(c.hex)}
+                            title={c.nom}
+                            style={{
+                              width: "1.5rem",
+                              height: "1.5rem",
+                              borderRadius: "50%",
+                              background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                              border: editionCouleur === c.hex
+                                ? "3px solid var(--accent)"
+                                : "2px solid var(--input-border)",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "0.6rem",
+                              color: "var(--text-muted)",
+                              boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {c.hex === null && "×"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => sauvegarderEdition(note.id)}
@@ -1076,6 +1178,7 @@ export default function Home() {
             <div
               className="modal-content"
               onClick={(e) => e.stopPropagation()}
+              style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) }}
             >
               {/* Header */}
               <div className="modal-header">
@@ -1104,13 +1207,50 @@ export default function Home() {
               {/* Body scrollable */}
               <div className="modal-body">
                 {enEdition ? (
-                  <textarea
-                    value={editionContenu}
-                    onChange={(e) => setEditionContenu(e.target.value)}
-                    rows={10}
-                    className="input-glass"
-                    style={{ resize: "vertical", minHeight: "150px" }}
-                  />
+                  <div className="space-y-3">
+                    <textarea
+                      value={editionContenu}
+                      onChange={(e) => setEditionContenu(e.target.value)}
+                      rows={10}
+                      className="input-glass"
+                      style={{ resize: "vertical", minHeight: "150px" }}
+                    />
+                    {/* Sélecteur couleur de fond */}
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
+                        Couleur de la note
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {COULEURS_NOTES.map((c) => (
+                          <button
+                            key={c.nom}
+                            type="button"
+                            onClick={() => setEditionCouleur(c.hex)}
+                            title={c.nom}
+                            style={{
+                              width: "1.75rem",
+                              height: "1.75rem",
+                              borderRadius: "50%",
+                              background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                              border: editionCouleur === c.hex
+                                ? "3px solid var(--accent)"
+                                : "2px solid var(--input-border)",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "0.7rem",
+                              color: "var(--text-muted)",
+                              boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {c.hex === null && "×"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 ) : note.contenu ? (
                   <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
                     {note.contenu}

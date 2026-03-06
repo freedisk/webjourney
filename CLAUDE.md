@@ -66,6 +66,7 @@ webjourney/
 | `user_id`   | uuid (FK)   | Référence vers `auth.users(id)`, cascade on delete   |
 | `titre`     | text         | Titre de la note (requis)                            |
 | `contenu`   | text         | Contenu de la note (optionnel)                       |
+| `couleur`   | text         | Code hex couleur de fond (ex: `#fef9c3`), `NULL` = défaut glassmorphism |
 | `created_at`| timestamptz  | Date de création, `now()` par défaut                 |
 
 RLS : `auth.uid() = user_id` pour toutes les opérations (SELECT, INSERT, UPDATE, DELETE)
@@ -117,6 +118,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Modale de détail au clic sur une note (React Portal vers body, overlay sombre, fermeture Escape/overlay/×)
 - [x] Édition inline dans la modale (titre + contenu, protection perte de modifications avec confirmation)
 - [x] Copier une note dans le presse-papier (bouton sur card + modale, copie titre + contenu)
+- [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches dans le formulaire, appliquée sur la card et dans la modale, champ `couleur` TEXT nullable en base)
 - [x] Textarea auto-extensible en mode édition card (auto-resize via scrollHeight)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
