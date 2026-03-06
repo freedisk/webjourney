@@ -34,7 +34,7 @@ export async function POST(request) {
       body: JSON.stringify({
         model: "claude-sonnet-4-5-20250929",
         max_tokens: 150,
-        system: "Tu es un assistant qui résume des notes. Génère un résumé concis en 2 phrases maximum, en français.",
+        system: "Tu es un assistant qui résume des notes. Génère un résumé concis en 2 phrases maximum, en français. Réponds uniquement avec le texte du résumé, sans formatage markdown, sans préfixe comme \"Résumé :\" et sans guillemets.",
         messages: [
           {
             role: "user",
@@ -56,8 +56,12 @@ export async function POST(request) {
 
     const data = await response.json();
 
-    // Extraire le texte du résumé depuis la réponse
-    const resume = data.content?.[0]?.text || "Impossible de générer un résumé.";
+    // Extraire le texte et nettoyer le markdown résiduel
+    const texte = data.content?.[0]?.text || "Impossible de générer un résumé.";
+    const resume = texte
+      .replace(/\*\*/g, "")
+      .replace(/^résumé\s*:\s*/i, "")
+      .trim();
 
     return NextResponse.json({ resume });
   } catch (err) {

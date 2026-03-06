@@ -864,7 +864,7 @@ export default function Home() {
                     ) : (
                       /* Boutons d'actions */
                       <div
-                        className="flex items-center gap-2 pt-3"
+                        className="flex items-center gap-2 pt-3 flex-wrap"
                         style={{ borderTop: "1.5px solid var(--glass-border)" }}
                       >
                         <button
