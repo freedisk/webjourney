@@ -125,7 +125,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Copier une note dans le presse-papier (bouton dans le panneau détail, copie titre + contenu)
 - [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches, appliquée sur le détail et indicateur dans la liste, champ `couleur` TEXT nullable en base)
 - [x] Notes épinglées (champ `epinglee` BOOLEAN en base, tri prioritaire en tête de liste, toggle 📌 sur card/modale/list view, indicateur visuel)
-- [x] Support Markdown dans les notes (rendu formaté en lecture via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, aide visuelle dans le formulaire d'édition)
+- [x] Support Markdown dans les notes (rendu formaté en lecture sur cards, modale et list view via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, textarea brut en édition, aide visuelle dans le formulaire)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables

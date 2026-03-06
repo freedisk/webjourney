@@ -1016,9 +1016,9 @@ export default function Home() {
                 {renderTagsBadges(note)}
 
                 {note.contenu ? (
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
-                    {note.contenu}
-                  </p>
+                  <div className="text-sm leading-relaxed">
+                    <MarkdownRenderer content={note.contenu} />
+                  </div>
                 ) : (
                   <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
                     Aucun contenu
