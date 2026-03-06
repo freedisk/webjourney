@@ -1,94 +1,84 @@
-Ajoute un panneau de statistiques personnelles (drawer latéral).
+joute le partage de note par lien public avec token unique.
 
-INSTALLATION :
-npm install recharts
+SCHÉMA DB :
+La colonne share_token (TEXT DEFAULT NULL) a déjà été ajoutée 
+dans Supabase. La policy RLS publique est aussi déjà en place.
+Ne pas recréer ces éléments.
 
-ACCÈS :
-- Bouton 📊 dans le header (à côté du toggle dark mode)
-- Clic → ouvre un drawer depuis la droite (slide-in)
-- Fermeture : bouton × + clic sur l'overlay + Échap
-- Même style glassmorphism + brutalism, compatible mode sombre/clair
+LOGIQUE DU TOKEN :
+- Note privée  → share_token = NULL
+- Note partagée → share_token = UUID généré (crypto.randomUUID())
+- Activer le partage  → générer un token + UPDATE en base
+- Désactiver le partage → share_token = NULL + UPDATE en base
+- Le lien de partage : https://[domaine]/share/[token]
 
-DONNÉES — REQUÊTES SUPABASE :
-Toutes les requêtes sont filtrées par auth.uid() (RLS actif).
+TOGGLE DE PARTAGE :
+- Bouton 🔗 sur la card (à côté des autres boutons d'action)
+- Bouton 🔗 dans la modale
+- États visuels :
+  · Privée : icône grisée, tooltip "Partager"
+  · Partagée : icône colorée (verte ou accent), tooltip "Lien copié !"
+- Clic sur une note privée :
+  · Générer crypto.randomUUID() comme token
+  · UPDATE notes SET share_token = token WHERE id = note.id
+  · Copier automatiquement le lien dans le presse-papier
+  · Feedback : "Lien copié !" (3 secondes)
+- Clic sur une note déjà partagée :
+  · Demander confirmation : "Désactiver le partage public ?"
+  · Si oui → UPDATE notes SET share_token = NULL
+  · Feedback : "Partage désactivé"
 
-1. Total notes :
-   SELECT COUNT(*) FROM notes WHERE user_id = auth.uid()
+PAGE PUBLIQUE — NOUVELLE ROUTE :
+Créer app/share/[token]/page.js
 
-2. Notes créées les 7 derniers jours (activité) :
-   SELECT DATE(created_at) as jour, COUNT(*) as total
-   FROM notes
-   WHERE user_id = auth.uid()
-   AND created_at >= NOW() - INTERVAL '7 days'
-   GROUP BY DATE(created_at)
-   ORDER BY jour ASC
+COMPORTEMENT :
+- Page Server Component (pas de "use client")
+- Récupérer la note via le token :
+  const { data } = await supabase
+    .from('notes')
+    .select('titre, contenu, tags(*), created_at')
+    .eq('share_token', token)
+    .single()
+- Si note non trouvée (token invalide ou partage désactivé) →
+  afficher page 404 élégante :
+  "Cette note n'existe pas ou n'est plus partagée."
+- Si note trouvée → afficher la note en lecture seule
 
-3. Répartition par tag :
-   SELECT tags.nom, tags.couleur, COUNT(notes_tags.note_id) as total
-   FROM tags
-   LEFT JOIN notes_tags ON tags.id = notes_tags.tag_id
-   WHERE tags.user_id = auth.uid()
-   GROUP BY tags.id, tags.nom, tags.couleur
-   ORDER BY total DESC
+CONTENU DE LA PAGE PUBLIQUE :
+- Header simple : logo/nom de l'app + lien "Créer mon compte"
+- Titre de la note (grand, lisible)
+- Contenu rendu en Markdown (réutiliser MarkdownRenderer)
+- Tags (badges colorés, lecture seule)
+- Date de création (format : "Partagée le 6 mars 2026")
+- Footer discret : "Créé avec WebJourney"
+- Pas de boutons d'action (lecture seule)
+- Même charte graphique que l'app (glassmorphism, mode sombre/clair)
+- Responsive mobile
 
-4. Mots écrits au total :
-   Calculé côté client — sommer la longueur des contenus de toutes les notes
-   en splitant sur les espaces :
-   notes.reduce((acc, n) => acc + (n.contenu?.split(' ').length || 0), 0)
+SÉCURITÉ :
+- La page publique utilise un client Supabase sans session 
+  (createClient côté serveur, pas de cookies auth)
+- Le token est un UUID opaque — impossible de deviner
+- Aucune donnée de l'utilisateur n'est exposée 
+  (pas de user_id, pas d'email)
+- Une note désactivée (share_token = NULL) devient 
+  immédiatement inaccessible
 
-5. Évolution — notes ce mois-ci vs mois dernier :
-   Calculé côté client depuis les données déjà chargées
-
-CONTENU DU DRAWER :
-
-SECTION 1 — Chiffres clés (cards mini en grille 2x2) :
-- 📝 Total notes
-- 📌 Notes épinglées
-- 🏷️ Tags créés
-- 📖 Mots écrits
-
-SECTION 2 — Activité des 7 derniers jours :
-- Graphique Recharts BarChart
-- Axe X : jours (format court "lun", "mar"...)
-- Axe Y : nombre de notes créées
-- Couleur des barres : cohérente avec le thème app
-- Si aucune activité sur un jour → barre à 0 (afficher quand même les 7 jours)
-
-SECTION 3 — Répartition par tags :
-- Graphique Recharts PieChart ou BarChart horizontal
-- Couleur de chaque segment = couleur du tag
-- Légende avec nom du tag + nombre de notes
-- Si aucun tag → message "Aucun tag créé"
-
-SECTION 4 — Évolution :
-- Phrase simple : "Ce mois-ci : X notes — Mois dernier : Y notes"
-- Indicateur visuel : ↑ vert si progression, ↓ rouge si régression, 
-  = gris si identique
-
-STYLE DU DRAWER :
-- Largeur : 400px desktop, 100% mobile
-- Slide-in depuis la droite (transform translateX)
-- Overlay sombre semi-transparent derrière
-- Header drawer : titre "📊 Mes statistiques" + bouton ×
-- Body scrollable
-- Spinner de chargement pendant la récupération des données
-- Recharts responsive : utiliser ResponsiveContainer width="100%"
-
-IMPLÉMENTATION :
-- Nouveau composant StatsDrawer.js dans components/
-- Chargement des données au moment de l'ouverture du drawer 
-  (pas au chargement de la page)
-- Gestion des états : loading, erreur, vide, données
+METTRE À JOUR :
+- Les requêtes SELECT existantes pour inclure share_token 
+  dans les données des notes (utile pour l'état du bouton)
+- INSERT : share_token = null par défaut (déjà le cas)
 
 NE PAS MODIFIER :
-- Logique CRUD
+- Logique CRUD existante
 - Système de tags
 - Markdown
 - Notes épinglées
 - Couleurs de cards
 - Résumé IA
 - Raccourcis clavier
+- Statistiques
 - Animations
 
 Mettre à jour le CLAUDE.md et commiter :
-"Statistiques personnelles — drawer + Recharts + agrégations Supabase"
+"Partage public par token — route /share/[token] + toggle card/modale + RLS"

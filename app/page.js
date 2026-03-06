@@ -637,6 +637,51 @@ export default function Home() {
     await chargerNotes(utilisateur.id);
   }
 
+  // Partager / désactiver le partage d'une note
+  async function togglePartage(note) {
+    setErreur(null);
+
+    if (note.share_token) {
+      // Déjà partagée → demander confirmation pour désactiver
+      if (!window.confirm("Désactiver le partage public ?")) return;
+
+      const { error } = await supabase
+        .from("notes")
+        .update({ share_token: null })
+        .eq("id", note.id);
+
+      if (error) {
+        setErreur("Erreur : " + error.message);
+        return;
+      }
+
+      setSucces("Partage désactivé.");
+    } else {
+      // Privée → générer un token et partager
+      const token = crypto.randomUUID();
+      const { error } = await supabase
+        .from("notes")
+        .update({ share_token: token })
+        .eq("id", note.id);
+
+      if (error) {
+        setErreur("Erreur : " + error.message);
+        return;
+      }
+
+      // Copier le lien dans le presse-papier
+      const lien = window.location.origin + "/share/" + token;
+      try {
+        await navigator.clipboard.writeText(lien);
+        setSucces("Lien copié !");
+      } catch {
+        setSucces("Partagée ! Lien : " + lien);
+      }
+    }
+
+    await chargerNotes(utilisateur.id);
+  }
+
   // Déconnexion
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -786,6 +831,18 @@ export default function Home() {
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
                   Copier
+                </button>
+                <button
+                  onClick={() => togglePartage(note)}
+                  className="btn-brutal ghost"
+                  style={{
+                    fontSize: "0.7rem",
+                    padding: "0.35rem 0.75rem",
+                    color: note.share_token ? "var(--success)" : "var(--text-muted)",
+                  }}
+                  title={note.share_token ? "Désactiver le partage" : "Partager"}
+                >
+                  {"\uD83D\uDD17"} {note.share_token ? "Partagée" : "Partager"}
                 </button>
                 <button
                   onClick={() => resumerNote(note)}
@@ -1639,6 +1696,18 @@ export default function Home() {
                         style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}
                       >
                         Dupliquer
+                      </button>
+                      <button
+                        onClick={() => togglePartage(note)}
+                        className="btn-brutal ghost"
+                        style={{
+                          fontSize: "0.6rem",
+                          padding: "0.2rem 0.5rem",
+                          color: note.share_token ? "var(--success)" : "var(--text-muted)",
+                        }}
+                        title={note.share_token ? "Désactiver le partage" : "Partager"}
+                      >
+                        {"\uD83D\uDD17"}
                       </button>
                       <button
                         onClick={() => resumerNote(note)}
