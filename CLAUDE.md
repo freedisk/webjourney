@@ -108,10 +108,13 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Auth email/mot de passe (inscription + validation email + connexion + déconnexion)
 - [x] Redirection automatique si non connecté
 - [x] CRUD notes (créer, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
-- [x] **List view — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (deux écrans empilés avec bouton retour)
-- [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri ascendant/descendant
+- [x] **Toggle Card View / List View** (icônes grille ⊞ / liste ☰ dans le header, bouton actif visuellement distinct)
+- [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (Modifier, Dupliquer, Copier, Résumer, + Tag, Supprimer)
+- [x] **List View — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (liste plein écran → note plein écran avec bouton retour ← Notes)
+- [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri chronologique toggle ↑↓
 - [x] Panneau droit : NoteDetail permanent (contenu complet, tags cliquables, résumé IA, actions Modifier/Dupliquer/Copier/Résumer/Supprimer/+Tag)
-- [x] Protection perte de modifications : confirmation lors du changement de note ou retour liste si édition en cours
+- [x] Modale : max-width 700px, boutons alignés sur une ligne (Supprimer aligné à droite), variables CSS dédiées (`--modal-bg/border/separator`) pour contraste clair/sombre
+- [x] Protection perte de modifications : confirmation lors du changement de note, retour liste, ou fermeture modale si édition en cours
 - [x] Design brutalism + glassmorphism avec mode sombre/clair (toggle + persistance localStorage)
 - [x] Recherche instantanée (filtre temps réel sur titre + contenu, insensible aux accents et à la casse)
 - [x] Tags colorés (CRUD, 8 couleurs prédéfinies, panneau de gestion)

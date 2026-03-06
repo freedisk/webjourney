@@ -1,7 +1,8 @@
 "use client";
 
-// Page principale — List view split panel, tags colorés, recherche, design brutalism + glassmorphism
+// Page principale — Card view + List view avec toggle, tags colorés, recherche, design brutalism + glassmorphism
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -65,7 +66,14 @@ export default function Home() {
   const dropdownRef = useRef(null);
   const [filtreTagId, setFiltreTagId] = useState(null);
 
-  // --- Split panel ---
+  // --- Toggle Card / List ---
+  const [viewMode, setViewMode] = useState("card");
+
+  // --- Card view : modale + accordéon ---
+  const [noteDetailId, setNoteDetailId] = useState(null);
+  const [notesDepliees, setNotesDepliees] = useState({});
+
+  // --- Split panel (list view) ---
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [triAscendant, setTriAscendant] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(false);
@@ -106,8 +114,11 @@ export default function Home() {
       return triAscendant ? dateA - dateB : dateB - dateA;
     });
 
-  // Note actuellement sélectionnée
+  // Note actuellement sélectionnée (list view)
   const noteSelectionnee = selectedNoteId ? notes.find((n) => n.id === selectedNoteId) : null;
+
+  // Note détaillée dans la modale (card view)
+  const noteModale = noteDetailId ? notes.find((n) => n.id === noteDetailId) : null;
 
   // Vérifier la session et charger les données au montage
   useEffect(() => {
@@ -150,6 +161,24 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickExterieur);
     return () => document.removeEventListener("mousedown", handleClickExterieur);
   }, []);
+
+  // Modale card view : bloquer le scroll + touche Escape
+  useEffect(() => {
+    if (!noteDetailId) return;
+
+    document.body.style.overflow = "hidden";
+
+    function handleEscape(e) {
+      if (e.key === "Escape") {
+        fermerModale();
+      }
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [noteDetailId, editionId, editionTitre, editionContenu, editionCouleur]);
 
   // Basculer le thème sombre/clair
   function toggleTheme() {
@@ -207,7 +236,7 @@ export default function Home() {
     setNotesTags(map);
   }
 
-  // === SÉLECTION DE NOTE (avec protection édition) ===
+  // === SÉLECTION DE NOTE (list view, avec protection édition) ===
 
   function selectionnerNote(noteId) {
     if (editionId) {
@@ -227,7 +256,7 @@ export default function Home() {
     setMobileDetail(true);
   }
 
-  // Retour à la liste sur mobile
+  // Retour à la liste sur mobile (list view)
   function retourListe() {
     if (editionId) {
       const note = notes.find((n) => n.id === selectedNoteId);
@@ -242,6 +271,24 @@ export default function Home() {
       annulerEdition();
     }
     setMobileDetail(false);
+  }
+
+  // Fermer la modale (card view, avec protection édition)
+  function fermerModale() {
+    if (editionId) {
+      const note = notes.find((n) => n.id === noteDetailId);
+      const titreModifie = note && editionTitre !== note.titre;
+      const contenuModifie = note && editionContenu !== (note.contenu || "");
+      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
+      if (titreModifie || contenuModifie || couleurModifiee) {
+        if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
+          return;
+        }
+      }
+      annulerEdition();
+    }
+    setNoteDetailId(null);
+    setConfirmSuppId(null);
   }
 
   // === CRUD NOTES ===
@@ -284,6 +331,10 @@ export default function Home() {
     if (selectedNoteId === noteId) {
       setSelectedNoteId(null);
       setMobileDetail(false);
+    }
+    // Fermer la modale si c'est la note affichée
+    if (noteDetailId === noteId) {
+      setNoteDetailId(null);
     }
     setSucces("Note supprimée.");
     await Promise.all([chargerNotes(utilisateur.id), chargerNotesTags()]);
@@ -471,7 +522,299 @@ export default function Home() {
     router.push("/login");
   }
 
-  // === RENDU — Composant NoteDetail (panneau droit / mobile détail) ===
+  // === RENDU — Tags d'une note (réutilisable) ===
+  function renderTagsBadges(note, opts = {}) {
+    const tagIds = notesTags[note.id] || [];
+    const tagsDeNote = tagIds.map(getTag).filter(Boolean);
+    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
+    const canRemove = opts.canRemove !== false;
+
+    return (
+      <>
+        {/* Tags cliquables */}
+        {tagsDeNote.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {tagsDeNote.map((tag) => (
+              canRemove ? (
+                <button
+                  key={tag.id}
+                  onClick={(e) => { e.stopPropagation(); retirerTagDeNote(note.id, tag.id); }}
+                  title={"Retirer \u00ab " + tag.nom + " \u00bb"}
+                  style={{
+                    background: tag.couleur + "25",
+                    color: tag.couleur,
+                    border: "1px solid " + tag.couleur,
+                    borderRadius: "2px",
+                    padding: "0.1rem 0.4rem",
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {tag.nom} &times;
+                </button>
+              ) : (
+                <span
+                  key={tag.id}
+                  style={{
+                    background: tag.couleur + "25",
+                    color: tag.couleur,
+                    border: "1px solid " + tag.couleur,
+                    borderRadius: "2px",
+                    padding: "0.1rem 0.4rem",
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {tag.nom}
+                </span>
+              )
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // === RENDU — Boutons d'action d'une note (réutilisable modale + détail) ===
+  function renderNoteActions(note) {
+    const tagIds = notesTags[note.id] || [];
+    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
+    const enEdition = editionId === note.id;
+
+    return (
+      <>
+        {/* Confirmation de suppression */}
+        {confirmSuppId === note.id ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
+              Supprimer ?
+            </span>
+            <button
+              onClick={() => supprimerNote(note.id)}
+              className="btn-brutal danger"
+              style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+            >
+              Oui
+            </button>
+            <button
+              onClick={() => setConfirmSuppId(null)}
+              className="btn-brutal ghost"
+              style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+            >
+              Non
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {enEdition ? (
+              <>
+                <button
+                  onClick={() => sauvegarderEdition(note.id)}
+                  className="btn-brutal primary"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Sauver
+                </button>
+                <button
+                  onClick={annulerEdition}
+                  className="btn-brutal ghost"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Annuler
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => commencerEdition(note)}
+                  className="btn-brutal primary"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Modifier
+                </button>
+                <button
+                  onClick={() => dupliquerNote(note)}
+                  className="btn-brutal ghost"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Dupliquer
+                </button>
+                <button
+                  onClick={() => copierNote(note)}
+                  className="btn-brutal ghost"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Copier
+                </button>
+                <button
+                  onClick={() => resumerNote(note)}
+                  disabled={!note.contenu || resumes[note.id]?.chargement}
+                  className="btn-brutal ghost disabled:opacity-30"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
+                  title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                >
+                  Résumer
+                </button>
+
+                {/* Bouton + tag */}
+                <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
+                  <button
+                    onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
+                    title="Ajouter un tag"
+                  >
+                    + Tag
+                  </button>
+                  {dropdownTagNoteId === note.id && (
+                    <div
+                      className="absolute left-0 bottom-full mb-1"
+                      style={{
+                        background: "var(--glass-bg)",
+                        backdropFilter: "blur(16px)",
+                        WebkitBackdropFilter: "blur(16px)",
+                        border: "2px solid var(--glass-border)",
+                        borderRadius: "2px",
+                        boxShadow: "4px 4px 0 var(--brutal-shadow)",
+                        padding: "0.4rem",
+                        minWidth: "120px",
+                        zIndex: 50,
+                      }}
+                    >
+                      {tagsDisponibles.length === 0 ? (
+                        <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+                          {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
+                        </p>
+                      ) : (
+                        tagsDisponibles.map((tag) => (
+                          <button
+                            key={tag.id}
+                            onClick={() => ajouterTagANote(note.id, tag.id)}
+                            className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
+                            style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
+                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                          >
+                            <span
+                              style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
+                            />
+                            {tag.nom}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
+                  className="btn-brutal ghost ml-auto"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
+                >
+                  Supprimer
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // === RENDU — Résumé IA d'une note ===
+  function renderResume(note) {
+    if (!resumes[note.id]) return null;
+    return (
+      <div
+        className="mt-4 p-2"
+        style={{
+          background: "var(--accent-glow)",
+          border: "1.5px solid var(--accent)",
+          borderRadius: "2px",
+        }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
+            Résumé IA
+          </p>
+          {!resumes[note.id].chargement && (
+            <button
+              onClick={() => masquerResume(note.id)}
+              style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
+            >
+              &times;
+            </button>
+          )}
+        </div>
+        {resumes[note.id].chargement ? (
+          <p className="text-xs mt-1 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+            <span
+              className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
+              style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+            />
+            Résumé en cours...
+          </p>
+        ) : resumes[note.id].erreur ? (
+          <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+            {resumes[note.id].erreur}
+          </p>
+        ) : (
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
+            {resumes[note.id].texte}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // === RENDU — Éditeur de couleur de note ===
+  function renderCouleurEditor() {
+    return (
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
+          Couleur de la note
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {COULEURS_NOTES.map((c) => (
+            <button
+              key={c.nom}
+              type="button"
+              onClick={() => setEditionCouleur(c.hex)}
+              title={c.nom}
+              style={{
+                width: "1.75rem",
+                height: "1.75rem",
+                borderRadius: "50%",
+                background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                border: editionCouleur === c.hex
+                  ? "3px solid var(--accent)"
+                  : "2px solid var(--input-border)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "0.7rem",
+                color: "var(--text-muted)",
+                boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                transition: "all 0.15s",
+              }}
+            >
+              {c.hex === null && "\u00d7"}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // === RENDU — Panneau détail (list view) ===
 
   function renderNoteDetail() {
     if (!noteSelectionnee) {
@@ -491,9 +834,6 @@ export default function Home() {
     }
 
     const note = noteSelectionnee;
-    const tagIds = notesTags[note.id] || [];
-    const tagsDeNote = tagIds.map(getTag).filter(Boolean);
-    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
     const enEdition = editionId === note.id;
 
     return (
@@ -538,71 +878,11 @@ export default function Home() {
                 className="input-glass"
                 style={{ resize: "vertical", minHeight: "200px" }}
               />
-              {/* Sélecteur couleur */}
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-                  Couleur de la note
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {COULEURS_NOTES.map((c) => (
-                    <button
-                      key={c.nom}
-                      type="button"
-                      onClick={() => setEditionCouleur(c.hex)}
-                      title={c.nom}
-                      style={{
-                        width: "1.75rem",
-                        height: "1.75rem",
-                        borderRadius: "50%",
-                        background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                        border: editionCouleur === c.hex
-                          ? "3px solid var(--accent)"
-                          : "2px solid var(--input-border)",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.7rem",
-                        color: "var(--text-muted)",
-                        boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      {c.hex === null && "\u00d7"}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {renderCouleurEditor()}
             </div>
           ) : (
             <>
-              {/* Tags cliquables */}
-              {tagsDeNote.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {tagsDeNote.map((tag) => (
-                    <button
-                      key={tag.id}
-                      onClick={() => retirerTagDeNote(note.id, tag.id)}
-                      title={"Retirer \u00ab " + tag.nom + " \u00bb"}
-                      style={{
-                        background: tag.couleur + "25",
-                        color: tag.couleur,
-                        border: "1px solid " + tag.couleur,
-                        borderRadius: "2px",
-                        padding: "0.1rem 0.4rem",
-                        fontSize: "0.6rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {tag.nom} &times;
-                    </button>
-                  ))}
-                </div>
-              )}
+              {renderTagsBadges(note)}
 
               {note.contenu ? (
                 <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
@@ -614,48 +894,7 @@ export default function Home() {
                 </p>
               )}
 
-              {/* Résumé IA */}
-              {resumes[note.id] && (
-                <div
-                  className="mt-4 p-2"
-                  style={{
-                    background: "var(--accent-glow)",
-                    border: "1.5px solid var(--accent)",
-                    borderRadius: "2px",
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
-                      Résumé IA
-                    </p>
-                    {!resumes[note.id].chargement && (
-                      <button
-                        onClick={() => masquerResume(note.id)}
-                        style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </div>
-                  {resumes[note.id].chargement ? (
-                    <p className="text-xs mt-1 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
-                      <span
-                        className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
-                        style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
-                      />
-                      Résumé en cours...
-                    </p>
-                  ) : resumes[note.id].erreur ? (
-                    <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
-                      {resumes[note.id].erreur}
-                    </p>
-                  ) : (
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                      {resumes[note.id].texte}
-                    </p>
-                  )}
-                </div>
-              )}
+              {renderResume(note)}
 
               <p className="text-xs font-mono mt-4" style={{ color: "var(--text-muted)" }}>
                 {new Date(note.created_at).toLocaleDateString("fr-FR", {
@@ -672,142 +911,106 @@ export default function Home() {
 
         {/* Footer actions */}
         <div className="detail-footer">
-          {/* Confirmation de suppression */}
-          {confirmSuppId === note.id ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
-                Supprimer ?
-              </span>
-              <button
-                onClick={() => supprimerNote(note.id)}
-                className="btn-brutal danger"
-                style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-              >
-                Oui
-              </button>
-              <button
-                onClick={() => setConfirmSuppId(null)}
-                className="btn-brutal ghost"
-                style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-              >
-                Non
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              {enEdition ? (
-                <>
-                  <button
-                    onClick={() => sauvegarderEdition(note.id)}
-                    className="btn-brutal primary"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Sauver
-                  </button>
-                  <button
-                    onClick={annulerEdition}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Annuler
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => commencerEdition(note)}
-                    className="btn-brutal primary"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    onClick={() => dupliquerNote(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Dupliquer
-                  </button>
-                  <button
-                    onClick={() => copierNote(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Copier
-                  </button>
-                  <button
-                    onClick={() => resumerNote(note)}
-                    disabled={!note.contenu || resumes[note.id]?.chargement}
-                    className="btn-brutal ghost disabled:opacity-30"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
-                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                  >
-                    Résumer
-                  </button>
-
-                  {/* Bouton + tag */}
-                  <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                    <button
-                      onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                      className="btn-brutal ghost"
-                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
-                      title="Ajouter un tag"
-                    >
-                      + Tag
-                    </button>
-                    {dropdownTagNoteId === note.id && (
-                      <div
-                        className="absolute left-0 bottom-full mb-1"
-                        style={{
-                          background: "var(--glass-bg)",
-                          backdropFilter: "blur(16px)",
-                          WebkitBackdropFilter: "blur(16px)",
-                          border: "2px solid var(--glass-border)",
-                          borderRadius: "2px",
-                          boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                          padding: "0.4rem",
-                          minWidth: "120px",
-                          zIndex: 50,
-                        }}
-                      >
-                        {tagsDisponibles.length === 0 ? (
-                          <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                            {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                          </p>
-                        ) : (
-                          tagsDisponibles.map((tag) => (
-                            <button
-                              key={tag.id}
-                              onClick={() => ajouterTagANote(note.id, tag.id)}
-                              className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                              style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                            >
-                              <span
-                                style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
-                              />
-                              {tag.nom}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
-                    className="btn-brutal ghost ml-auto"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
-                  >
-                    Supprimer
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          {renderNoteActions(note)}
         </div>
       </div>
+    );
+  }
+
+  // === RENDU — Modale de détail (card view) ===
+  function renderModale() {
+    if (!noteModale) return null;
+
+    const note = noteModale;
+    const enEdition = editionId === note.id;
+
+    return createPortal(
+      <div
+        className="modal-overlay"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !enEdition) {
+            fermerModale();
+          }
+        }}
+      >
+        <div
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) || "var(--modal-bg)" }}
+        >
+          {/* Header modale */}
+          <div className="modal-header">
+            {enEdition ? (
+              <input
+                type="text"
+                value={editionTitre}
+                onChange={(e) => setEditionTitre(e.target.value)}
+                className="input-glass"
+                style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
+              />
+            ) : (
+              <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                {note.titre}
+              </h2>
+            )}
+            <button
+              onClick={fermerModale}
+              className="btn-brutal ghost"
+              style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
+            >
+              &times;
+            </button>
+          </div>
+
+          {/* Body modale */}
+          <div className="modal-body">
+            {enEdition ? (
+              <div className="space-y-3">
+                <textarea
+                  value={editionContenu}
+                  onChange={(e) => setEditionContenu(e.target.value)}
+                  rows={10}
+                  className="input-glass"
+                  style={{ resize: "vertical", minHeight: "150px" }}
+                />
+                {renderCouleurEditor()}
+              </div>
+            ) : (
+              <>
+                {renderTagsBadges(note)}
+
+                {note.contenu ? (
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
+                    {note.contenu}
+                  </p>
+                ) : (
+                  <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                    Aucun contenu
+                  </p>
+                )}
+
+                {renderResume(note)}
+
+                <p className="text-xs font-mono mt-4" style={{ color: "var(--text-muted)" }}>
+                  {new Date(note.created_at).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Footer modale */}
+          <div className="modal-footer">
+            {renderNoteActions(note)}
+          </div>
+        </div>
+      </div>,
+      document.body
     );
   }
 
@@ -848,6 +1051,45 @@ export default function Home() {
           </h1>
           <div className="tag" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
             {notes.length} note{notes.length !== 1 ? "s" : ""}
+          </div>
+
+          {/* Toggle Card / List */}
+          <div className="flex items-center" style={{ border: "2px solid var(--brutal-border)", borderRadius: "2px" }}>
+            <button
+              onClick={() => { setViewMode("card"); annulerEdition(); }}
+              title="Vue en cartes"
+              style={{
+                padding: "0.3rem 0.5rem",
+                fontSize: "0.9rem",
+                lineHeight: 1,
+                background: viewMode === "card" ? "var(--accent)" : "transparent",
+                color: viewMode === "card" ? "#fff" : "var(--text-secondary)",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 700,
+                transition: "all 0.15s",
+              }}
+            >
+              &#8862;
+            </button>
+            <button
+              onClick={() => { setViewMode("list"); annulerEdition(); setNoteDetailId(null); }}
+              title="Vue en liste"
+              style={{
+                padding: "0.3rem 0.5rem",
+                fontSize: "0.9rem",
+                lineHeight: 1,
+                background: viewMode === "list" ? "var(--accent)" : "transparent",
+                color: viewMode === "list" ? "#fff" : "var(--text-secondary)",
+                border: "none",
+                borderLeft: "2px solid var(--brutal-border)",
+                cursor: "pointer",
+                fontWeight: 700,
+                transition: "all 0.15s",
+              }}
+            >
+              &#9776;
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1047,33 +1289,45 @@ export default function Home() {
         )}
       </div>
 
-      {/* === SPLIT PANEL === */}
-      <div className="split-container mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
-
-        {/* === PANNEAU GAUCHE — Liste === */}
-        <div className={"panel-left" + (mobileDetail ? " hidden-mobile" : "")}>
-          {/* Recherche */}
-          <div className="p-3 space-y-2" style={{ borderBottom: "1px solid var(--panel-border)", flexShrink: 0 }}>
-            <div className="relative">
-              <input
-                type="text"
-                value={recherche}
-                onChange={(e) => setRecherche(e.target.value)}
-                placeholder="Rechercher..."
-                className="input-glass"
-                style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
-              />
-              {recherche && (
+      {/* === CARD VIEW === */}
+      {viewMode === "card" && (
+        <div className="flex-1 overflow-y-auto mx-3 mt-2 mb-3">
+          {/* Barre recherche + filtres */}
+          <div className="glass-card p-3 space-y-2 mb-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <input
+                  type="text"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="input-glass"
+                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                />
+                {recherche && (
+                  <button
+                    onClick={() => setRecherche("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                  {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""}
+                </span>
                 <button
-                  onClick={() => setRecherche("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
+                  onClick={() => setTriAscendant(!triAscendant)}
+                  className="text-xs font-bold uppercase"
+                  style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: "0.15rem 0.3rem" }}
+                  title={triAscendant ? "Plus récentes en premier" : "Plus anciennes en premier"}
                 >
-                  &times;
+                  {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
                 </button>
-              )}
+              </div>
             </div>
-
             {/* Filtres tags */}
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
@@ -1100,127 +1354,391 @@ export default function Home() {
                 ))}
               </div>
             )}
-
-            {/* Tri + compteur */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""}
-              </span>
-              <button
-                onClick={() => setTriAscendant(!triAscendant)}
-                className="text-xs font-bold uppercase"
-                style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: "0.15rem 0.3rem" }}
-                title={triAscendant ? "Plus récentes en premier" : "Plus anciennes en premier"}
-              >
-                {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
-              </button>
-            </div>
           </div>
 
-          {/* Liste des notes */}
-          <div className="panel-left-scroll">
-            {notes.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-2xl mb-2">&#9997;</p>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                  Aucune note
-                </p>
-              </div>
-            ) : notesFiltrees.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-2xl mb-2">&#128269;</p>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                  Aucun résultat
-                </p>
-              </div>
-            ) : (
-              notesFiltrees.map((note) => {
+          {/* Grille de cards */}
+          {notes.length === 0 ? (
+            <div className="glass-card p-10 text-center">
+              <p className="text-4xl mb-3">&#9997;</p>
+              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                Aucune note
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                Crée ta première note ci-dessus
+              </p>
+            </div>
+          ) : notesFiltrees.length === 0 ? (
+            <div className="glass-card p-10 text-center">
+              <p className="text-4xl mb-3">&#128269;</p>
+              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                Aucun résultat
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {notesFiltrees.map((note) => {
                 const tagIds = notesTags[note.id] || [];
                 const tagsDeNote = tagIds.map(getTag).filter(Boolean);
-                const tagsVisibles = tagsDeNote.slice(0, 2);
-                const tagsRestants = tagsDeNote.length - 2;
+                const isDepliee = notesDepliees[note.id];
+                const contenuLong = note.contenu && note.contenu.length > 200;
 
                 return (
                   <div
                     key={note.id}
-                    className={"note-item" + (selectedNoteId === note.id ? " active" : "")}
-                    onClick={() => selectionnerNote(note.id)}
+                    className="glass-card p-4 flex flex-col gap-2 cursor-pointer"
+                    onClick={() => setNoteDetailId(note.id)}
+                    style={{ backgroundColor: getCouleurFond(note.couleur) }}
                   >
-                    {/* Indicateur couleur */}
-                    {note.couleur && (
-                      <div
-                        style={{
-                          width: "4px",
-                          flexShrink: 0,
-                          background: getCouleurFond(note.couleur),
-                          marginRight: "0.6rem",
-                          borderRadius: "2px",
-                        }}
-                      />
+                    {/* Titre */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-black text-sm" style={{ color: "var(--text-primary)", wordBreak: "break-word", flex: 1 }}>
+                        {note.titre}
+                      </h3>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); copierNote(note); }}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", flexShrink: 0 }}
+                        title="Copier la note"
+                      >
+                        Copier
+                      </button>
+                    </div>
+
+                    {/* Tags */}
+                    {tagsDeNote.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {tagsDeNote.map((tag) => (
+                          <span
+                            key={tag.id}
+                            style={{
+                              background: tag.couleur + "25",
+                              color: tag.couleur,
+                              border: "1px solid " + tag.couleur,
+                              borderRadius: "2px",
+                              padding: "0.1rem 0.4rem",
+                              fontSize: "0.6rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.04em",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {tag.nom}
+                          </span>
+                        ))}
+                      </div>
                     )}
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Titre tronqué */}
-                      <p
-                        className="text-xs font-bold"
-                        style={{
-                          color: "var(--text-primary)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
+                    {/* Contenu avec accordéon */}
+                    {note.contenu && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <p
+                          className="text-xs leading-relaxed"
+                          style={{
+                            color: "var(--text-secondary)",
+                            whiteSpace: "pre-wrap",
+                            overflow: "hidden",
+                            maxHeight: isDepliee ? "none" : "4.5em",
+                            transition: "max-height 0.3s ease",
+                          }}
+                        >
+                          {note.contenu}
+                        </p>
+                        {contenuLong && (
+                          <button
+                            onClick={() => setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] }))}
+                            className="text-xs font-bold mt-1"
+                            style={{ color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                          >
+                            {isDepliee ? "Voir moins \u25B2" : "Voir plus \u25BC"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Date */}
+                    <p className="text-xs font-mono mt-auto" style={{ color: "var(--text-muted)" }}>
+                      {new Date(note.created_at).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+
+                    {/* Boutons d'action */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-2" style={{ borderTop: "1px solid var(--panel-border)" }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => { setNoteDetailId(note.id); commencerEdition(note); }}
+                        className="btn-brutal primary"
+                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}
                       >
-                        {note.titre}
-                      </p>
-
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {/* Date courte */}
-                        <span className="text-xs font-mono" style={{ color: "var(--text-muted)", fontSize: "0.6rem", flexShrink: 0 }}>
-                          {new Date(note.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                        </span>
-
-                        {/* Tags mini */}
-                        {tagsVisibles.length > 0 && (
-                          <div className="flex gap-1" style={{ minWidth: 0, overflow: "hidden" }}>
-                            {tagsVisibles.map((tag) => (
-                              <span
-                                key={tag.id}
-                                style={{
-                                  background: tag.couleur + "25",
-                                  color: tag.couleur,
-                                  border: "1px solid " + tag.couleur,
-                                  borderRadius: "2px",
-                                  padding: "0 0.25rem",
-                                  fontSize: "0.5rem",
-                                  fontWeight: 700,
-                                  textTransform: "uppercase",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {tag.nom}
-                              </span>
-                            ))}
-                            {tagsRestants > 0 && (
-                              <span className="text-xs" style={{ color: "var(--text-muted)", fontSize: "0.5rem" }}>
-                                +{tagsRestants}
-                              </span>
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => dupliquerNote(note)}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}
+                      >
+                        Dupliquer
+                      </button>
+                      <button
+                        onClick={() => resumerNote(note)}
+                        disabled={!note.contenu || resumes[note.id]?.chargement}
+                        className="btn-brutal ghost disabled:opacity-30"
+                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--accent)" }}
+                        title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                      >
+                        Résumer
+                      </button>
+                      <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
+                        <button
+                          onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
+                          className="btn-brutal ghost"
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--accent)" }}
+                          title="Ajouter un tag"
+                        >
+                          + Tag
+                        </button>
+                        {dropdownTagNoteId === note.id && (
+                          <div
+                            className="absolute left-0 bottom-full mb-1"
+                            style={{
+                              background: "var(--glass-bg)",
+                              backdropFilter: "blur(16px)",
+                              WebkitBackdropFilter: "blur(16px)",
+                              border: "2px solid var(--glass-border)",
+                              borderRadius: "2px",
+                              boxShadow: "4px 4px 0 var(--brutal-shadow)",
+                              padding: "0.4rem",
+                              minWidth: "120px",
+                              zIndex: 50,
+                            }}
+                          >
+                            {tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).length === 0 ? (
+                              <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+                                {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
+                              </p>
+                            ) : (
+                              tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).map((tag) => (
+                                <button
+                                  key={tag.id}
+                                  onClick={() => ajouterTagANote(note.id, tag.id)}
+                                  className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
+                                  style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                                >
+                                  <span style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }} />
+                                  {tag.nom}
+                                </button>
+                              ))
                             )}
                           </div>
                         )}
                       </div>
+                      {confirmSuppId === note.id ? (
+                        <div className="flex items-center gap-1 ml-auto">
+                          <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)", fontSize: "0.6rem" }}>Supprimer ?</span>
+                          <button onClick={() => supprimerNote(note.id)} className="btn-brutal danger" style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}>Oui</button>
+                          <button onClick={() => setConfirmSuppId(null)} className="btn-brutal ghost" style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}>Non</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmSuppId(note.id)}
+                          className="btn-brutal ghost ml-auto"
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--danger)" }}
+                        >
+                          Supprimer
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
-              })
-            )}
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === LIST VIEW (Split Panel) === */}
+      {viewMode === "list" && (
+        <div className="split-container mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
+
+          {/* === PANNEAU GAUCHE — Liste === */}
+          <div className={"panel-left" + (mobileDetail ? " hidden-mobile" : "")}>
+            {/* Recherche */}
+            <div className="p-3 space-y-2" style={{ borderBottom: "1px solid var(--panel-border)", flexShrink: 0 }}>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="input-glass"
+                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                />
+                {recherche && (
+                  <button
+                    onClick={() => setRecherche("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+
+              {/* Filtres tags */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => setFiltreTagId(filtreTagId === tag.id ? null : tag.id)}
+                      style={{
+                        background: filtreTagId === tag.id ? tag.couleur : tag.couleur + "20",
+                        color: filtreTagId === tag.id ? "#fff" : tag.couleur,
+                        border: "1px solid " + tag.couleur,
+                        borderRadius: "2px",
+                        padding: "0.1rem 0.35rem",
+                        fontSize: "0.6rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {tag.nom}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Tri + compteur */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                  {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""}
+                </span>
+                <button
+                  onClick={() => setTriAscendant(!triAscendant)}
+                  className="text-xs font-bold uppercase"
+                  style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: "0.15rem 0.3rem" }}
+                  title={triAscendant ? "Plus récentes en premier" : "Plus anciennes en premier"}
+                >
+                  {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
+                </button>
+              </div>
+            </div>
+
+            {/* Liste des notes */}
+            <div className="panel-left-scroll">
+              {notes.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-2xl mb-2">&#9997;</p>
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                    Aucune note
+                  </p>
+                </div>
+              ) : notesFiltrees.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-2xl mb-2">&#128269;</p>
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                    Aucun résultat
+                  </p>
+                </div>
+              ) : (
+                notesFiltrees.map((note) => {
+                  const tagIds = notesTags[note.id] || [];
+                  const tagsDeNote = tagIds.map(getTag).filter(Boolean);
+                  const tagsVisibles = tagsDeNote.slice(0, 2);
+                  const tagsRestants = tagsDeNote.length - 2;
+
+                  return (
+                    <div
+                      key={note.id}
+                      className={"note-item" + (selectedNoteId === note.id ? " active" : "")}
+                      onClick={() => selectionnerNote(note.id)}
+                    >
+                      {/* Indicateur couleur */}
+                      {note.couleur && (
+                        <div
+                          style={{
+                            width: "4px",
+                            flexShrink: 0,
+                            background: getCouleurFond(note.couleur),
+                            marginRight: "0.6rem",
+                            borderRadius: "2px",
+                          }}
+                        />
+                      )}
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Titre tronqué */}
+                        <p
+                          className="text-xs font-bold"
+                          style={{
+                            color: "var(--text-primary)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {note.titre}
+                        </p>
+
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {/* Date courte */}
+                          <span className="text-xs font-mono" style={{ color: "var(--text-muted)", fontSize: "0.6rem", flexShrink: 0 }}>
+                            {new Date(note.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                          </span>
+
+                          {/* Tags mini */}
+                          {tagsVisibles.length > 0 && (
+                            <div className="flex gap-1" style={{ minWidth: 0, overflow: "hidden" }}>
+                              {tagsVisibles.map((tag) => (
+                                <span
+                                  key={tag.id}
+                                  style={{
+                                    background: tag.couleur + "25",
+                                    color: tag.couleur,
+                                    border: "1px solid " + tag.couleur,
+                                    borderRadius: "2px",
+                                    padding: "0 0.25rem",
+                                    fontSize: "0.5rem",
+                                    fontWeight: 700,
+                                    textTransform: "uppercase",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {tag.nom}
+                                </span>
+                              ))}
+                              {tagsRestants > 0 && (
+                                <span className="text-xs" style={{ color: "var(--text-muted)", fontSize: "0.5rem" }}>
+                                  +{tagsRestants}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* === PANNEAU DROIT — Détail === */}
+          <div className={"panel-right" + (!mobileDetail ? " hidden-mobile" : "")}>
+            {renderNoteDetail()}
           </div>
         </div>
+      )}
 
-        {/* === PANNEAU DROIT — Détail === */}
-        <div className={"panel-right" + (!mobileDetail ? " hidden-mobile" : "")}>
-          {renderNoteDetail()}
-        </div>
-      </div>
+      {/* Modale card view (portail) */}
+      {viewMode === "card" && renderModale()}
     </div>
   );
 }
