@@ -790,9 +790,9 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="space-y-2">
             {enEdition ? (
-              <>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => sauvegarderEdition(note.id)}
                   className="btn-brutal primary"
@@ -807,139 +807,144 @@ export default function Home() {
                 >
                   Annuler
                 </button>
-              </>
+              </div>
             ) : (
               <>
-                <button
-                  onClick={() => toggleEpingle(note)}
-                  className="btn-brutal ghost"
-                  style={{
-                    fontSize: "0.85rem",
-                    padding: "0.35rem 0.5rem",
-                    color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
-                    lineHeight: 1,
-                  }}
-                  title={note.epinglee ? "Désépingler" : "Épingler"}
-                >
-                  {note.epinglee ? "\uD83D\uDCCC" : "\uD83D\uDCCC"}
-                </button>
-                <button
-                  onClick={() => commencerEdition(note)}
-                  className="btn-brutal primary"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => dupliquerNote(note)}
-                  className="btn-brutal ghost"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  Dupliquer
-                </button>
-                <button
-                  onClick={() => copierNote(note)}
-                  className="btn-brutal ghost"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  Copier
-                </button>
-                {note.share_token ? (
-                  <>
+                {/* Ligne 1 — Actions principales */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => toggleEpingle(note)}
+                    className="btn-brutal ghost"
+                    style={{
+                      fontSize: "0.85rem",
+                      padding: "0.35rem 0.5rem",
+                      color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
+                      lineHeight: 1,
+                    }}
+                    title={note.epinglee ? "Désépingler" : "Épingler"}
+                  >
+                    {"\uD83D\uDCCC"}
+                  </button>
+                  <button
+                    onClick={() => commencerEdition(note)}
+                    className="btn-brutal primary"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => dupliquerNote(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Dupliquer
+                  </button>
+                  <button
+                    onClick={() => copierNote(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Copier
+                  </button>
+                  <button
+                    onClick={() => resumerNote(note)}
+                    disabled={!note.contenu || resumes[note.id]?.chargement}
+                    className="btn-brutal ghost disabled:opacity-30"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
+                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                  >
+                    Résumer
+                  </button>
+                  {/* Bouton + tag */}
+                  <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
                     <button
-                      onClick={() => copierLienPartage(note)}
+                      onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
                       className="btn-brutal ghost"
-                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }}
-                      title="Copier le lien de partage"
+                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
+                      title="Ajouter un tag"
                     >
-                      {"\uD83D\uDD17"} Copier le lien
+                      + Tag
                     </button>
+                    {dropdownTagNoteId === note.id && (
+                      <div
+                        className="absolute left-0 bottom-full mb-1"
+                        style={{
+                          background: "var(--glass-bg)",
+                          backdropFilter: "blur(16px)",
+                          WebkitBackdropFilter: "blur(16px)",
+                          border: "2px solid var(--glass-border)",
+                          borderRadius: "2px",
+                          boxShadow: "4px 4px 0 var(--brutal-shadow)",
+                          padding: "0.4rem",
+                          minWidth: "120px",
+                          zIndex: 50,
+                        }}
+                      >
+                        {tagsDisponibles.length === 0 ? (
+                          <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+                            {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
+                          </p>
+                        ) : (
+                          tagsDisponibles.map((tag) => (
+                            <button
+                              key={tag.id}
+                              onClick={() => ajouterTagANote(note.id, tag.id)}
+                              className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
+                              style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
+                              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                            >
+                              <span
+                                style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
+                              />
+                              {tag.nom}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ligne 2 — Partage + Supprimer */}
+                <div className="flex items-center gap-2">
+                  {note.share_token ? (
+                    <>
+                      <button
+                        onClick={() => copierLienPartage(note)}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }}
+                        title="Copier le lien de partage"
+                      >
+                        {"\uD83D\uDD17"} Copier le lien
+                      </button>
+                      <button
+                        onClick={() => togglePartage(note)}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
+                        title="Désactiver le partage public"
+                      >
+                        Désactiver
+                      </button>
+                    </>
+                  ) : (
                     <button
                       onClick={() => togglePartage(note)}
                       className="btn-brutal ghost"
-                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
-                      title="Désactiver le partage public"
+                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }}
+                      title="Partager cette note"
                     >
-                      Désactiver
+                      {"\uD83D\uDD17"} Partager
                     </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => togglePartage(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }}
-                    title="Partager cette note"
-                  >
-                    {"\uD83D\uDD17"} Partager
-                  </button>
-                )}
-                <button
-                  onClick={() => resumerNote(note)}
-                  disabled={!note.contenu || resumes[note.id]?.chargement}
-                  className="btn-brutal ghost disabled:opacity-30"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
-                  title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                >
-                  Résumer
-                </button>
-
-                {/* Bouton + tag */}
-                <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                  <button
-                    onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
-                    title="Ajouter un tag"
-                  >
-                    + Tag
-                  </button>
-                  {dropdownTagNoteId === note.id && (
-                    <div
-                      className="absolute left-0 bottom-full mb-1"
-                      style={{
-                        background: "var(--glass-bg)",
-                        backdropFilter: "blur(16px)",
-                        WebkitBackdropFilter: "blur(16px)",
-                        border: "2px solid var(--glass-border)",
-                        borderRadius: "2px",
-                        boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                        padding: "0.4rem",
-                        minWidth: "120px",
-                        zIndex: 50,
-                      }}
-                    >
-                      {tagsDisponibles.length === 0 ? (
-                        <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                          {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                        </p>
-                      ) : (
-                        tagsDisponibles.map((tag) => (
-                          <button
-                            key={tag.id}
-                            onClick={() => ajouterTagANote(note.id, tag.id)}
-                            className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                            style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          >
-                            <span
-                              style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
-                            />
-                            {tag.nom}
-                          </button>
-                        ))
-                      )}
-                    </div>
                   )}
+                  <button
+                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
+                    className="btn-brutal ghost ml-auto"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
+                  >
+                    Supprimer
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
-                  className="btn-brutal ghost ml-auto"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
-                >
-                  Supprimer
-                </button>
               </>
             )}
           </div>
