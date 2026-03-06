@@ -35,9 +35,9 @@ App de notes personnelles avec authentification, tags colorés, recherche instan
 ```
 webjourney/
 ├── app/
-│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, split panel, texture bruit
+│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, split panel, kanban, texture bruit
 │   ├── layout.js                # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
-│   ├── page.js                  # Page principale : card/list view toggle, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier, épinglage, Markdown
+│   ├── page.js                  # Page principale : card/list/kanban view toggle, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier, épinglage, Markdown, drag & drop kanban
 │   ├── login/
 │   │   └── page.js              # Page connexion/inscription : formulaire email + mot de passe, toggle thème
 │   ├── api/
@@ -74,6 +74,8 @@ webjourney/
 | `contenu`   | text         | Contenu de la note (optionnel)                       |
 | `couleur`   | text         | Code hex couleur de fond (ex: `#fef9c3`), `NULL` = défaut glassmorphism |
 | `created_at`| timestamptz  | Date de création, `now()` par défaut                 |
+| `kanban_colonne` | text      | Colonne kanban : `'todo'` / `'inprogress'` / `'done'`, défaut `'todo'` |
+| `kanban_ordre`   | integer   | Ordre dans la colonne kanban, défaut `0`             |
 
 RLS : `auth.uid() = user_id` pour toutes les opérations (SELECT, INSERT, UPDATE, DELETE)
 
@@ -114,7 +116,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Auth email/mot de passe (inscription + validation email + connexion + déconnexion)
 - [x] Redirection automatique si non connecté
 - [x] CRUD notes (créer, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
-- [x] **Toggle Card View / List View** (icônes grille ⊞ / liste ☰ dans le header, bouton actif visuellement distinct)
+- [x] **Toggle Card View / List View / Kanban** (icônes grille ⊞ / liste ☰ / colonnes SVG dans le header, bouton actif visuellement distinct)
 - [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (Modifier, Dupliquer, Copier, Résumer, + Tag, Supprimer)
 - [x] **List View — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (liste plein écran → note plein écran avec bouton retour ← Notes)
 - [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri chronologique toggle ↑↓
@@ -132,7 +134,8 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Support Markdown dans les notes (rendu formaté en lecture sur cards, modale et list view via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, textarea brut en édition, aide visuelle dans le formulaire)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
-- [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2=card/list view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
+- [x] **Kanban View** — 3 colonnes fixes (À faire / En cours / Terminé), drag & drop HTML5 natif, cards compactes (titre + 2 tags + icône épinglée), clic → modale, optimistic update avec rollback, colonnes scrollables, responsive (empilé sur mobile), champs `kanban_colonne` / `kanban_ordre` en base
+- [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement

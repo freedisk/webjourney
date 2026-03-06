@@ -33,6 +33,13 @@ const COULEURS_TAGS = [
   { nom: "Cyan", hex: "#06b6d4" },
 ];
 
+// Colonnes Kanban
+const KANBAN_COLONNES = [
+  { id: "todo", nom: "\u00c0 faire", couleur: "var(--text-muted)" },
+  { id: "inprogress", nom: "En cours", couleur: "#f59e0b" },
+  { id: "done", nom: "Termin\u00e9", couleur: "var(--success)" },
+];
+
 export default function Home() {
   const router = useRouter();
   const [utilisateur, setUtilisateur] = useState(null);
@@ -90,6 +97,10 @@ export default function Home() {
 
   // --- Animation pulse épinglage ---
   const [pulseNoteId, setPulseNoteId] = useState(null);
+
+  // --- Kanban drag & drop ---
+  const [dragNoteId, setDragNoteId] = useState(null);
+  const [dragOverColonne, setDragOverColonne] = useState(null);
 
   // --- Résumé IA ---
   const [resumes, setResumes] = useState({});
@@ -236,6 +247,14 @@ export default function Home() {
       // 2 → List View
       if (e.key === "2") {
         setViewMode("list");
+        annulerEdition();
+        setNoteDetailId(null);
+        return;
+      }
+
+      // 3 → Kanban View
+      if (e.key === "3") {
+        setViewMode("kanban");
         annulerEdition();
         setNoteDetailId(null);
         return;
@@ -692,6 +711,37 @@ export default function Home() {
     } catch {
       setErreur("Impossible de copier le lien.");
     }
+  }
+
+  // Déplacer une note dans le kanban (colonne + ordre)
+  async function deplacerNoteKanban(noteId, nouvelleColonne) {
+    const noteAvant = notes.find((n) => n.id === noteId);
+    if (!noteAvant) return;
+
+    const ancienneColonne = noteAvant.kanban_colonne || "todo";
+    const ancienOrdre = noteAvant.kanban_ordre || 0;
+    if (ancienneColonne === nouvelleColonne) return;
+
+    // Optimistic update
+    setNotes((prev) => prev.map((n) =>
+      n.id === noteId ? { ...n, kanban_colonne: nouvelleColonne, kanban_ordre: 0 } : n
+    ));
+
+    const { error } = await supabase
+      .from("notes")
+      .update({ kanban_colonne: nouvelleColonne, kanban_ordre: 0 })
+      .eq("id", noteId);
+
+    if (error) {
+      // Rollback
+      setNotes((prev) => prev.map((n) =>
+        n.id === noteId ? { ...n, kanban_colonne: ancienneColonne, kanban_ordre: ancienOrdre } : n
+      ));
+      setErreur("Erreur lors du d\u00e9placement : " + error.message);
+      return;
+    }
+
+    setSucces("Note d\u00e9plac\u00e9e !");
   }
 
   // Déconnexion
@@ -1507,6 +1557,28 @@ export default function Home() {
             >
               &#9776;
             </button>
+            <button
+              onClick={() => { setViewMode("kanban"); annulerEdition(); setNoteDetailId(null); }}
+              title="Vue Kanban"
+              style={{
+                padding: "0.3rem 0.5rem",
+                fontSize: "0.9rem",
+                lineHeight: 1,
+                background: viewMode === "kanban" ? "var(--accent)" : "transparent",
+                color: viewMode === "kanban" ? "#fff" : "var(--text-secondary)",
+                border: "none",
+                borderLeft: "2px solid var(--brutal-border)",
+                cursor: "pointer",
+                fontWeight: 700,
+                transition: "all 0.15s",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ display: "block" }}>
+                <rect x="0" y="0" width="3.5" height="14" rx="0.5" fill="currentColor"/>
+                <rect x="5.25" y="0" width="3.5" height="10" rx="0.5" fill="currentColor"/>
+                <rect x="10.5" y="0" width="3.5" height="12" rx="0.5" fill="currentColor"/>
+              </svg>
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -2049,6 +2121,176 @@ export default function Home() {
         </div>
       )}
 
+      {/* === KANBAN VIEW === */}
+      {viewMode === "kanban" && (
+        <div className="flex-1 overflow-hidden mx-3 mt-2 mb-3 fade-in flex flex-col">
+          {/* Barre recherche + filtres */}
+          <div className="glass-card p-3 space-y-2 mb-3" style={{ flexShrink: 0 }}>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <input
+                  ref={rechercheRef}
+                  type="text"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="input-glass"
+                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                />
+                {recherche && (
+                  <button
+                    onClick={() => setRecherche("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setFiltreTagId(filtreTagId === tag.id ? null : tag.id)}
+                    style={{
+                      background: filtreTagId === tag.id ? tag.couleur : tag.couleur + "20",
+                      color: filtreTagId === tag.id ? "#fff" : tag.couleur,
+                      border: "1px solid " + tag.couleur,
+                      borderRadius: "2px",
+                      padding: "0.1rem 0.35rem",
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {tag.nom}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Colonnes Kanban */}
+          <div className="kanban-container">
+            {KANBAN_COLONNES.map((col) => {
+              const notesColonne = notesFiltrees
+                .filter((n) => (n.kanban_colonne || "todo") === col.id)
+                .sort((a, b) => {
+                  if (a.epinglee && !b.epinglee) return -1;
+                  if (!a.epinglee && b.epinglee) return 1;
+                  return (a.kanban_ordre || 0) - (b.kanban_ordre || 0);
+                });
+
+              return (
+                <div
+                  key={col.id}
+                  className={"kanban-colonne" + (dragOverColonne === col.id ? " kanban-colonne-dragover" : "")}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                  onDragEnter={(e) => { e.preventDefault(); setDragOverColonne(col.id); }}
+                  onDragLeave={(e) => {
+                    // Ne pas retirer si on entre dans un enfant
+                    if (e.currentTarget.contains(e.relatedTarget)) return;
+                    setDragOverColonne(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverColonne(null);
+                    const noteId = e.dataTransfer.getData("text/plain");
+                    if (noteId) deplacerNoteKanban(noteId, col.id);
+                  }}
+                  style={{
+                    borderColor: dragOverColonne === col.id ? col.couleur : undefined,
+                  }}
+                >
+                  {/* Header colonne */}
+                  <div className="kanban-colonne-header">
+                    <span
+                      className="kanban-colonne-dot"
+                      style={{ background: col.couleur }}
+                    />
+                    <span className="kanban-colonne-nom">{col.nom}</span>
+                    <span className="kanban-colonne-compteur">{notesColonne.length}</span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="kanban-colonne-scroll">
+                    {notesColonne.length === 0 ? (
+                      <div className="kanban-vide">
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>
+                          Aucune note
+                        </p>
+                      </div>
+                    ) : (
+                      notesColonne.map((note) => {
+                        const tagIds = notesTags[note.id] || [];
+                        const tagsDeNote = tagIds.map(getTag).filter(Boolean).slice(0, 2);
+
+                        return (
+                          <div
+                            key={note.id}
+                            className={"kanban-card" + (dragNoteId === note.id ? " kanban-card-dragging" : "")}
+                            draggable="true"
+                            onDragStart={(e) => {
+                              setDragNoteId(note.id);
+                              e.dataTransfer.setData("text/plain", note.id);
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            onDragEnd={() => {
+                              setDragNoteId(null);
+                              setDragOverColonne(null);
+                            }}
+                            onClick={() => setNoteDetailId(note.id)}
+                            style={{
+                              backgroundColor: getCouleurFond(note.couleur),
+                              borderColor: note.epinglee ? "var(--accent)" : undefined,
+                            }}
+                          >
+                            <p className="kanban-card-titre">
+                              {note.epinglee && <span style={{ marginRight: "0.25rem" }}>{"\uD83D\uDCCC"}</span>}
+                              {note.titre}
+                            </p>
+                            {tagsDeNote.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {tagsDeNote.map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    style={{
+                                      background: tag.couleur + "25",
+                                      color: tag.couleur,
+                                      border: "1px solid " + tag.couleur,
+                                      borderRadius: "2px",
+                                      padding: "0 0.3rem",
+                                      fontSize: "0.55rem",
+                                      fontWeight: 700,
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.04em",
+                                    }}
+                                  >
+                                    {tag.nom}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* === LIST VIEW (Split Panel) === */}
       {viewMode === "list" && (
         <div className="split-container fade-in mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
@@ -2228,8 +2470,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modale card view (portail) */}
-      {viewMode === "card" && renderModale()}
+      {/* Modale card/kanban view (portail) */}
+      {(viewMode === "card" || viewMode === "kanban") && renderModale()}
 
       {/* Drawer statistiques */}
       <StatsDrawer
@@ -2300,7 +2542,7 @@ export default function Home() {
                   {[
                     ["N", "Nouvelle note"],
                     ["/", "Rechercher"],
-                    ["1 / 2", "Card / List view"],
+                    ["1 / 2 / 3", "Card / List / Kanban"],
                     ["\u00c9chap", "Fermer / Annuler"],
                     ["\u2191 \u2193", "Naviguer (liste)"],
                     ["Entr\u00e9e", "S\u00e9lectionner"],
