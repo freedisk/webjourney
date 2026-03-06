@@ -2,6 +2,7 @@
 
 // Page principale — Notes avec tags colorés, recherche, design brutalism + glassmorphism
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -53,6 +54,12 @@ export default function Home() {
   const dropdownRef = useRef(null);
   // Filtre par tag actif
   const [filtreTagId, setFiltreTagId] = useState(null);
+
+  // --- Modale de détail ---
+  const [noteDetailId, setNoteDetailId] = useState(null);
+
+  // --- Accordéon cards (notes dépliées) ---
+  const [notesDepliees, setNotesDepliees] = useState({});
 
   // --- Résumé IA ---
   // Map : noteId → { texte, chargement, erreur }
@@ -109,6 +116,23 @@ export default function Home() {
     const timer = setTimeout(() => setSucces(null), 3000);
     return () => clearTimeout(timer);
   }, [succes]);
+
+  // Verrouiller le scroll et fermer au Escape quand la modale est ouverte
+  useEffect(() => {
+    if (noteDetailId) {
+      document.body.style.overflow = "hidden";
+      function handleEscape(e) {
+        if (e.key === "Escape") fermerModale();
+      }
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.body.style.overflow = "";
+        document.removeEventListener("keydown", handleEscape);
+      };
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [noteDetailId, editionId, editionTitre, editionContenu]);
 
   // Fermer le dropdown de tags au clic extérieur
   useEffect(() => {
@@ -257,6 +281,22 @@ export default function Home() {
     setEditionContenu("");
   }
 
+  // Fermer la modale avec protection contre la perte de modifications
+  function fermerModale() {
+    if (editionId && noteDetailId) {
+      const note = notes.find((n) => n.id === noteDetailId);
+      const titreModifie = note && editionTitre !== note.titre;
+      const contenuModifie = note && editionContenu !== (note.contenu || "");
+      if (titreModifie || contenuModifie) {
+        if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
+          return;
+        }
+      }
+      annulerEdition();
+    }
+    setNoteDetailId(null);
+  }
+
   async function sauvegarderEdition(noteId) {
     setErreur(null);
     if (!editionTitre.trim()) return;
@@ -390,6 +430,17 @@ export default function Home() {
       delete copie[noteId];
       return copie;
     });
+  }
+
+  // Copier une note dans le presse-papier
+  async function copierNote(note) {
+    const texte = note.contenu ? note.titre + "\n\n" + note.contenu : note.titre;
+    try {
+      await navigator.clipboard.writeText(texte);
+      setSucces("Note copiée !");
+    } catch {
+      setErreur("Impossible de copier la note.");
+    }
   }
 
   // Déconnexion
@@ -697,10 +748,15 @@ export default function Home() {
             const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
 
             return (
-              <div key={note.id} className="glass-card p-5 flex flex-col justify-between">
+              <div
+                key={note.id}
+                className="glass-card p-5 flex flex-col justify-between"
+                onClick={() => { if (editionId !== note.id) setNoteDetailId(note.id); }}
+                style={{ cursor: editionId === note.id ? "default" : "pointer" }}
+              >
                 {/* Mode édition inline */}
                 {editionId === note.id ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="text"
                       value={editionTitre}
@@ -710,10 +766,17 @@ export default function Home() {
                     />
                     <textarea
                       value={editionContenu}
-                      onChange={(e) => setEditionContenu(e.target.value)}
+                      onChange={(e) => {
+                        setEditionContenu(e.target.value);
+                        e.target.style.height = "auto";
+                        e.target.style.height = e.target.scrollHeight + "px";
+                      }}
+                      ref={(el) => {
+                        if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+                      }}
                       rows={3}
                       className="input-glass"
-                      style={{ resize: "none" }}
+                      style={{ resize: "none", overflow: "hidden" }}
                     />
                     <div className="flex gap-2">
                       <button
@@ -742,7 +805,7 @@ export default function Home() {
 
                       {/* Badges de tags assignés */}
                       {tagsDeNote.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
+                        <div className="flex flex-wrap gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
                           {tagsDeNote.map((tag) => (
                             <button
                               key={tag.id}
@@ -768,21 +831,43 @@ export default function Home() {
                         </div>
                       )}
 
-                      {note.contenu && (
-                        <p
-                          className="text-sm leading-relaxed"
-                          style={{
-                            color: "var(--text-secondary)",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 4,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {note.contenu}
-                        </p>
-                      )}
+                      {note.contenu && (() => {
+                        const estDepliee = notesDepliees[note.id];
+                        const lignes = note.contenu.split("\n").length;
+                        const estLongue = lignes > 5 || note.contenu.length > 300;
+
+                        return (
+                          <>
+                            <p
+                              className="text-sm leading-relaxed"
+                              style={{
+                                color: "var(--text-secondary)",
+                                whiteSpace: "pre-wrap",
+                                ...(!estDepliee && estLongue ? {
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 5,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                } : {}),
+                              }}
+                            >
+                              {note.contenu}
+                            </p>
+                            {estLongue && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] }));
+                                }}
+                                className="text-xs font-bold uppercase tracking-wider mt-1"
+                                style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
+                              >
+                                {estDepliee ? "▲ Réduire" : "▼ Voir plus"}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                       {/* Résumé IA (affiché temporairement) */}
                       {resumes[note.id] && (
                         <div
@@ -842,6 +927,7 @@ export default function Home() {
                       <div
                         className="flex items-center gap-2 pt-3"
                         style={{ borderTop: "2px solid var(--danger)" }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
                           Supprimer ?
@@ -866,6 +952,7 @@ export default function Home() {
                       <div
                         className="flex items-center gap-1.5 pt-3"
                         style={{ borderTop: "1.5px solid var(--glass-border)" }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => commencerEdition(note)}
@@ -880,6 +967,13 @@ export default function Home() {
                           style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
                         >
                           Dupliquer
+                        </button>
+                        <button
+                          onClick={() => copierNote(note)}
+                          className="btn-brutal ghost"
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
+                        >
+                          Copier
                         </button>
 
                         {/* Bouton Résumer IA — désactivé si pas de contenu */}
@@ -964,6 +1058,174 @@ export default function Home() {
           })}
         </div>
       )}
+
+      {/* === MODALE DE DÉTAIL (portail vers body) === */}
+      {noteDetailId && (() => {
+        const note = notes.find((n) => n.id === noteDetailId);
+        if (!note) return null;
+        const tagIds = notesTags[note.id] || [];
+        const tagsDeNote = tagIds.map(getTag).filter(Boolean);
+
+        const enEdition = editionId === note.id;
+
+        return createPortal(
+          <div
+            className="modal-overlay"
+            onClick={fermerModale}
+          >
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="modal-header">
+                {enEdition ? (
+                  <input
+                    type="text"
+                    value={editionTitre}
+                    onChange={(e) => setEditionTitre(e.target.value)}
+                    className="input-glass"
+                    style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
+                  />
+                ) : (
+                  <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                    {note.titre}
+                  </h2>
+                )}
+                <button
+                  onClick={fermerModale}
+                  className="btn-brutal ghost"
+                  style={{ fontSize: "1.2rem", padding: "0.2rem 0.5rem", lineHeight: 1, flexShrink: 0 }}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Body scrollable */}
+              <div className="modal-body">
+                {enEdition ? (
+                  <textarea
+                    value={editionContenu}
+                    onChange={(e) => setEditionContenu(e.target.value)}
+                    rows={10}
+                    className="input-glass"
+                    style={{ resize: "vertical", minHeight: "150px" }}
+                  />
+                ) : note.contenu ? (
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
+                    {note.contenu}
+                  </p>
+                ) : (
+                  <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                    Aucun contenu
+                  </p>
+                )}
+
+                {/* Résumé IA si présent (lecture seule) */}
+                {!enEdition && resumes[note.id] && resumes[note.id].texte && (
+                  <div
+                    className="mt-4 p-2"
+                    style={{
+                      background: "var(--accent-glow)",
+                      border: "1.5px solid var(--accent)",
+                      borderRadius: "2px",
+                    }}
+                  >
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
+                      Résumé IA
+                    </p>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                      {resumes[note.id].texte}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="modal-footer">
+                {!enEdition && (
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {/* Tags */}
+                    {tagsDeNote.map((tag) => (
+                      <span
+                        key={tag.id}
+                        style={{
+                          background: tag.couleur + "25",
+                          color: tag.couleur,
+                          border: "1px solid " + tag.couleur,
+                          borderRadius: "2px",
+                          padding: "0.1rem 0.4rem",
+                          fontSize: "0.6rem",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {tag.nom}
+                      </span>
+                    ))}
+                    {/* Date */}
+                    <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                      {new Date(note.created_at).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {enEdition ? (
+                    <>
+                      <button
+                        onClick={async () => { await sauvegarderEdition(note.id); }}
+                        className="btn-brutal primary"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                      >
+                        Sauver
+                      </button>
+                      <button
+                        onClick={annulerEdition}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                      >
+                        Annuler
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => commencerEdition(note)}
+                        className="btn-brutal primary"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => copierNote(note)}
+                        className="btn-brutal ghost"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                      >
+                        Copier
+                      </button>
+                      <button
+                        onClick={() => { setNoteDetailId(null); setConfirmSuppId(note.id); }}
+                        className="btn-brutal danger"
+                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                      >
+                        Supprimer
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }

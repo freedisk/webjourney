@@ -35,7 +35,7 @@ App de notes personnelles avec authentification, tags colorés, recherche instan
 ```
 webjourney/
 ├── app/
-│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, texture bruit
+│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, modal, texture bruit
 │   ├── layout.js                # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
 │   ├── page.js                  # Page principale : CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA
 │   ├── login/
@@ -113,6 +113,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Tags colorés (CRUD, 8 couleurs prédéfinies, panneau de gestion)
 - [x] Assignation de tags aux notes (bouton +, dropdown, badges cliquables pour retirer)
 - [x] Filtrage par tags (combinable avec la recherche texte)
+- [x] Modale de détail au clic sur une note (contenu complet, tags, date, actions modifier/supprimer, fermeture Escape/overlay)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
@@ -138,6 +139,7 @@ Style **brutalism + glassmorphism** avec mode sombre/clair :
 - `.btn-brutal` : boutons uppercase bold 700, ombre décalée 3px, animations press/hover (variantes : `primary`, `danger`, `ghost`)
 - `.input-glass` : inputs vitreux avec glow accent au focus (`box-shadow` accent-glow)
 - `.tag` : badges typographiques uppercase, bordure fine
+- `.modal-overlay` + `.modal-content` : modale centrée avec overlay sombre, animations fade-in + slide-up, body scrollable, responsive
 - Thème : classe `.dark` sur `<html>`, persisté dans `localStorage`, script inline anti-flash
 - Formes floues colorées (accent + danger) en arrière-plan pour la profondeur
 - Texture de bruit SVG en overlay pour le côté brutaliste
