@@ -35,9 +35,9 @@ App de notes personnelles avec authentification, tags colorés, recherche instan
 ```
 webjourney/
 ├── app/
-│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, modal, texture bruit
+│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, split panel, texture bruit
 │   ├── layout.js                # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
-│   ├── page.js                  # Page principale : CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, modale détail, copier, accordéon
+│   ├── page.js                  # Page principale : list view split panel, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier
 │   ├── login/
 │   │   └── page.js              # Page connexion/inscription : formulaire email + mot de passe, toggle thème
 │   ├── api/
@@ -108,18 +108,17 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Auth email/mot de passe (inscription + validation email + connexion + déconnexion)
 - [x] Redirection automatique si non connecté
 - [x] CRUD notes (créer, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
-- [x] Affichage en cards responsive (grille adaptative 1-2 colonnes)
-- [x] Mode accordéon sur les cards (contenu tronqué à 5 lignes si dense, bouton voir plus/réduire)
+- [x] **List view — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (deux écrans empilés avec bouton retour)
+- [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri ascendant/descendant
+- [x] Panneau droit : NoteDetail permanent (contenu complet, tags cliquables, résumé IA, actions Modifier/Dupliquer/Copier/Résumer/Supprimer/+Tag)
+- [x] Protection perte de modifications : confirmation lors du changement de note ou retour liste si édition en cours
 - [x] Design brutalism + glassmorphism avec mode sombre/clair (toggle + persistance localStorage)
 - [x] Recherche instantanée (filtre temps réel sur titre + contenu, insensible aux accents et à la casse)
 - [x] Tags colorés (CRUD, 8 couleurs prédéfinies, panneau de gestion)
-- [x] Assignation de tags aux notes (bouton +, dropdown, badges cliquables pour retirer)
-- [x] Filtrage par tags (combinable avec la recherche texte)
-- [x] Modale de détail au clic sur une note (React Portal vers body, overlay sombre, fermeture Escape/overlay/×)
-- [x] Édition inline dans la modale (titre + contenu, protection perte de modifications avec confirmation)
-- [x] Copier une note dans le presse-papier (bouton sur card + modale, copie titre + contenu)
-- [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches dans le formulaire, appliquée sur la card et dans la modale, champ `couleur` TEXT nullable en base)
-- [x] Textarea auto-extensible en mode édition card (auto-resize via scrollHeight)
+- [x] Assignation de tags aux notes (bouton + Tag, dropdown, badges cliquables pour retirer)
+- [x] Filtrage par tags (combinable avec la recherche texte, intégré au panneau gauche)
+- [x] Copier une note dans le presse-papier (bouton dans le panneau détail, copie titre + contenu)
+- [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches, appliquée sur le détail et indicateur dans la liste, champ `couleur` TEXT nullable en base)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
@@ -145,15 +144,17 @@ Style **brutalism + glassmorphism** avec mode sombre/clair :
 - `.btn-brutal` : boutons uppercase bold 700, ombre décalée 3px, animations press/hover (variantes : `primary`, `danger`, `ghost`)
 - `.input-glass` : inputs vitreux avec glow accent au focus (`box-shadow` accent-glow)
 - `.tag` : badges typographiques uppercase, bordure fine
-- `.modal-overlay` + `.modal-content` : modale centrée via React Portal (`createPortal` vers `document.body`), overlay sombre `backdrop-blur(6px)`, animations fade-in + slide-up avec scale, body scrollable, responsive
-- Variables modale dédiées : `--modal-bg` (fond quasi-opaque), `--modal-border`, `--modal-separator` (contrastes optimisés clair/sombre)
+- `.split-container` + `.panel-left` + `.panel-right` : layout split panel flex, panneau gauche 300px fixe, panneau droit flex-1, scrolls indépendants
+- `.note-item` : items de liste avec hover, état actif (bordure accent), indicateur couleur
+- `.detail-header` + `.detail-body` + `.detail-footer` : structure du panneau détail
+- Variables panel dédiées : `--panel-bg`, `--panel-border`, `--panel-hover`, `--panel-active`
+- Responsive mobile (`< 768px`) : panneaux empilés, classes `.hidden-mobile` pour toggle liste/détail
 - Thème : classe `.dark` sur `<html>`, persisté dans `localStorage`, script inline anti-flash
 - Formes floues colorées (accent + danger) en arrière-plan pour la profondeur
 - Texture de bruit SVG en overlay pour le côté brutaliste
 
 ## Fonctionnalités à venir
 
-- [ ] Tri des notes (date, titre)
 - [ ] Éditeur de contenu enrichi (Markdown)
 - [ ] Partage de notes
 - [ ] Export des notes (PDF, JSON)

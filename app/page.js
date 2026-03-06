@@ -1,8 +1,7 @@
 "use client";
 
-// Page principale — Notes avec tags colorés, recherche, design brutalism + glassmorphism
+// Page principale — List view split panel, tags colorés, recherche, design brutalism + glassmorphism
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -57,27 +56,21 @@ export default function Home() {
 
   // --- Tags ---
   const [tags, setTags] = useState([]);
-  // Map : noteId → [tagId, tagId, ...]
   const [notesTags, setNotesTags] = useState({});
-  // Panneau de gestion des tags
   const [panneauTagsOuvert, setPanneauTagsOuvert] = useState(false);
   const [nouveauTagNom, setNouveauTagNom] = useState("");
   const [nouveauTagCouleur, setNouveauTagCouleur] = useState(COULEURS_TAGS[0].hex);
   const [confirmSuppTagId, setConfirmSuppTagId] = useState(null);
-  // Dropdown d'ajout de tag sur une note
   const [dropdownTagNoteId, setDropdownTagNoteId] = useState(null);
   const dropdownRef = useRef(null);
-  // Filtre par tag actif
   const [filtreTagId, setFiltreTagId] = useState(null);
 
-  // --- Modale de détail ---
-  const [noteDetailId, setNoteDetailId] = useState(null);
-
-  // --- Accordéon cards (notes dépliées) ---
-  const [notesDepliees, setNotesDepliees] = useState({});
+  // --- Split panel ---
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
+  const [triAscendant, setTriAscendant] = useState(false);
+  const [mobileDetail, setMobileDetail] = useState(false);
 
   // --- Résumé IA ---
-  // Map : noteId → { texte, chargement, erreur }
   const [resumes, setResumes] = useState({});
 
   // Obtenir la couleur de fond d'une note selon le thème actuel
@@ -93,21 +86,28 @@ export default function Home() {
     return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   }
 
-  // Filtrer les notes : recherche textuelle + filtre par tag
-  const notesFiltrees = notes.filter((note) => {
-    // Filtre textuel
-    if (recherche.trim()) {
-      const terme = normaliser(recherche);
-      const matchTexte = normaliser(note.titre).includes(terme) || normaliser(note.contenu).includes(terme);
-      if (!matchTexte) return false;
-    }
-    // Filtre par tag
-    if (filtreTagId) {
-      const tagsDeLaNote = notesTags[note.id] || [];
-      if (!tagsDeLaNote.includes(filtreTagId)) return false;
-    }
-    return true;
-  });
+  // Filtrer et trier les notes
+  const notesFiltrees = notes
+    .filter((note) => {
+      if (recherche.trim()) {
+        const terme = normaliser(recherche);
+        const matchTexte = normaliser(note.titre).includes(terme) || normaliser(note.contenu).includes(terme);
+        if (!matchTexte) return false;
+      }
+      if (filtreTagId) {
+        const tagsDeLaNote = notesTags[note.id] || [];
+        if (!tagsDeLaNote.includes(filtreTagId)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return triAscendant ? dateA - dateB : dateB - dateA;
+    });
+
+  // Note actuellement sélectionnée
+  const noteSelectionnee = selectedNoteId ? notes.find((n) => n.id === selectedNoteId) : null;
 
   // Vérifier la session et charger les données au montage
   useEffect(() => {
@@ -139,23 +139,6 @@ export default function Home() {
     const timer = setTimeout(() => setSucces(null), 3000);
     return () => clearTimeout(timer);
   }, [succes]);
-
-  // Verrouiller le scroll et fermer au Escape quand la modale est ouverte
-  useEffect(() => {
-    if (noteDetailId) {
-      document.body.style.overflow = "hidden";
-      function handleEscape(e) {
-        if (e.key === "Escape") fermerModale();
-      }
-      document.addEventListener("keydown", handleEscape);
-      return () => {
-        document.body.style.overflow = "";
-        document.removeEventListener("keydown", handleEscape);
-      };
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [noteDetailId, editionId, editionTitre, editionContenu]);
 
   // Fermer le dropdown de tags au clic extérieur
   useEffect(() => {
@@ -192,7 +175,6 @@ export default function Home() {
     setNotes(data);
   }
 
-  // Charger tous les tags de l'utilisateur
   async function chargerTags(userId) {
     const { data, error } = await supabase
       .from("tags")
@@ -207,7 +189,6 @@ export default function Home() {
     setTags(data);
   }
 
-  // Charger toutes les associations notes_tags
   async function chargerNotesTags() {
     const { data, error } = await supabase
       .from("notes_tags")
@@ -218,13 +199,49 @@ export default function Home() {
       return;
     }
 
-    // Construire la map noteId → [tagId, ...]
     const map = {};
     for (const row of data) {
       if (!map[row.note_id]) map[row.note_id] = [];
       map[row.note_id].push(row.tag_id);
     }
     setNotesTags(map);
+  }
+
+  // === SÉLECTION DE NOTE (avec protection édition) ===
+
+  function selectionnerNote(noteId) {
+    if (editionId) {
+      const note = notes.find((n) => n.id === selectedNoteId);
+      const titreModifie = note && editionTitre !== note.titre;
+      const contenuModifie = note && editionContenu !== (note.contenu || "");
+      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
+      if (titreModifie || contenuModifie || couleurModifiee) {
+        if (!window.confirm("Tu as des modifications non sauvegardées. Changer de note quand même ?")) {
+          return;
+        }
+      }
+      annulerEdition();
+    }
+    setSelectedNoteId(noteId);
+    setConfirmSuppId(null);
+    setMobileDetail(true);
+  }
+
+  // Retour à la liste sur mobile
+  function retourListe() {
+    if (editionId) {
+      const note = notes.find((n) => n.id === selectedNoteId);
+      const titreModifie = note && editionTitre !== note.titre;
+      const contenuModifie = note && editionContenu !== (note.contenu || "");
+      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
+      if (titreModifie || contenuModifie || couleurModifiee) {
+        if (!window.confirm("Tu as des modifications non sauvegardées. Revenir quand même ?")) {
+          return;
+        }
+      }
+      annulerEdition();
+    }
+    setMobileDetail(false);
   }
 
   // === CRUD NOTES ===
@@ -263,6 +280,11 @@ export default function Home() {
     }
 
     setConfirmSuppId(null);
+    // Désélectionner si c'est la note active
+    if (selectedNoteId === noteId) {
+      setSelectedNoteId(null);
+      setMobileDetail(false);
+    }
     setSucces("Note supprimée.");
     await Promise.all([chargerNotes(utilisateur.id), chargerNotesTags()]);
   }
@@ -281,7 +303,6 @@ export default function Home() {
       return;
     }
 
-    // Dupliquer aussi les tags de la note
     const tagsOriginaux = notesTags[note.id] || [];
     if (tagsOriginaux.length > 0 && data && data[0]) {
       await supabase.from("notes_tags").insert(
@@ -309,23 +330,6 @@ export default function Home() {
     setEditionCouleur(null);
   }
 
-  // Fermer la modale avec protection contre la perte de modifications
-  function fermerModale() {
-    if (editionId && noteDetailId) {
-      const note = notes.find((n) => n.id === noteDetailId);
-      const titreModifie = note && editionTitre !== note.titre;
-      const contenuModifie = note && editionContenu !== (note.contenu || "");
-      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee) {
-        if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
-          return;
-        }
-      }
-      annulerEdition();
-    }
-    setNoteDetailId(null);
-  }
-
   async function sauvegarderEdition(noteId) {
     setErreur(null);
     if (!editionTitre.trim()) return;
@@ -347,7 +351,6 @@ export default function Home() {
 
   // === CRUD TAGS ===
 
-  // Créer un nouveau tag
   async function creerTag(e) {
     e.preventDefault();
     setErreur(null);
@@ -370,7 +373,6 @@ export default function Home() {
     await chargerTags(utilisateur.id);
   }
 
-  // Supprimer un tag (et ses associations)
   async function supprimerTag(tagId) {
     setErreur(null);
     const { error } = await supabase.from("tags").delete().eq("id", tagId);
@@ -381,19 +383,16 @@ export default function Home() {
     }
 
     setConfirmSuppTagId(null);
-    // Désactiver le filtre si on supprime le tag filtré
     if (filtreTagId === tagId) setFiltreTagId(null);
     setSucces("Tag supprimé.");
     await Promise.all([chargerTags(utilisateur.id), chargerNotesTags()]);
   }
 
-  // Assigner un tag à une note
   async function ajouterTagANote(noteId, tagId) {
     setErreur(null);
     const { error } = await supabase.from("notes_tags").insert({ note_id: noteId, tag_id: tagId });
 
     if (error) {
-      // Ignorer les doublons
       if (error.code === "23505") return;
       setErreur("Erreur : " + error.message);
       return;
@@ -403,7 +402,6 @@ export default function Home() {
     await chargerNotesTags();
   }
 
-  // Retirer un tag d'une note
   async function retirerTagDeNote(noteId, tagId) {
     setErreur(null);
     const { error } = await supabase
@@ -420,16 +418,13 @@ export default function Home() {
     await chargerNotesTags();
   }
 
-  // Trouver un tag par son ID
   function getTag(tagId) {
     return tags.find((t) => t.id === tagId);
   }
 
   // === RÉSUMÉ IA ===
 
-  // Demander un résumé pour une note via l'API route
   async function resumerNote(note) {
-    // Marquer le chargement pour cette note
     setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: true, erreur: null } }));
 
     try {
@@ -452,7 +447,6 @@ export default function Home() {
     }
   }
 
-  // Masquer le résumé d'une note
   function masquerResume(noteId) {
     setResumes((prev) => {
       const copie = { ...prev };
@@ -461,7 +455,6 @@ export default function Home() {
     });
   }
 
-  // Copier une note dans le presse-papier
   async function copierNote(note) {
     const texte = note.contenu ? note.titre + "\n\n" + note.contenu : note.titre;
     try {
@@ -476,6 +469,346 @@ export default function Home() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
+  }
+
+  // === RENDU — Composant NoteDetail (panneau droit / mobile détail) ===
+
+  function renderNoteDetail() {
+    if (!noteSelectionnee) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center">
+            <p className="text-4xl mb-4">&#128221;</p>
+            <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+              Sélectionne une note
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              Clique sur une note dans la liste
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const note = noteSelectionnee;
+    const tagIds = notesTags[note.id] || [];
+    const tagsDeNote = tagIds.map(getTag).filter(Boolean);
+    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
+    const enEdition = editionId === note.id;
+
+    return (
+      <div
+        className="flex flex-col h-full"
+        style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) }}
+      >
+        {/* Header détail */}
+        <div className="detail-header">
+          {/* Bouton retour mobile */}
+          <button
+            onClick={retourListe}
+            className="btn-brutal ghost md:hidden"
+            style={{ fontSize: "0.7rem", padding: "0.25rem 0.5rem", flexShrink: 0 }}
+          >
+            &larr; Notes
+          </button>
+
+          {enEdition ? (
+            <input
+              type="text"
+              value={editionTitre}
+              onChange={(e) => setEditionTitre(e.target.value)}
+              className="input-glass"
+              style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
+            />
+          ) : (
+            <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+              {note.titre}
+            </h2>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="detail-body flex-1 overflow-y-auto">
+          {enEdition ? (
+            <div className="space-y-3">
+              <textarea
+                value={editionContenu}
+                onChange={(e) => setEditionContenu(e.target.value)}
+                rows={12}
+                className="input-glass"
+                style={{ resize: "vertical", minHeight: "200px" }}
+              />
+              {/* Sélecteur couleur */}
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  Couleur de la note
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {COULEURS_NOTES.map((c) => (
+                    <button
+                      key={c.nom}
+                      type="button"
+                      onClick={() => setEditionCouleur(c.hex)}
+                      title={c.nom}
+                      style={{
+                        width: "1.75rem",
+                        height: "1.75rem",
+                        borderRadius: "50%",
+                        background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                        border: editionCouleur === c.hex
+                          ? "3px solid var(--accent)"
+                          : "2px solid var(--input-border)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.7rem",
+                        color: "var(--text-muted)",
+                        boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {c.hex === null && "\u00d7"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Tags cliquables */}
+              {tagsDeNote.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {tagsDeNote.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => retirerTagDeNote(note.id, tag.id)}
+                      title={"Retirer \u00ab " + tag.nom + " \u00bb"}
+                      style={{
+                        background: tag.couleur + "25",
+                        color: tag.couleur,
+                        border: "1px solid " + tag.couleur,
+                        borderRadius: "2px",
+                        padding: "0.1rem 0.4rem",
+                        fontSize: "0.6rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {tag.nom} &times;
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {note.contenu ? (
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
+                  {note.contenu}
+                </p>
+              ) : (
+                <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                  Aucun contenu
+                </p>
+              )}
+
+              {/* Résumé IA */}
+              {resumes[note.id] && (
+                <div
+                  className="mt-4 p-2"
+                  style={{
+                    background: "var(--accent-glow)",
+                    border: "1.5px solid var(--accent)",
+                    borderRadius: "2px",
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
+                      Résumé IA
+                    </p>
+                    {!resumes[note.id].chargement && (
+                      <button
+                        onClick={() => masquerResume(note.id)}
+                        style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                  {resumes[note.id].chargement ? (
+                    <p className="text-xs mt-1 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                      <span
+                        className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
+                        style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+                      />
+                      Résumé en cours...
+                    </p>
+                  ) : resumes[note.id].erreur ? (
+                    <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+                      {resumes[note.id].erreur}
+                    </p>
+                  ) : (
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                      {resumes[note.id].texte}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs font-mono mt-4" style={{ color: "var(--text-muted)" }}>
+                {new Date(note.created_at).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div className="detail-footer">
+          {/* Confirmation de suppression */}
+          {confirmSuppId === note.id ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
+                Supprimer ?
+              </span>
+              <button
+                onClick={() => supprimerNote(note.id)}
+                className="btn-brutal danger"
+                style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+              >
+                Oui
+              </button>
+              <button
+                onClick={() => setConfirmSuppId(null)}
+                className="btn-brutal ghost"
+                style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+              >
+                Non
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              {enEdition ? (
+                <>
+                  <button
+                    onClick={() => sauvegarderEdition(note.id)}
+                    className="btn-brutal primary"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Sauver
+                  </button>
+                  <button
+                    onClick={annulerEdition}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Annuler
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => commencerEdition(note)}
+                    className="btn-brutal primary"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => dupliquerNote(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Dupliquer
+                  </button>
+                  <button
+                    onClick={() => copierNote(note)}
+                    className="btn-brutal ghost"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    Copier
+                  </button>
+                  <button
+                    onClick={() => resumerNote(note)}
+                    disabled={!note.contenu || resumes[note.id]?.chargement}
+                    className="btn-brutal ghost disabled:opacity-30"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
+                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                  >
+                    Résumer
+                  </button>
+
+                  {/* Bouton + tag */}
+                  <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
+                    <button
+                      onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
+                      className="btn-brutal ghost"
+                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
+                      title="Ajouter un tag"
+                    >
+                      + Tag
+                    </button>
+                    {dropdownTagNoteId === note.id && (
+                      <div
+                        className="absolute left-0 bottom-full mb-1"
+                        style={{
+                          background: "var(--glass-bg)",
+                          backdropFilter: "blur(16px)",
+                          WebkitBackdropFilter: "blur(16px)",
+                          border: "2px solid var(--glass-border)",
+                          borderRadius: "2px",
+                          boxShadow: "4px 4px 0 var(--brutal-shadow)",
+                          padding: "0.4rem",
+                          minWidth: "120px",
+                          zIndex: 50,
+                        }}
+                      >
+                        {tagsDisponibles.length === 0 ? (
+                          <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
+                            {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
+                          </p>
+                        ) : (
+                          tagsDisponibles.map((tag) => (
+                            <button
+                              key={tag.id}
+                              onClick={() => ajouterTagANote(note.id, tag.id)}
+                              className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
+                              style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
+                              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                            >
+                              <span
+                                style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
+                              />
+                              {tag.nom}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
+                    className="btn-brutal ghost ml-auto"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
+                  >
+                    Supprimer
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   // État de chargement
@@ -496,7 +829,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen max-w-6xl mx-auto px-4 py-6 relative" style={{ zIndex: 1 }}>
+    <div className="h-screen flex flex-col relative" style={{ zIndex: 1 }}>
       {/* Formes décoratives en arrière-plan */}
       <div
         className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-20 blur-3xl pointer-events-none"
@@ -508,7 +841,7 @@ export default function Home() {
       />
 
       {/* === HEADER === */}
-      <header className="glass-card p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
+      <header className="glass-card p-4 flex items-center justify-between flex-wrap gap-3 m-3 mb-0" style={{ flexShrink: 0 }}>
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-black tracking-tight">
             WEB<span style={{ color: "var(--accent)" }}>JOURNEY</span>
@@ -518,7 +851,6 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Bouton gérer les tags */}
           <button
             onClick={() => setPanneauTagsOuvert(!panneauTagsOuvert)}
             className="btn-brutal ghost"
@@ -540,12 +872,11 @@ export default function Home() {
 
       {/* === PANNEAU DE GESTION DES TAGS === */}
       {panneauTagsOuvert && (
-        <div className="glass-card p-5 mb-6 space-y-4">
+        <div className="glass-card p-5 space-y-4 mx-3 mt-3" style={{ flexShrink: 0 }}>
           <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             Gestion des tags
           </p>
 
-          {/* Formulaire de création de tag */}
           <form onSubmit={creerTag} className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[150px]">
               <input
@@ -557,7 +888,6 @@ export default function Home() {
                 className="input-glass"
               />
             </div>
-            {/* Sélecteur de couleur */}
             <div className="flex gap-1.5">
               {COULEURS_TAGS.map((c) => (
                 <button
@@ -581,7 +911,6 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Liste des tags existants */}
           {tags.length === 0 ? (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>Aucun tag créé.</p>
           ) : (
@@ -603,7 +932,6 @@ export default function Home() {
                   <span className="text-xs font-bold" style={{ color: tag.couleur }}>
                     {tag.nom}
                   </span>
-                  {/* Suppression avec confirmation */}
                   {confirmSuppTagId === tag.id ? (
                     <>
                       <button
@@ -639,733 +967,260 @@ export default function Home() {
       )}
 
       {/* === FORMULAIRE D'AJOUT === */}
-      <form onSubmit={ajouterNote} className="glass-card p-5 mb-6 space-y-3">
+      <form onSubmit={ajouterNote} className="glass-card p-4 space-y-2 mx-3 mt-3" style={{ flexShrink: 0 }}>
         <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
           Nouvelle note
         </p>
-        <input
-          type="text"
-          value={titre}
-          onChange={(e) => setTitre(e.target.value)}
-          placeholder="Titre"
-          required
-          className="input-glass"
-          style={{ fontWeight: 700 }}
-        />
-        <textarea
-          value={contenu}
-          onChange={(e) => setContenu(e.target.value)}
-          placeholder="Contenu (optionnel)"
-          rows={3}
-          className="input-glass"
-          style={{ resize: "none" }}
-        />
-        {/* Sélecteur de couleur de fond */}
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-            Couleur de la note
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {COULEURS_NOTES.map((c) => (
-              <button
-                key={c.nom}
-                type="button"
-                onClick={() => setCouleurNote(c.hex)}
-                title={c.nom}
-                style={{
-                  width: "1.75rem",
-                  height: "1.75rem",
-                  borderRadius: "50%",
-                  background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                  border: couleurNote === c.hex
-                    ? "3px solid var(--accent)"
-                    : "2px solid var(--input-border)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.7rem",
-                  color: "var(--text-muted)",
-                  boxShadow: couleurNote === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                {c.hex === null && "×"}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="text"
+            value={titre}
+            onChange={(e) => setTitre(e.target.value)}
+            placeholder="Titre"
+            required
+            className="input-glass"
+            style={{ fontWeight: 700, flex: "1 1 200px" }}
+          />
+          <textarea
+            value={contenu}
+            onChange={(e) => setContenu(e.target.value)}
+            placeholder="Contenu (optionnel)"
+            rows={1}
+            className="input-glass"
+            style={{ resize: "none", flex: "2 1 300px" }}
+          />
+          <button type="submit" className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+            + Ajouter
+          </button>
         </div>
-        <button type="submit" className="btn-brutal primary">
-          + Ajouter
-        </button>
+        {/* Couleurs de note */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            Couleur :
+          </span>
+          {COULEURS_NOTES.map((c) => (
+            <button
+              key={c.nom}
+              type="button"
+              onClick={() => setCouleurNote(c.hex)}
+              title={c.nom}
+              style={{
+                width: "1.25rem",
+                height: "1.25rem",
+                borderRadius: "50%",
+                background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                border: couleurNote === c.hex
+                  ? "2.5px solid var(--accent)"
+                  : "1.5px solid var(--input-border)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "0.55rem",
+                color: "var(--text-muted)",
+                transition: "all 0.15s",
+              }}
+            >
+              {c.hex === null && "\u00d7"}
+            </button>
+          ))}
+        </div>
       </form>
 
-      {/* === BARRE DE RECHERCHE + FILTRES TAGS === */}
-      {notes.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <div className="relative">
-            <input
-              type="text"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher une note..."
-              className="input-glass"
-              style={{ paddingRight: "2.5rem" }}
-            />
-            {recherche && (
-              <button
-                onClick={() => setRecherche("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-muted)", fontSize: "1.1rem", lineHeight: 1, padding: "0.25rem" }}
-              >
-                &times;
-              </button>
-            )}
-          </div>
-
-          {/* Filtres par tag */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                Filtrer :
-              </span>
-              {tags.map((tag) => (
-                <button
-                  key={tag.id}
-                  onClick={() => setFiltreTagId(filtreTagId === tag.id ? null : tag.id)}
-                  style={{
-                    background: filtreTagId === tag.id ? tag.couleur : tag.couleur + "20",
-                    color: filtreTagId === tag.id ? "#fff" : tag.couleur,
-                    border: "1.5px solid " + tag.couleur,
-                    borderRadius: "2px",
-                    padding: "0.2rem 0.55rem",
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    transition: "all 0.15s",
-                    boxShadow: filtreTagId === tag.id ? "2px 2px 0 " + tag.couleur + "60" : "none",
-                  }}
-                >
-                  {tag.nom}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Compteur de résultats */}
-          {(recherche.trim() || filtreTagId) && (
-            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""} trouvée{notesFiltrees.length !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Messages de feedback */}
-      {succes && (
-        <div
-          className="glass-card p-3 mb-4 text-sm font-bold"
-          style={{ color: "var(--success)", borderColor: "var(--success)" }}
-        >
-          {succes}
-        </div>
-      )}
-      {erreur && (
-        <div
-          className="glass-card p-3 mb-4 text-sm font-bold"
-          style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
-        >
-          {erreur}
-        </div>
-      )}
-
-      {/* === GRILLE DE NOTES === */}
-      {notes.length === 0 ? (
-        <div className="glass-card p-16 text-center">
-          <p className="text-4xl mb-4">&#9997;</p>
-          <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-            Aucune note
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            Crée ta première note ci-dessus
-          </p>
-        </div>
-      ) : notesFiltrees.length === 0 ? (
-        <div className="glass-card p-16 text-center">
-          <p className="text-4xl mb-4">&#128269;</p>
-          <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-            Aucune note ne correspond
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            Essaie avec d&apos;autres mots-clés
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {notesFiltrees.map((note) => {
-            // Tags assignés à cette note
-            const tagIds = notesTags[note.id] || [];
-            const tagsDeNote = tagIds.map(getTag).filter(Boolean);
-            // Tags pas encore assignés (pour le dropdown)
-            const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
-
-            return (
-              <div
-                key={note.id}
-                className="glass-card p-5 flex flex-col justify-between"
-                onClick={() => { if (editionId !== note.id) setNoteDetailId(note.id); }}
-                style={{
-                  cursor: editionId === note.id ? "default" : "pointer",
-                  backgroundColor: editionId === note.id ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur),
-                }}
-              >
-                {/* Mode édition inline */}
-                {editionId === note.id ? (
-                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="text"
-                      value={editionTitre}
-                      onChange={(e) => setEditionTitre(e.target.value)}
-                      className="input-glass"
-                      style={{ fontWeight: 700 }}
-                    />
-                    <textarea
-                      value={editionContenu}
-                      onChange={(e) => {
-                        setEditionContenu(e.target.value);
-                        e.target.style.height = "auto";
-                        e.target.style.height = e.target.scrollHeight + "px";
-                      }}
-                      ref={(el) => {
-                        if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
-                      }}
-                      rows={3}
-                      className="input-glass"
-                      style={{ resize: "none", overflow: "hidden" }}
-                    />
-                    {/* Sélecteur couleur de fond */}
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
-                        Couleur
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {COULEURS_NOTES.map((c) => (
-                          <button
-                            key={c.nom}
-                            type="button"
-                            onClick={() => setEditionCouleur(c.hex)}
-                            title={c.nom}
-                            style={{
-                              width: "1.5rem",
-                              height: "1.5rem",
-                              borderRadius: "50%",
-                              background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                              border: editionCouleur === c.hex
-                                ? "3px solid var(--accent)"
-                                : "2px solid var(--input-border)",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.6rem",
-                              color: "var(--text-muted)",
-                              boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            {c.hex === null && "×"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => sauvegarderEdition(note.id)}
-                        className="btn-brutal primary"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Sauver
-                      </button>
-                      <button
-                        onClick={annulerEdition}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Contenu de la card */}
-                    <div className="mb-4">
-                      <h2 className="font-black text-sm mb-2" style={{ color: "var(--text-primary)" }}>
-                        {note.titre}
-                      </h2>
-
-                      {/* Badges de tags assignés */}
-                      {tagsDeNote.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
-                          {tagsDeNote.map((tag) => (
-                            <button
-                              key={tag.id}
-                              onClick={() => retirerTagDeNote(note.id, tag.id)}
-                              title={"Retirer « " + tag.nom + " »"}
-                              style={{
-                                background: tag.couleur + "25",
-                                color: tag.couleur,
-                                border: "1px solid " + tag.couleur,
-                                borderRadius: "2px",
-                                padding: "0.1rem 0.4rem",
-                                fontSize: "0.6rem",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.04em",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {tag.nom} &times;
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {note.contenu && (() => {
-                        const estDepliee = notesDepliees[note.id];
-                        const lignes = note.contenu.split("\n").length;
-                        const estLongue = lignes > 5 || note.contenu.length > 300;
-
-                        return (
-                          <>
-                            <p
-                              className="text-sm leading-relaxed"
-                              style={{
-                                color: "var(--text-secondary)",
-                                whiteSpace: "pre-wrap",
-                                ...(!estDepliee && estLongue ? {
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 5,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                } : {}),
-                              }}
-                            >
-                              {note.contenu}
-                            </p>
-                            {estLongue && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] }));
-                                }}
-                                className="text-xs font-bold uppercase tracking-wider mt-1"
-                                style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
-                              >
-                                {estDepliee ? "▲ Réduire" : "▼ Voir plus"}
-                              </button>
-                            )}
-                          </>
-                        );
-                      })()}
-                      {/* Résumé IA (affiché temporairement) */}
-                      {resumes[note.id] && (
-                        <div
-                          className="mt-2 p-2"
-                          style={{
-                            background: "var(--accent-glow)",
-                            border: "1.5px solid var(--accent)",
-                            borderRadius: "2px",
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
-                              Résumé IA
-                            </p>
-                            {!resumes[note.id].chargement && (
-                              <button
-                                onClick={() => masquerResume(note.id)}
-                                style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
-                              >
-                                &times;
-                              </button>
-                            )}
-                          </div>
-                          {resumes[note.id].chargement ? (
-                            <p className="text-xs mt-1 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
-                              <span
-                                className="inline-block w-3 h-3 border-2 rounded-full animate-spin"
-                                style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
-                              />
-                              Résumé en cours...
-                            </p>
-                          ) : resumes[note.id].erreur ? (
-                            <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
-                              {resumes[note.id].erreur}
-                            </p>
-                          ) : (
-                            <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                              {resumes[note.id].texte}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <p className="text-xs font-mono mt-3" style={{ color: "var(--text-muted)" }}>
-                        {new Date(note.created_at).toLocaleDateString("fr-FR", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-
-                    {/* Confirmation de suppression */}
-                    {confirmSuppId === note.id ? (
-                      <div
-                        className="flex items-center gap-2 pt-3"
-                        style={{ borderTop: "2px solid var(--danger)" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
-                          Supprimer ?
-                        </span>
-                        <button
-                          onClick={() => supprimerNote(note.id)}
-                          className="btn-brutal danger"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-                        >
-                          Oui
-                        </button>
-                        <button
-                          onClick={() => setConfirmSuppId(null)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-                        >
-                          Non
-                        </button>
-                      </div>
-                    ) : (
-                      /* Boutons d'actions */
-                      <div
-                        className="flex items-center gap-1.5 pt-3"
-                        style={{ borderTop: "1.5px solid var(--glass-border)" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() => commencerEdition(note)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => dupliquerNote(note)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
-                        >
-                          Dupliquer
-                        </button>
-                        <button
-                          onClick={() => copierNote(note)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
-                        >
-                          Copier
-                        </button>
-
-                        {/* Bouton Résumer IA — désactivé si pas de contenu */}
-                        <button
-                          onClick={() => resumerNote(note)}
-                          disabled={!note.contenu || resumes[note.id]?.chargement}
-                          className="btn-brutal ghost disabled:opacity-30"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem", color: "var(--accent)" }}
-                          title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                        >
-                          Résumer
-                        </button>
-
-                        {/* Bouton + pour ajouter un tag */}
-                        <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                          <button
-                            onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                            className="btn-brutal ghost"
-                            style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", color: "var(--accent)" }}
-                            title="Ajouter un tag"
-                          >
-                            +
-                          </button>
-                          {/* Dropdown de sélection de tag */}
-                          {dropdownTagNoteId === note.id && (
-                            <div
-                              className="absolute left-0 bottom-full mb-1"
-                              style={{
-                                background: "var(--glass-bg)",
-                                backdropFilter: "blur(16px)",
-                                WebkitBackdropFilter: "blur(16px)",
-                                border: "2px solid var(--glass-border)",
-                                borderRadius: "2px",
-                                boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                                padding: "0.4rem",
-                                minWidth: "120px",
-                                zIndex: 50,
-                              }}
-                            >
-                              {tagsDisponibles.length === 0 ? (
-                                <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                                  {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                                </p>
-                              ) : (
-                                tagsDisponibles.map((tag) => (
-                                  <button
-                                    key={tag.id}
-                                    onClick={() => ajouterTagANote(note.id, tag.id)}
-                                    className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                                    style={{
-                                      color: tag.couleur,
-                                      borderRadius: "1px",
-                                      cursor: "pointer",
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                                  >
-                                    <span
-                                      style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
-                                    />
-                                    {tag.nom}
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
-                          className="btn-brutal ghost ml-auto"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem", color: "var(--danger)" }}
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* === MODALE DE DÉTAIL (portail vers body) === */}
-      {noteDetailId && (() => {
-        const note = notes.find((n) => n.id === noteDetailId);
-        if (!note) return null;
-        const tagIds = notesTags[note.id] || [];
-        const tagsDeNote = tagIds.map(getTag).filter(Boolean);
-
-        const enEdition = editionId === note.id;
-
-        return createPortal(
+      <div className="mx-3 mt-2" style={{ flexShrink: 0 }}>
+        {succes && (
           <div
-            className="modal-overlay"
-            onClick={fermerModale}
+            className="glass-card p-3 text-sm font-bold mb-2"
+            style={{ color: "var(--success)", borderColor: "var(--success)" }}
           >
-            <div
-              className="modal-content"
-              onClick={(e) => e.stopPropagation()}
-              style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) }}
-            >
-              {/* Header */}
-              <div className="modal-header">
-                {enEdition ? (
-                  <input
-                    type="text"
-                    value={editionTitre}
-                    onChange={(e) => setEditionTitre(e.target.value)}
-                    className="input-glass"
-                    style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
-                  />
-                ) : (
-                  <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
-                    {note.titre}
-                  </h2>
-                )}
+            {succes}
+          </div>
+        )}
+        {erreur && (
+          <div
+            className="glass-card p-3 text-sm font-bold mb-2"
+            style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+          >
+            {erreur}
+          </div>
+        )}
+      </div>
+
+      {/* === SPLIT PANEL === */}
+      <div className="split-container mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
+
+        {/* === PANNEAU GAUCHE — Liste === */}
+        <div className={"panel-left" + (mobileDetail ? " hidden-mobile" : "")}>
+          {/* Recherche */}
+          <div className="p-3 space-y-2" style={{ borderBottom: "1px solid var(--panel-border)", flexShrink: 0 }}>
+            <div className="relative">
+              <input
+                type="text"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                placeholder="Rechercher..."
+                className="input-glass"
+                style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+              />
+              {recherche && (
                 <button
-                  onClick={fermerModale}
-                  className="btn-brutal ghost"
-                  style={{ fontSize: "1.2rem", padding: "0.2rem 0.5rem", lineHeight: 1, flexShrink: 0 }}
+                  onClick={() => setRecherche("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
                 >
                   &times;
                 </button>
-              </div>
+              )}
+            </div>
 
-              {/* Body scrollable */}
-              <div className="modal-body">
-                {enEdition ? (
-                  <div className="space-y-3">
-                    <textarea
-                      value={editionContenu}
-                      onChange={(e) => setEditionContenu(e.target.value)}
-                      rows={10}
-                      className="input-glass"
-                      style={{ resize: "vertical", minHeight: "150px" }}
-                    />
-                    {/* Sélecteur couleur de fond */}
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-                        Couleur de la note
+            {/* Filtres tags */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setFiltreTagId(filtreTagId === tag.id ? null : tag.id)}
+                    style={{
+                      background: filtreTagId === tag.id ? tag.couleur : tag.couleur + "20",
+                      color: filtreTagId === tag.id ? "#fff" : tag.couleur,
+                      border: "1px solid " + tag.couleur,
+                      borderRadius: "2px",
+                      padding: "0.1rem 0.35rem",
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {tag.nom}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Tri + compteur */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                {notesFiltrees.length} note{notesFiltrees.length !== 1 ? "s" : ""}
+              </span>
+              <button
+                onClick={() => setTriAscendant(!triAscendant)}
+                className="text-xs font-bold uppercase"
+                style={{ color: "var(--accent)", cursor: "pointer", background: "none", border: "none", padding: "0.15rem 0.3rem" }}
+                title={triAscendant ? "Plus récentes en premier" : "Plus anciennes en premier"}
+              >
+                {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
+              </button>
+            </div>
+          </div>
+
+          {/* Liste des notes */}
+          <div className="panel-left-scroll">
+            {notes.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-2xl mb-2">&#9997;</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                  Aucune note
+                </p>
+              </div>
+            ) : notesFiltrees.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-2xl mb-2">&#128269;</p>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                  Aucun résultat
+                </p>
+              </div>
+            ) : (
+              notesFiltrees.map((note) => {
+                const tagIds = notesTags[note.id] || [];
+                const tagsDeNote = tagIds.map(getTag).filter(Boolean);
+                const tagsVisibles = tagsDeNote.slice(0, 2);
+                const tagsRestants = tagsDeNote.length - 2;
+
+                return (
+                  <div
+                    key={note.id}
+                    className={"note-item" + (selectedNoteId === note.id ? " active" : "")}
+                    onClick={() => selectionnerNote(note.id)}
+                  >
+                    {/* Indicateur couleur */}
+                    {note.couleur && (
+                      <div
+                        style={{
+                          width: "4px",
+                          flexShrink: 0,
+                          background: getCouleurFond(note.couleur),
+                          marginRight: "0.6rem",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Titre tronqué */}
+                      <p
+                        className="text-xs font-bold"
+                        style={{
+                          color: "var(--text-primary)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {note.titre}
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        {COULEURS_NOTES.map((c) => (
-                          <button
-                            key={c.nom}
-                            type="button"
-                            onClick={() => setEditionCouleur(c.hex)}
-                            title={c.nom}
-                            style={{
-                              width: "1.75rem",
-                              height: "1.75rem",
-                              borderRadius: "50%",
-                              background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                              border: editionCouleur === c.hex
-                                ? "3px solid var(--accent)"
-                                : "2px solid var(--input-border)",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.7rem",
-                              color: "var(--text-muted)",
-                              boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            {c.hex === null && "×"}
-                          </button>
-                        ))}
+
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {/* Date courte */}
+                        <span className="text-xs font-mono" style={{ color: "var(--text-muted)", fontSize: "0.6rem", flexShrink: 0 }}>
+                          {new Date(note.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                        </span>
+
+                        {/* Tags mini */}
+                        {tagsVisibles.length > 0 && (
+                          <div className="flex gap-1" style={{ minWidth: 0, overflow: "hidden" }}>
+                            {tagsVisibles.map((tag) => (
+                              <span
+                                key={tag.id}
+                                style={{
+                                  background: tag.couleur + "25",
+                                  color: tag.couleur,
+                                  border: "1px solid " + tag.couleur,
+                                  borderRadius: "2px",
+                                  padding: "0 0.25rem",
+                                  fontSize: "0.5rem",
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {tag.nom}
+                              </span>
+                            ))}
+                            {tagsRestants > 0 && (
+                              <span className="text-xs" style={{ color: "var(--text-muted)", fontSize: "0.5rem" }}>
+                                +{tagsRestants}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ) : note.contenu ? (
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
-                    {note.contenu}
-                  </p>
-                ) : (
-                  <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                    Aucun contenu
-                  </p>
-                )}
+                );
+              })
+            )}
+          </div>
+        </div>
 
-                {/* Résumé IA si présent (lecture seule) */}
-                {!enEdition && resumes[note.id] && resumes[note.id].texte && (
-                  <div
-                    className="mt-4 p-2"
-                    style={{
-                      background: "var(--accent-glow)",
-                      border: "1.5px solid var(--accent)",
-                      borderRadius: "2px",
-                    }}
-                  >
-                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
-                      Résumé IA
-                    </p>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-primary)" }}>
-                      {resumes[note.id].texte}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="modal-footer">
-                {!enEdition && (
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    {/* Tags */}
-                    {tagsDeNote.map((tag) => (
-                      <span
-                        key={tag.id}
-                        style={{
-                          background: tag.couleur + "25",
-                          color: tag.couleur,
-                          border: "1px solid " + tag.couleur,
-                          borderRadius: "2px",
-                          padding: "0.1rem 0.4rem",
-                          fontSize: "0.6rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
-                        }}
-                      >
-                        {tag.nom}
-                      </span>
-                    ))}
-                    {/* Date */}
-                    <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
-                      {new Date(note.created_at).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  {enEdition ? (
-                    <>
-                      <button
-                        onClick={async () => { await sauvegarderEdition(note.id); }}
-                        className="btn-brutal primary"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Sauver
-                      </button>
-                      <button
-                        onClick={annulerEdition}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Annuler
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => commencerEdition(note)}
-                        className="btn-brutal primary"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => copierNote(note)}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Copier
-                      </button>
-                      <button
-                        onClick={() => { setNoteDetailId(null); setConfirmSuppId(note.id); }}
-                        className="btn-brutal danger"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                      >
-                        Supprimer
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        );
-      })()}
+        {/* === PANNEAU DROIT — Détail === */}
+        <div className={"panel-right" + (!mobileDetail ? " hidden-mobile" : "")}>
+          {renderNoteDetail()}
+        </div>
+      </div>
     </div>
   );
 }
