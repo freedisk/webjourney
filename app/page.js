@@ -109,6 +109,10 @@ export default function Home() {
       return true;
     })
     .sort((a, b) => {
+      // Épinglées en premier
+      if (a.epinglee && !b.epinglee) return -1;
+      if (!a.epinglee && b.epinglee) return 1;
+      // Tri chronologique à l'intérieur de chaque groupe
       const dateA = new Date(a.created_at);
       const dateB = new Date(b.created_at);
       return triAscendant ? dateA - dateB : dateB - dateA;
@@ -516,6 +520,24 @@ export default function Home() {
     }
   }
 
+  // Épingler / désépingler une note
+  async function toggleEpingle(note) {
+    setErreur(null);
+    const nouvelleValeur = !note.epinglee;
+    const { error } = await supabase
+      .from("notes")
+      .update({ epinglee: nouvelleValeur })
+      .eq("id", note.id);
+
+    if (error) {
+      setErreur("Erreur lors de l'épinglage : " + error.message);
+      return;
+    }
+
+    setSucces(nouvelleValeur ? "Note épinglée !" : "Note désépinglée.");
+    await chargerNotes(utilisateur.id);
+  }
+
   // Déconnexion
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -632,6 +654,19 @@ export default function Home() {
               </>
             ) : (
               <>
+                <button
+                  onClick={() => toggleEpingle(note)}
+                  className="btn-brutal ghost"
+                  style={{
+                    fontSize: "0.85rem",
+                    padding: "0.35rem 0.5rem",
+                    color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
+                    lineHeight: 1,
+                  }}
+                  title={note.epinglee ? "Désépingler" : "Épingler"}
+                >
+                  {note.epinglee ? "\uD83D\uDCCC" : "\uD83D\uDCCC"}
+                </button>
                 <button
                   onClick={() => commencerEdition(note)}
                   className="btn-brutal primary"
@@ -1387,11 +1422,15 @@ export default function Home() {
                     key={note.id}
                     className="glass-card p-4 flex flex-col gap-2 cursor-pointer"
                     onClick={() => setNoteDetailId(note.id)}
-                    style={{ backgroundColor: getCouleurFond(note.couleur) }}
+                    style={{
+                      backgroundColor: getCouleurFond(note.couleur),
+                      borderColor: note.epinglee ? "var(--accent)" : undefined,
+                    }}
                   >
                     {/* Titre */}
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-black text-sm" style={{ color: "var(--text-primary)", wordBreak: "break-word", flex: 1 }}>
+                        {note.epinglee && <span style={{ marginRight: "0.3rem" }}>{"\uD83D\uDCCC"}</span>}
                         {note.titre}
                       </h3>
                       <button
@@ -1467,6 +1506,19 @@ export default function Home() {
 
                     {/* Boutons d'action */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-2" style={{ borderTop: "1px solid var(--panel-border)" }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => toggleEpingle(note)}
+                        className="btn-brutal ghost"
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "0.2rem 0.4rem",
+                          color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
+                          lineHeight: 1,
+                        }}
+                        title={note.epinglee ? "Désépingler" : "Épingler"}
+                      >
+                        {"\uD83D\uDCCC"}
+                      </button>
                       <button
                         onClick={() => { setNoteDetailId(note.id); commencerEdition(note); }}
                         className="btn-brutal primary"
@@ -1684,6 +1736,7 @@ export default function Home() {
                             textOverflow: "ellipsis",
                           }}
                         >
+                          {note.epinglee && <span style={{ marginRight: "0.25rem" }}>{"\uD83D\uDCCC"}</span>}
                           {note.titre}
                         </p>
 

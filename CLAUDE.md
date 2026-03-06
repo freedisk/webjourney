@@ -122,6 +122,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Filtrage par tags (combinable avec la recherche texte, intégré au panneau gauche)
 - [x] Copier une note dans le presse-papier (bouton dans le panneau détail, copie titre + contenu)
 - [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches, appliquée sur le détail et indicateur dans la liste, champ `couleur` TEXT nullable en base)
+- [x] Notes épinglées (champ `epinglee` BOOLEAN en base, tri prioritaire en tête de liste, toggle 📌 sur card/modale/list view, indicateur visuel)
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
