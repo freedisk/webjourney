@@ -688,7 +688,7 @@ export default function Home() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {notesFiltrees.map((note) => {
             // Tags assignés à cette note
             const tagIds = notesTags[note.id] || [];
@@ -864,20 +864,20 @@ export default function Home() {
                     ) : (
                       /* Boutons d'actions */
                       <div
-                        className="flex items-center gap-2 pt-3 flex-wrap"
+                        className="flex items-center gap-1.5 pt-3"
                         style={{ borderTop: "1.5px solid var(--glass-border)" }}
                       >
                         <button
                           onClick={() => commencerEdition(note)}
                           className="btn-brutal ghost"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
                         >
                           Modifier
                         </button>
                         <button
                           onClick={() => dupliquerNote(note)}
                           className="btn-brutal ghost"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
                         >
                           Dupliquer
                         </button>
@@ -887,7 +887,7 @@ export default function Home() {
                           onClick={() => resumerNote(note)}
                           disabled={!note.contenu || resumes[note.id]?.chargement}
                           className="btn-brutal ghost disabled:opacity-30"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem", color: "var(--accent)" }}
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem", color: "var(--accent)" }}
                           title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
                         >
                           Résumer
@@ -898,7 +898,7 @@ export default function Home() {
                           <button
                             onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
                             className="btn-brutal ghost"
-                            style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem", color: "var(--accent)" }}
+                            style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", color: "var(--accent)" }}
                             title="Ajouter un tag"
                           >
                             +
@@ -951,7 +951,7 @@ export default function Home() {
                         <button
                           onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
                           className="btn-brutal ghost ml-auto"
-                          style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem", color: "var(--danger)" }}
+                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem", color: "var(--danger)" }}
                         >
                           Supprimer
                         </button>
