@@ -115,7 +115,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 
 - [x] Auth email/mot de passe (inscription + validation email + connexion + déconnexion)
 - [x] Redirection automatique si non connecté
-- [x] CRUD notes (créer, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
+- [x] CRUD notes (créer via bouton "+ Nouvelle note" → modale de création, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
 - [x] **Toggle Card View / List View / Kanban** (icônes grille ⊞ / liste ☰ / colonnes SVG dans le header, bouton actif visuellement distinct)
 - [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (Modifier, Dupliquer, Copier, Résumer, + Tag, Supprimer)
 - [x] **List View — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (liste plein écran → note plein écran avec bouton retour ← Notes)
@@ -135,7 +135,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
 - [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
 - [x] **Kanban View** — 3 colonnes fixes (À faire / En cours / Terminé), drag & drop HTML5 natif, cards compactes (titre + 2 tags + icône épinglée), clic → modale, optimistic update avec rollback, colonnes scrollables, responsive (empilé sur mobile), champs `kanban_colonne` / `kanban_ordre` en base
-- [x] Raccourcis clavier (N=nouvelle note, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
+- [x] Raccourcis clavier (N=ouvre modale création, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement

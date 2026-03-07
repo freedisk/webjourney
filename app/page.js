@@ -98,6 +98,9 @@ export default function Home() {
   // --- Animation pulse épinglage ---
   const [pulseNoteId, setPulseNoteId] = useState(null);
 
+  // --- Modale création ---
+  const [modeCreation, setModeCreation] = useState(false);
+
   // --- Kanban drag & drop ---
   const [dragNoteId, setDragNoteId] = useState(null);
   const [dragOverColonne, setDragOverColonne] = useState(null);
@@ -190,15 +193,19 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickExterieur);
   }, []);
 
-  // Modale card view : bloquer le scroll + touche Escape
+  // Modale card view / création : bloquer le scroll + touche Escape
   useEffect(() => {
-    if (!noteDetailId) return;
+    if (!noteDetailId && !modeCreation) return;
 
     document.body.style.overflow = "hidden";
 
     function handleEscape(e) {
       if (e.key === "Escape") {
-        fermerModale();
+        if (modeCreation) {
+          fermerModaleCreation();
+        } else {
+          fermerModale();
+        }
       }
     }
     document.addEventListener("keydown", handleEscape);
@@ -206,7 +213,7 @@ export default function Home() {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [noteDetailId, editionId, editionTitre, editionContenu, editionCouleur]);
+  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
@@ -223,10 +230,10 @@ export default function Home() {
       // Ne pas intercepter si on tape dans un champ
       if (isTyping) return;
 
-      // N → focus sur le champ titre nouvelle note
+      // N → ouvrir la modale de création
       if (e.key === "n" || e.key === "N") {
         e.preventDefault();
-        titreRef.current?.focus();
+        setModeCreation(true);
         return;
       }
 
@@ -411,10 +418,18 @@ export default function Home() {
     setConfirmSuppId(null);
   }
 
+  // Fermer la modale de création (sans créer)
+  function fermerModaleCreation() {
+    setModeCreation(false);
+    setTitre("");
+    setContenu("");
+    setCouleurNote(null);
+  }
+
   // === CRUD NOTES ===
 
   async function ajouterNote(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setErreur(null);
     if (!titre.trim()) return;
 
@@ -433,7 +448,8 @@ export default function Home() {
     setTitre("");
     setContenu("");
     setCouleurNote(null);
-    setSucces("Note ajoutée !");
+    setModeCreation(false);
+    setSucces("Note ajout\u00e9e !");
     await chargerNotes(utilisateur.id);
   }
 
@@ -1580,6 +1596,13 @@ export default function Home() {
               </svg>
             </button>
           </div>
+          <button
+            onClick={() => setModeCreation(true)}
+            className="btn-brutal primary"
+            style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+          >
+            + Nouvelle note
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -1699,71 +1722,6 @@ export default function Home() {
           )}
         </div>
       )}
-
-      {/* === FORMULAIRE D'AJOUT === */}
-      <form onSubmit={ajouterNote} className="glass-card p-4 space-y-2 mx-3 mt-3" style={{ flexShrink: 0 }}>
-        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-          Nouvelle note
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            ref={titreRef}
-            type="text"
-            value={titre}
-            onChange={(e) => setTitre(e.target.value)}
-            placeholder="Titre"
-            required
-            className="input-glass"
-            style={{ fontWeight: 700, flex: "1 1 200px" }}
-          />
-          <textarea
-            value={contenu}
-            onChange={(e) => setContenu(e.target.value)}
-            placeholder="Contenu (optionnel)"
-            rows={1}
-            className="input-glass"
-            style={{ resize: "none", flex: "2 1 300px" }}
-          />
-          <button type="submit" className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-            + Ajouter
-          </button>
-        </div>
-        {/* Couleurs de note */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Couleur :
-          </span>
-          {COULEURS_NOTES.map((c) => (
-            <button
-              key={c.nom}
-              type="button"
-              onClick={() => setCouleurNote(c.hex)}
-              title={c.nom}
-              style={{
-                width: "1.25rem",
-                height: "1.25rem",
-                borderRadius: "50%",
-                background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                border: couleurNote === c.hex
-                  ? "2.5px solid var(--accent)"
-                  : "1.5px solid var(--input-border)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.55rem",
-                color: "var(--text-muted)",
-                transition: "all 0.15s",
-              }}
-            >
-              {c.hex === null && "\u00d7"}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs mt-1" style={{ color: "var(--text-muted)", fontSize: "0.65rem" }}>
-          Supporte le Markdown — **gras**, *italique*, # titre, - liste
-        </p>
-      </form>
 
       {/* Messages de feedback */}
       <div className="mx-3 mt-2" style={{ flexShrink: 0 }}>
@@ -2472,6 +2430,129 @@ export default function Home() {
 
       {/* Modale card/kanban view (portail) */}
       {(viewMode === "card" || viewMode === "kanban") && renderModale()}
+
+      {/* Modale de création */}
+      {modeCreation && createPortal(
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) fermerModaleCreation();
+          }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: getCouleurFond(couleurNote) || "var(--modal-bg)" }}
+          >
+            {/* Header */}
+            <div className="modal-header">
+              <h2 className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
+                Nouvelle note
+              </h2>
+              <button
+                onClick={fermerModaleCreation}
+                className="btn-brutal ghost"
+                style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="modal-body">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
+                    Titre
+                  </label>
+                  <input
+                    ref={titreRef}
+                    type="text"
+                    value={titre}
+                    onChange={(e) => setTitre(e.target.value)}
+                    placeholder="Titre de la note"
+                    className="input-glass"
+                    style={{ fontWeight: 700, fontSize: "1rem" }}
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
+                    Contenu
+                  </label>
+                  <textarea
+                    value={contenu}
+                    onChange={(e) => setContenu(e.target.value)}
+                    placeholder="Contenu (optionnel) — supporte le Markdown"
+                    rows={8}
+                    className="input-glass"
+                    style={{ resize: "vertical", minHeight: "120px" }}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
+                    Couleur de la note
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {COULEURS_NOTES.map((c) => (
+                      <button
+                        key={c.nom}
+                        type="button"
+                        onClick={() => setCouleurNote(c.hex)}
+                        title={c.nom}
+                        style={{
+                          width: "1.75rem",
+                          height: "1.75rem",
+                          borderRadius: "50%",
+                          background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
+                          border: couleurNote === c.hex
+                            ? "3px solid var(--accent)"
+                            : "2px solid var(--input-border)",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.7rem",
+                          color: "var(--text-muted)",
+                          boxShadow: couleurNote === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {c.hex === null && "\u00d7"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="modal-footer">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => ajouterNote()}
+                  disabled={!titre.trim()}
+                  className="btn-brutal primary disabled:opacity-30"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Cr&eacute;er
+                </button>
+                <button
+                  onClick={fermerModaleCreation}
+                  className="btn-brutal ghost"
+                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                >
+                  Annuler
+                </button>
+              </div>
+              <p className="text-xs mt-2" style={{ color: "var(--text-muted)", fontSize: "0.65rem" }}>
+                Supporte le Markdown &mdash; **gras**, *italique*, # titre, - liste
+              </p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Drawer statistiques */}
       <StatsDrawer
