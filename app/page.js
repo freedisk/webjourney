@@ -1669,7 +1669,7 @@ export default function Home() {
             {utilisateur.email}
           </span>
           <button onClick={handleLogout} className="btn-brutal danger" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-            D\u00e9connexion
+            Déconnexion
           </button>
         </div>
       </header>

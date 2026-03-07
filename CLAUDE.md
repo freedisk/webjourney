@@ -117,11 +117,11 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Redirection automatique si non connecté
 - [x] CRUD notes (créer via bouton "+ Nouvelle note" → modale de création, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
 - [x] **Toggle Card View / List View / Kanban** (icônes grille ⊞ / liste ☰ / colonnes SVG dans le header, bouton actif visuellement distinct)
-- [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (Modifier, Dupliquer, Copier, Résumer, + Tag, Supprimer)
+- [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (A-/A+, 📌, Modifier, Dupliquer, Partage, Résumer, +Tag, Supprimer)
 - [x] **List View — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (liste plein écran → note plein écran avec bouton retour ← Notes)
 - [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri chronologique toggle ↑↓
 - [x] Panneau droit : NoteDetail permanent (contenu complet, tags cliquables, résumé IA, actions Modifier/Dupliquer/Copier/Résumer/Supprimer/+Tag)
-- [x] Modale : max-width 700px, boutons alignés sur une ligne (Supprimer aligné à droite), variables CSS dédiées (`--modal-bg/border/separator`) pour contraste clair/sombre
+- [x] Modale : max-width 700px, tous les boutons d'action sur une ligne avec flex-wrap (A-/A+, 📌, Modifier, Dupliquer, Partage, Résumer, Copier — même ordre que les cards), +Tag et Supprimer dans le header, variables CSS dédiées (`--modal-bg/border/separator`) pour contraste clair/sombre
 - [x] Protection perte de modifications : confirmation lors du changement de note, retour liste, ou fermeture modale si édition en cours. Protection perte données : confirmation si fermeture avec modifications non sauvegardées (modes création ET édition, tous les triggers de fermeture : overlay, Échap, bouton ×)
 - [x] Design brutalism + glassmorphism avec mode sombre/clair (toggle + persistance localStorage)
 - [x] Recherche instantanée (filtre temps réel sur titre + contenu, insensible aux accents et à la casse)
@@ -138,7 +138,8 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Raccourcis clavier (N=ouvre modale création, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
-- [x] Taille des caractères : boutons A- / A+ dans modale et vue principale, plage 11-22px, persistée en localStorage (clé noteFontSize)
+- [x] Taille des caractères : boutons A- / A+ dans chaque card, modale et panneau détail list view, plage 11-22px, persistée en localStorage (clé noteFontSize)
+- [x] Header réorganisé : boutons d'action à gauche (toggles vue, + Nouvelle note, Gérer tags, 📊 stats, thème), utilisateur + Déconnexion à droite
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
