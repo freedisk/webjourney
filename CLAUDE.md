@@ -122,7 +122,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri chronologique toggle ↑↓
 - [x] Panneau droit : NoteDetail permanent (contenu complet, tags cliquables, résumé IA, actions Modifier/Dupliquer/Copier/Résumer/Supprimer/+Tag)
 - [x] Modale : max-width 700px, boutons alignés sur une ligne (Supprimer aligné à droite), variables CSS dédiées (`--modal-bg/border/separator`) pour contraste clair/sombre
-- [x] Protection perte de modifications : confirmation lors du changement de note, retour liste, ou fermeture modale si édition en cours
+- [x] Protection perte de modifications : confirmation lors du changement de note, retour liste, ou fermeture modale si édition en cours. Protection perte données : confirmation si fermeture avec modifications non sauvegardées (modes création ET édition, tous les triggers de fermeture : overlay, Échap, bouton ×)
 - [x] Design brutalism + glassmorphism avec mode sombre/clair (toggle + persistance localStorage)
 - [x] Recherche instantanée (filtre temps réel sur titre + contenu, insensible aux accents et à la casse)
 - [x] Tags colorés (CRUD, 8 couleurs prédéfinies, panneau de gestion)

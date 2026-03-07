@@ -418,8 +418,14 @@ export default function Home() {
     setConfirmSuppId(null);
   }
 
-  // Fermer la modale de création (sans créer)
+  // Fermer la modale de création (sans créer, avec protection)
   function fermerModaleCreation() {
+    const modifie = titre.trim() !== "" || contenu.trim() !== "" || couleurNote !== null;
+    if (modifie) {
+      if (!window.confirm("Des modifications non sauvegard\u00e9es seront perdues. Quitter quand m\u00eame ?")) {
+        return;
+      }
+    }
     setModeCreation(false);
     setTitre("");
     setContenu("");
@@ -1253,7 +1259,7 @@ export default function Home() {
       <div
         className="modal-overlay"
         onClick={(e) => {
-          if (e.target === e.currentTarget && !enEdition) {
+          if (e.target === e.currentTarget) {
             fermerModale();
           }
         }}
