@@ -1493,9 +1493,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <>
-                {/* Ligne 1 — Taille, Épingler, Modifier, Dupliquer, Copier */}
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                   {renderBoutonsTaille()}
                   <button
                     onClick={() => toggleEpingle(note)}
@@ -1514,9 +1512,6 @@ export default function Home() {
                   <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
                     Copier
                   </button>
-                </div>
-                {/* Ligne 2 — Résumer, Partage */}
-                <div className="flex items-center gap-2">
                   <button
                     onClick={() => resumerNote(note)}
                     disabled={!note.contenu || resumes[note.id]?.chargement}
@@ -1529,7 +1524,7 @@ export default function Home() {
                   {note.share_token ? (
                     <>
                       <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Copier le lien de partage">
-                        {"\uD83D\uDD17"} Copier le lien
+                        {"\uD83D\uDD17"} Lien
                       </button>
                       <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }} title="Désactiver le partage">
                         Désactiver
@@ -1541,7 +1536,6 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-              </>
             )}
           </div>
         </div>
