@@ -1421,10 +1421,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-2">
-                  {renderTagsBadges(note)}
-                  {renderBoutonsTaille()}
-                </div>
+                {renderTagsBadges(note)}
 
                 {note.share_token && (
                   <div
@@ -1497,8 +1494,9 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {/* Ligne 1 — Épingler, Modifier, Dupliquer, Copier */}
+                {/* Ligne 1 — Taille, Épingler, Modifier, Dupliquer, Copier */}
                 <div className="flex items-center gap-2">
+                  {renderBoutonsTaille()}
                   <button
                     onClick={() => toggleEpingle(note)}
                     className="btn-brutal ghost"
