@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "WebJourney — Mes Notes",
+  title: "Capsule — Mes Notes",
   description: "Application de notes personnelles",
 };
 

@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
     .single();
 
   return {
-    title: data ? data.titre + " — WebJourney" : "Note introuvable — WebJourney",
+    title: data ? data.titre + " — Capsule" : "Note introuvable — Capsule",
   };
 }
 
@@ -93,8 +93,8 @@ export default async function SharedNotePage({ params }) {
         padding: "1rem 1.5rem",
         borderBottom: "2px solid var(--panel-border)",
       }}>
-        <h1 style={{ fontSize: "1.1rem", fontWeight: 900, letterSpacing: "-0.02em" }}>
-          WEB<span style={{ color: "var(--accent)" }}>JOURNEY</span>
+        <h1 style={{ fontSize: "1.3rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase", background: "linear-gradient(135deg, var(--accent), #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+          CAPSULE
         </h1>
         <a
           href="/login"
@@ -167,7 +167,7 @@ export default async function SharedNotePage({ params }) {
         marginTop: "3rem",
       }}>
         <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          Créé avec WebJourney
+          Créé avec Capsule
         </p>
       </footer>
     </div>

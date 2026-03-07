@@ -1577,9 +1577,7 @@ export default function Home() {
       <header className="glass-card p-4 flex items-center justify-between flex-wrap gap-3 m-3 mb-0" style={{ flexShrink: 0 }}>
         {/* ZONE GAUCHE — Identité + navigation */}
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-black tracking-tight">
-            WEB<span style={{ color: "var(--accent)" }}>JOURNEY</span>
-          </h1>
+          <h1 className="logo-capsule">CAPSULE</h1>
           <div className="tag" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
             {notes.length} note{notes.length !== 1 ? "s" : ""}
           </div>

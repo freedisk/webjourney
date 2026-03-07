@@ -1,4 +1,4 @@
-# WebJourney — App de Notes
+# Capsule — App de Notes
 
 ## Contexte
 

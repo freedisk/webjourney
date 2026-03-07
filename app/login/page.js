@@ -91,7 +91,7 @@ export default function LoginPage() {
             className="text-4xl font-black tracking-tight"
             style={{ color: "var(--text-primary)" }}
           >
-            WEB<span style={{ color: "var(--accent)" }}>JOURNEY</span>
+            <span className="logo-capsule">CAPSULE</span>
           </h1>
           <p className="text-xs font-bold uppercase tracking-widest mt-2" style={{ color: "var(--text-muted)" }}>
             Connexion
