@@ -52,6 +52,9 @@ export default function Home() {
   const [succes, setSucces] = useState(null);
   const [sombre, setSombre] = useState(false);
 
+  // --- Taille des caractères notes ---
+  const [noteFontSize, setNoteFontSize] = useState(14);
+
   // Édition inline
   const [editionId, setEditionId] = useState(null);
   const [editionTitre, setEditionTitre] = useState("");
@@ -154,6 +157,13 @@ export default function Home() {
   // Vérifier la session et charger les données au montage
   useEffect(() => {
     setSombre(document.documentElement.classList.contains("dark"));
+
+    // Restaurer la taille des caractères depuis localStorage
+    const savedSize = localStorage.getItem("noteFontSize");
+    if (savedSize) {
+      const parsed = parseInt(savedSize, 10);
+      if (!isNaN(parsed) && parsed >= 11 && parsed <= 22) setNoteFontSize(parsed);
+    }
 
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -313,6 +323,41 @@ export default function Home() {
     setSombre(isDark);
     document.documentElement.classList.toggle("dark", isDark);
     localStorage.setItem("theme", isDark ? "dark" : "light");
+  }
+
+  // Changer la taille des caractères des notes
+  function changerTailleNote(delta) {
+    setNoteFontSize((prev) => {
+      const next = Math.max(11, Math.min(22, prev + delta));
+      localStorage.setItem("noteFontSize", String(next));
+      return next;
+    });
+  }
+
+  // Boutons A- / A+ (réutilisable)
+  function renderBoutonsTaille() {
+    return (
+      <div className="flex items-center gap-0.5">
+        <button
+          onClick={() => changerTailleNote(-1)}
+          disabled={noteFontSize <= 11}
+          className="btn-brutal ghost disabled:opacity-30"
+          style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", fontWeight: 800 }}
+          title="R\u00e9duire la taille du texte"
+        >
+          A-
+        </button>
+        <button
+          onClick={() => changerTailleNote(1)}
+          disabled={noteFontSize >= 22}
+          className="btn-brutal ghost disabled:opacity-30"
+          style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", fontWeight: 800 }}
+          title="Augmenter la taille du texte"
+        >
+          A+
+        </button>
+      </div>
+    );
   }
 
   // === CHARGEMENT DES DONNÉES ===
@@ -1163,6 +1208,7 @@ export default function Home() {
               {note.titre}
             </h2>
           )}
+          {!enEdition && renderBoutonsTaille()}
         </div>
 
         {/* Body */}
@@ -1216,7 +1262,7 @@ export default function Home() {
               )}
 
               {note.contenu ? (
-                <div className="text-sm leading-relaxed">
+                <div className="leading-relaxed" style={{ fontSize: noteFontSize + "px" }}>
                   <MarkdownRenderer content={note.contenu} />
                 </div>
               ) : (
@@ -1375,7 +1421,10 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {renderTagsBadges(note)}
+                <div className="flex items-center justify-between mb-2">
+                  {renderTagsBadges(note)}
+                  {renderBoutonsTaille()}
+                </div>
 
                 {note.share_token && (
                   <div
@@ -1411,7 +1460,7 @@ export default function Home() {
                 )}
 
                 {note.contenu ? (
-                  <div className="text-sm leading-relaxed">
+                  <div className="leading-relaxed" style={{ fontSize: noteFontSize + "px" }}>
                     <MarkdownRenderer content={note.contenu} />
                   </div>
                 ) : (
@@ -1787,6 +1836,7 @@ export default function Home() {
                 >
                   {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
                 </button>
+                {renderBoutonsTaille()}
               </div>
             </div>
             {/* Filtres tags */}
@@ -1899,8 +1949,9 @@ export default function Home() {
                     {note.contenu && (
                       <div onClick={(e) => e.stopPropagation()}>
                         <div
-                          className="text-xs leading-relaxed"
+                          className="leading-relaxed"
                           style={{
+                            fontSize: noteFontSize + "px",
                             overflow: "hidden",
                             maxHeight: isDepliee ? "none" : "4.5em",
                             transition: "max-height 0.3s ease",

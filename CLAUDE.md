@@ -138,6 +138,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Raccourcis clavier (N=ouvre modale création, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
+- [x] Taille des caractères : boutons A- / A+ dans modale et vue principale, plage 11-22px, persistée en localStorage (clé noteFontSize)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
