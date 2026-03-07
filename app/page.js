@@ -1509,18 +1509,6 @@ export default function Home() {
                   <button onClick={() => dupliquerNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
                     Dupliquer
                   </button>
-                  <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                    Copier
-                  </button>
-                  <button
-                    onClick={() => resumerNote(note)}
-                    disabled={!note.contenu || resumes[note.id]?.chargement}
-                    className="btn-brutal ghost disabled:opacity-30"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
-                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                  >
-                    Résumer
-                  </button>
                   {note.share_token ? (
                     <>
                       <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Copier le lien de partage">
@@ -1535,6 +1523,18 @@ export default function Home() {
                       {"\uD83D\uDD17"} Partager
                     </button>
                   )}
+                  <button
+                    onClick={() => resumerNote(note)}
+                    disabled={!note.contenu || resumes[note.id]?.chargement}
+                    className="btn-brutal ghost disabled:opacity-30"
+                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
+                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
+                  >
+                    Résumer
+                  </button>
+                  <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                    Copier
+                  </button>
                 </div>
             )}
           </div>
