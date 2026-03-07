@@ -1575,15 +1575,14 @@ export default function Home() {
 
       {/* === HEADER === */}
       <header className="glass-card p-4 flex items-center justify-between flex-wrap gap-3 m-3 mb-0" style={{ flexShrink: 0 }}>
-        <div className="flex items-center gap-4">
+        {/* ZONE GAUCHE — Identité + navigation */}
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-black tracking-tight">
             WEB<span style={{ color: "var(--accent)" }}>JOURNEY</span>
           </h1>
           <div className="tag" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
             {notes.length} note{notes.length !== 1 ? "s" : ""}
           </div>
-
-          {/* Toggle Card / List */}
           <div className="flex items-center" style={{ border: "2px solid var(--brutal-border)", borderRadius: "2px" }}>
             <button
               onClick={() => { setViewMode("card"); annulerEdition(); }}
@@ -1643,34 +1642,46 @@ export default function Home() {
               </svg>
             </button>
           </div>
-          <button
-            onClick={() => setModeCreation(true)}
-            className="btn-brutal primary"
-            style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-          >
-            + Nouvelle note
-          </button>
-          <button
-            onClick={() => setPanneauTagsOuvert(!panneauTagsOuvert)}
-            className="btn-brutal ghost"
-            style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-          >
-            {panneauTagsOuvert ? "Fermer tags" : "G\u00e9rer tags"}
-          </button>
-          <button onClick={() => setStatsOuvert(true)} className="btn-brutal ghost" style={{ fontSize: "0.9rem", padding: "0.35rem 0.55rem" }} title="Statistiques">
-            {"\uD83D\uDCCA"}
-          </button>
-          <button onClick={toggleTheme} className="btn-brutal ghost" style={{ fontSize: "1rem", padding: "0.35rem 0.55rem" }}>
-            {sombre ? "\u2600" : "\u263E"}
-          </button>
         </div>
+
+        {/* ZONE CENTRE — Action principale */}
+        <button
+          onClick={() => setModeCreation(true)}
+          className="btn-brutal primary"
+          style={{ fontSize: "0.8rem", padding: "0.5rem 1.2rem", letterSpacing: "0.06em" }}
+        >
+          + NOUVELLE NOTE
+        </button>
+
+        {/* ZONE DROITE — Actions secondaires + session */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
-            {utilisateur.email}
-          </span>
-          <button onClick={handleLogout} className="btn-brutal danger" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-            Déconnexion
-          </button>
+          {/* Groupe 1 — Outils */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPanneauTagsOuvert(!panneauTagsOuvert)}
+              className="btn-brutal ghost"
+              style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+            >
+              {panneauTagsOuvert ? "Fermer tags" : "Gérer tags"}
+            </button>
+            <button onClick={() => setStatsOuvert(true)} className="btn-brutal ghost" style={{ fontSize: "0.9rem", padding: "0.35rem 0.55rem" }} title="Statistiques">
+              {"\uD83D\uDCCA"}
+            </button>
+            <button onClick={toggleTheme} className="btn-brutal ghost" style={{ fontSize: "1rem", padding: "0.35rem 0.55rem" }}>
+              {sombre ? "\u2600" : "\u263E"}
+            </button>
+          </div>
+          {/* Séparateur */}
+          <div style={{ width: "1px", height: "1.5rem", background: "var(--panel-border)", flexShrink: 0 }} />
+          {/* Groupe 2 — Session */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
+              {utilisateur.email}
+            </span>
+            <button onClick={handleLogout} className="btn-brutal danger" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+              Déconnexion
+            </button>
+          </div>
         </div>
       </header>
 

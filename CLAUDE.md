@@ -139,7 +139,7 @@ Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environmen
 - [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
 - [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
 - [x] Taille des caractères : boutons A- / A+ dans chaque card, modale et panneau détail list view, plage 11-22px, persistée en localStorage (clé noteFontSize)
-- [x] Header réorganisé : boutons d'action à gauche (toggles vue, + Nouvelle note, Gérer tags, 📊 stats, thème), utilisateur + Déconnexion à droite
+- [x] Header 3 zones : gauche (logo + badge + toggles vue), centre (+ NOUVELLE NOTE, action primaire isolée), droite (Gérer tags | 📊 | thème · séparateur · email + Déconnexion)
 - [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
 - [x] RLS complet sur toutes les tables
 - [x] Déploiement auto via `git push` → Vercel
