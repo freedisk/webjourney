@@ -1650,26 +1650,26 @@ export default function Home() {
           >
             + Nouvelle note
           </button>
-        </div>
-        <div className="flex items-center gap-3">
           <button
             onClick={() => setPanneauTagsOuvert(!panneauTagsOuvert)}
             className="btn-brutal ghost"
             style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
           >
-            {panneauTagsOuvert ? "Fermer tags" : "Gérer tags"}
+            {panneauTagsOuvert ? "Fermer tags" : "G\u00e9rer tags"}
           </button>
-          <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
-            {utilisateur.email}
-          </span>
           <button onClick={() => setStatsOuvert(true)} className="btn-brutal ghost" style={{ fontSize: "0.9rem", padding: "0.35rem 0.55rem" }} title="Statistiques">
             {"\uD83D\uDCCA"}
           </button>
           <button onClick={toggleTheme} className="btn-brutal ghost" style={{ fontSize: "1rem", padding: "0.35rem 0.55rem" }}>
             {sombre ? "\u2600" : "\u263E"}
           </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
+            {utilisateur.email}
+          </span>
           <button onClick={handleLogout} className="btn-brutal danger" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-            Quitter
+            D\u00e9connexion
           </button>
         </div>
       </header>
