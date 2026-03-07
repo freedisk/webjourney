@@ -1938,7 +1938,7 @@ export default function Home() {
 
                     {/* Contenu avec accordéon */}
                     {note.contenu && (
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div>
                         <div
                           className="leading-relaxed"
                           style={{
@@ -1952,7 +1952,7 @@ export default function Home() {
                         </div>
                         {contenuLong && (
                           <button
-                            onClick={() => setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] }))}
+                            onClick={(e) => { e.stopPropagation(); setNotesDepliees((prev) => ({ ...prev, [note.id]: !prev[note.id] })); }}
                             className="text-xs font-bold mt-1"
                             style={{ color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                           >
