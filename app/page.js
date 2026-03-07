@@ -1836,7 +1836,6 @@ export default function Home() {
                 >
                   {triAscendant ? "\u2191 Ancien" : "\u2193 Récent"}
                 </button>
-                {renderBoutonsTaille()}
               </div>
             </div>
             {/* Filtres tags */}
@@ -2001,6 +2000,7 @@ export default function Home() {
 
                     {/* Boutons d'action */}
                     <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-2" style={{ borderTop: "1px solid var(--panel-border)" }} onClick={(e) => e.stopPropagation()}>
+                      {renderBoutonsTaille()}
                       <button
                         onClick={() => toggleEpingle(note)}
                         className="btn-brutal ghost"
