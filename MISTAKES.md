@@ -125,6 +125,22 @@ présente après correction afin d'éviter la répétition du problème.
   `--file` ou stdin pour le SQL long et typer explicitement les agrégats d'audit.
 - **Statut** : contourné ; installation Docker suivie par `TOOL-002`.
 
+## M-010 — Initialisations Supabase CLI concurrentes
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : `migration list` et l'audit SQL lancés simultanément sont restés
+  bloqués sur `Initialising login role...`, alors qu'un dry-run parallèle avait
+  déjà obtenu la connexion.
+- **Cause** : concurrence probable lors de l'initialisation du rôle de connexion
+  par deux processus CLI liés au même profil local.
+- **Impact** : deux lectures sans écriture ont été interrompues ; aucune
+  modification de base ni perte de preuve.
+- **Correction** : arrêt ciblé des deux processus, puis commandes rejouées
+  séquentiellement avec succès en environ quatre secondes chacune.
+- **Prévention** : sérialiser les commandes Supabase CLI qui initialisent une
+  connexion liée ; paralléliser seulement les contrôles sans session partagée.
+- **Statut** : corrigé ; procédure inscrite dans ce registre.
+
 ## Modèle d'entrée
 
 ```markdown

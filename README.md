@@ -7,7 +7,8 @@ Application personnelle de notes construite avec Next.js, Supabase et Vercel.
 Capsule gère l'authentification, le Markdown, les tags, trois vues (cartes,
 liste et Kanban), le partage public par token, les statistiques et les résumés
 Anthropic. Les notes peuvent également contenir des images privées ajoutées par
-fichier ou par copier/coller.
+sélection, copier/coller ou glisser-déposer. Elles sont optimisées localement,
+accompagnées d'une progression et consultables dans une galerie plein écran.
 
 Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
 d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
@@ -25,7 +26,7 @@ ligne.
 
 ## Démarrage local
 
-Pré-requis : Node.js 20.9 minimum et npm 10 minimum.
+Pré-requis : Node.js 24 (version de référence `24.19.0`) et npm 11.
 
 ```bash
 npm install
@@ -87,6 +88,7 @@ npm test                # tests unitaires Vitest
 npm run build           # build de production
 npm run validate        # lint + tests + build
 npm run security:audit  # audit complet des dépendances
+npm run ops:audit-images # rapport read-only Markdown / métadonnées / Storage
 ```
 
 ## Structure essentielle
@@ -100,13 +102,18 @@ app/
   share/[token]/page.js      lecture publique et signature serveur
 components/
   PWARegistration.js         enregistrement du service worker
-  NoteContentEditor.js       texte, fichier, collage et aperçus
-  MarkdownRenderer.js        Markdown et images signées
+  NoteContentEditor.js       texte, sélection, collage, dépôt et progression
+  MarkdownRenderer.js        Markdown et galerie d'images signées
+  ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
   note-images.js             format stable et validations
+  image-compression.js       optimisation WebP locale et garde-fous
   note-image-storage.js      upload, copie, suppression, signature
+  note-image-audit.mjs       classification d'intégrité read-only
   supabase.js                client navigateur
   supabase-admin.js          client serveur à clé secrète
+scripts/
+  audit-note-images.mjs      audit opératoire du bucket privé
 supabase/migrations/         schéma et politiques versionnés
 supabase/schemas/            photographie déclarative de production
 supabase/tests/              audit SQL non destructif

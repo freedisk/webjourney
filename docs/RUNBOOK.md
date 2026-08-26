@@ -14,6 +14,9 @@ npm run validate
 Lire `MEMORY.md`, le backlog et les dernières entrées du devbook. Vérifier les
 variables sans afficher leurs valeurs.
 
+Le runtime de référence est Node.js `24.19.0` avec npm 11. Les fichiers `.nvmrc`,
+`.node-version`, `package.json` et le workflow CI doivent rester cohérents.
+
 ## 2. Développement local
 
 ```powershell
@@ -111,7 +114,20 @@ Invoke-WebRequest https://webjourney-one.vercel.app/offline
 Puis réaliser une vérification authentifiée non destructive et, si le périmètre
 le demande, la recette spécialisée images ou PWA.
 
-## 6. Rollback applicatif
+## 6. Audit d'intégrité des images
+
+```powershell
+npm run ops:audit-images
+```
+
+La commande compare les références Markdown, `note_images` et les objets du
+bucket privé. Elle est strictement read-only, n'affiche aucun contenu de note et
+retourne le code 2 si une incohérence est trouvée. `-- --details` ajoute les
+identifiants techniques nécessaires au diagnostic ; il ne doit pas être copié
+dans un journal public. Tout nettoyage reste une opération séparée, revue et
+explicitement autorisée.
+
+## 7. Rollback applicatif
 
 1. Identifier le dernier déploiement Vercel sain.
 2. Réassigner/promouvoir ce déploiement selon la procédure Vercel.
@@ -122,7 +138,7 @@ le demande, la recette spécialisée images ou PWA.
 Les migrations de production sont forward-only. Une correction de schéma est
 une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
 
-## 7. Incident Supabase
+## 8. Incident Supabase
 
 1. Stopper les nouvelles écritures applicatives si la corruption est possible.
 2. Identifier la cible et l'heure exacte.
@@ -133,7 +149,7 @@ une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
 7. Vérifier RLS et accès croisés avec deux utilisateurs.
 8. Documenter dans devbook, mistakes et journal.
 
-## 8. Incident secret exposé
+## 9. Incident secret exposé
 
 1. Révoquer ou faire tourner immédiatement le secret.
 2. Mettre à jour Vercel et les environnements autorisés.
@@ -142,7 +158,7 @@ une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
    procédure dédiée si un secret a été commité.
 5. Vérifier les accès Supabase/Anthropic suspects.
 
-## 9. Journalisation de fin
+## 10. Journalisation de fin
 
 Avant clôture :
 

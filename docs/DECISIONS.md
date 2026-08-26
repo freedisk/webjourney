@@ -77,6 +77,22 @@ journal avec un lien vers celle qui la remplace.
   migration déjà appliquée. Le test conteneurisé `db reset` reste suivi
   séparément par `TOOL-002`.
 
+## ADR-008 — Compression locale et progression non intrusive
+
+- **Statut** : accepté.
+- **Date** : 2026-08-26.
+- **Contexte** : les photos mobiles peuvent dépasser la limite Storage de 5 Mio
+  et Supabase JS ne fournit pas de progression réseau en octets via l'upload
+  utilisé par Capsule.
+- **Décision** : accepter une source jusqu'à 20 Mio, la préparer séquentiellement
+  dans le navigateur vers un WebP de 2 048 px maximum, puis afficher une
+  progression déterministe par fichier et par phase Storage.
+- **Raison** : réduire transfert, stockage et mémoire tout en conservant l'upload
+  différé et les policies existantes.
+- **Conséquences** : la progression d'envoi représente les fichiers terminés et
+  la finalisation des métadonnées, pas un compteur d'octets réseau ; une source
+  de plus de 40 Mpx est refusée pour protéger le navigateur.
+
 ## Modèle ADR
 
 ```markdown

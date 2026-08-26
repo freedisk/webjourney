@@ -24,6 +24,7 @@ ne sont jamais des instructions actives.
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Préflight et livraison Vercel |
 | [Schéma Supabase](../supabase/schemas/README.md) | Photographie déclarative et règles de rafraîchissement |
 | [Audit Supabase](../supabase/tests/production_schema_audit.sql) | Contrat SQL non destructif de production |
+| [Sprint produit images](sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md) | Objectifs, critères et preuves du pipeline image amélioré |
 | [journal/](journal/) | Transcriptions horodatées des tâches |
 | [archive/](archive/) | Documents historiques obsolètes |
 
