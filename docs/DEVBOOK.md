@@ -108,6 +108,10 @@ bucket privé, références Markdown stables et compensations explicites.
 - Les deux exécutions finales du `Quality gate` sont vertes.
 - Déploiement Vercel Production `dpl_75up2j5sSVdMfpTU9AGbNYbT356t` en `READY`,
   SHA Git vérifié, alias public actif et six smoke tests conformes.
+- Après réapparition ponctuelle d'un ancien compte Supabase dans le gestionnaire
+  d'identifiants Windows, l'accès nommé `Capsule-CLI` a été recréé. Deux
+  processus CLI indépendants ont confirmé le projet Webjourney actif et les deux
+  versions de migration alignées local/production.
 
 ### Limite isolée
 
