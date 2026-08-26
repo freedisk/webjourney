@@ -86,11 +86,15 @@ présente après correction afin d'éviter la répétition du problème.
 - **Cause** : authentifications et contrôle navigateur indépendants du dépôt.
 - **Impact** : délais opérationnels, sans modification incorrecte.
 - **Correction** : réauthentification Vercel et usage des identifiants Git déjà
-  authentifiés pour l'API GitHub.
+  authentifiés pour l'API GitHub. Pour Supabase, un ancien compte CLI est
+  redevenu actif en fin de session ; une nouvelle connexion nommée
+  `Capsule-CLI` a été créée et vérifiée dans deux processus séparés sur le projet
+  Webjourney et son historique de migrations.
 - **Prévention** : vérifier les CLI en lecture seule avant une release et garder
   une voie API authentifiée sans afficher les jetons ; isoler et nommer les
   nouveaux accès persistants lorsque le CLI le permet.
-- **Statut** : surveillé.
+- **Statut** : corrigé pour cette session ; à surveiller si plusieurs comptes
+  Supabase partagent de nouveau l'identifiant générique du gestionnaire Windows.
 
 ## M-008 — Dette qualité et sécurité non bloquante à l'origine
 
