@@ -5,6 +5,17 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### Expérience images
+
+- Compression WebP locale, limite source de 20 Mio, dimension maximale de
+  2 048 px et garde-fou contre les images démesurées.
+- Ajout par glisser-déposer, progression de préparation/envoi et erreurs par
+  fichier sans abandonner les fichiers valides.
+- Galerie responsive avec visionneuse plein écran, navigation clavier et geste
+  horizontal.
+- Rapport d'intégrité read-only entre Markdown, métadonnées et Storage privé.
+- Runtime de développement, CI et hébergement verrouillé sur Node 24 / npm 11.
+
 ### Documentation
 
 - Journal horodaté reconstitué depuis le début de la tâche Codex.

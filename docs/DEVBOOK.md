@@ -119,6 +119,65 @@ Docker Desktop n'est pas installé sur ce poste ; le `db reset` conteneurisé es
 donc suivi séparément par `TOOL-002`. Cette absence n'a pas bloqué la capture
 stricte, la validation transactionnelle ni l'activation de l'historique CLI.
 
+## 2026-08-26 — Sprint produit images
+
+### Objectif
+
+Améliorer l'acquisition et la consultation des images sans changer le schéma
+Supabase ni les invariants de confidentialité et d'upload différé.
+
+### Changements
+
+- Pipeline navigateur : sources JPEG/PNG/WebP jusqu'à 20 Mio, décodage protégé
+  à 40 mégapixels, réduction à 2 048 px et tentatives WebP jusqu'à 5 Mio.
+- Ajout par sélection, copier/coller ou glisser-déposer, traitement séquentiel,
+  erreurs par fichier et progression de préparation puis de sauvegarde.
+- Cartes d'aperçu enrichies et visionneuse plein écran avec compteur, clavier,
+  geste horizontal, confinement/restitution du focus et original signé.
+- Progression Storage par phase/fichier et compensation conservée ; le callback
+  d'interface ne peut pas interrompre l'opération.
+- `OPS-001` : audit read-only des références Markdown, métadonnées et objets du
+  bucket, avec classificateur pur testé et commande d'exploitation.
+- `TOOL-001` : Node 24.19 / npm 11 verrouillés par fichiers de version et
+  métadonnées package.
+- Documentation images, architecture, décisions, tests, runbook et backlog
+  synchronisés.
+
+### Validation locale et distante
+
+- `npm run validate` : ESLint propre, 5 fichiers et 31/31 tests, build Next.js
+  16.3.3 réussi.
+- `npm run security:audit -- --audit-level=high` : zéro vulnérabilité.
+- Recette Chrome réelle : PNG 3 200×2 000 vers WebP 2 048×1 280, sous la limite,
+  Markdown inséré, aperçu et fermeture de la visionneuse par `Échap`.
+- Recette authentifiée à deux images : rendu, compteur, navigation et édition
+  validés ; objets, note et compte synthétiques ensuite supprimés et vérifiés.
+- `npm run ops:audit-images` sur la production : 20 notes, 1 métadonnée,
+  1 objet Storage et zéro incohérence dans les six catégories.
+- Supabase : deux migrations alignées, dry-run vide et audit de schéma 12/12.
+- Smoke build local : `/`, `/login`, manifeste, service worker et `/offline` en
+  200 ; `/api/resumer` sans session en 401.
+- PR #6 ouverte sur `66a8ca6` ; `Quality gate`, Vercel Preview et commentaire
+  Preview tous verts avant le commit documentaire de preuve.
+
+### Décisions
+
+- Pas de migration : le contrat final reste JPEG/PNG/WebP, 5 Mio et bucket
+  privé existant.
+- La progression indique des phases et fichiers ; l'API Supabase ne publie pas
+  de mesure fiable des octets envoyés.
+- Aucun nettoyage automatique des orphelins ; toute suppression exige une revue
+  et une autorisation distinctes.
+- `QA-001`, `SEC-001`, `OPS-002` et la corbeille restent séparés : ils exigent
+  respectivement une cible de test isolée, une politique de quota, une solution
+  d'observabilité et une règle de rétention.
+
+### Références
+
+- Branche : `codex/image-product-sprint`.
+- Pull request : GitHub #6.
+- Sprint : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
+
 ## Modèle d'entrée
 
 ```markdown

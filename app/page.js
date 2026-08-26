@@ -49,6 +49,24 @@ const KANBAN_COLONNES = [
   { id: "done", nom: "Termin\u00e9", couleur: "var(--success)" },
 ];
 
+function formatImageOperationProgress(progress) {
+  const percent = Math.max(0, Math.min(100, progress.percent || 0));
+  if (progress.phase === "metadata") {
+    return { percent, label: "Finalisation de la galerie…" };
+  }
+  if (progress.phase === "rollback") {
+    return { percent, label: "Annulation de l'envoi incomplet…" };
+  }
+  if (progress.phase === "complete") {
+    return { percent: 100, label: "Images prêtes" };
+  }
+  const action = progress.phase === "copying" ? "Copie" : "Envoi";
+  return {
+    percent,
+    label: `${action} de l'image ${progress.current}/${progress.total}`,
+  };
+}
+
 export default function Home() {
   const router = useRouter();
   const [utilisateur, setUtilisateur] = useState(null);
@@ -126,7 +144,10 @@ export default function Home() {
   const [creationPendingImages, setCreationPendingImages] = useState([]);
   const [editionPendingImages, setEditionPendingImages] = useState([]);
   const [noteSaving, setNoteSaving] = useState(false);
+  const [imagePreparing, setImagePreparing] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(null);
   const [imageFeatureError, setImageFeatureError] = useState(null);
+  const noteBusy = noteSaving || imagePreparing;
 
   // Obtenir la couleur de fond d'une note selon le thème actuel
   function getCouleurFond(couleur) {
@@ -254,7 +275,7 @@ export default function Home() {
     };
   // Les fonctions de fermeture lisent volontairement les mêmes états listés ici.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur, editionPendingImages.length, creationPendingImages.length, noteSaving]);
+  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur, editionPendingImages.length, creationPendingImages.length, noteBusy]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
@@ -482,7 +503,7 @@ export default function Home() {
   // === SÉLECTION DE NOTE (list view, avec protection édition) ===
 
   function selectionnerNote(noteId) {
-    if (noteSaving) return;
+    if (noteBusy) return;
     if (editionId) {
       const note = notes.find((n) => n.id === selectedNoteId);
       const titreModifie = note && editionTitre !== note.titre;
@@ -502,7 +523,7 @@ export default function Home() {
 
   // Retour à la liste sur mobile (list view)
   function retourListe() {
-    if (noteSaving) return;
+    if (noteBusy) return;
     if (editionId) {
       const note = notes.find((n) => n.id === selectedNoteId);
       const titreModifie = note && editionTitre !== note.titre;
@@ -520,7 +541,7 @@ export default function Home() {
 
   // Fermer la modale (card view, avec protection édition)
   function fermerModale() {
-    if (noteSaving) return;
+    if (noteBusy) return;
     if (editionId) {
       const note = notes.find((n) => n.id === noteDetailId);
       const titreModifie = note && editionTitre !== note.titre;
@@ -539,7 +560,7 @@ export default function Home() {
 
   // Fermer la modale de création (sans créer, avec protection)
   function fermerModaleCreation() {
-    if (noteSaving) return;
+    if (noteBusy) return;
     const modifie = titre.trim() !== "" || contenu.trim() !== "" || couleurNote !== null || creationPendingImages.length > 0;
     if (modifie) {
       if (!window.confirm("Des modifications non sauvegard\u00e9es seront perdues. Quitter quand m\u00eame ?")) {
@@ -558,9 +579,10 @@ export default function Home() {
   async function ajouterNote(e) {
     if (e) e.preventDefault();
     setErreur(null);
-    if (!titre.trim() || noteSaving) return;
+    if (!titre.trim() || noteBusy) return;
 
     setNoteSaving(true);
+    setImageUploadProgress({ percent: 3, label: "Création de la note…" });
     const noteId = crypto.randomUUID();
     let noteCreated = false;
 
@@ -582,7 +604,10 @@ export default function Home() {
         noteId,
         content: contenu,
         pendingImages: creationPendingImages,
+        onProgress: (progress) => setImageUploadProgress(formatImageOperationProgress(progress)),
       });
+
+      setImageUploadProgress({ percent: 96, label: "Actualisation de la galerie…" });
 
       setTitre("");
       setContenu("");
@@ -598,12 +623,13 @@ export default function Home() {
       setErreur("Erreur lors de l'ajout : " + saveError.message);
     } finally {
       setNoteSaving(false);
+      setImageUploadProgress(null);
     }
   }
 
   async function supprimerNote(noteId) {
     setErreur(null);
-    if (noteSaving) return;
+    if (noteBusy) return;
     setNoteSaving(true);
 
     try {
@@ -636,8 +662,9 @@ export default function Home() {
 
   async function dupliquerNote(note) {
     setErreur(null);
-    if (noteSaving) return;
+    if (noteBusy) return;
     setNoteSaving(true);
+    setImageUploadProgress({ percent: 3, label: "Création de la copie…" });
 
     const targetNoteId = crypto.randomUUID();
     const sourceImages = noteImages[note.id] || [];
@@ -668,6 +695,7 @@ export default function Home() {
         targetNoteId,
         content: note.contenu || "",
         sourceImages,
+        onProgress: (progress) => setImageUploadProgress(formatImageOperationProgress(progress)),
       });
       duplicatedImages = duplicateResult.images;
 
@@ -703,6 +731,7 @@ export default function Home() {
       setErreur("Erreur lors de la duplication : " + duplicateError.message);
     } finally {
       setNoteSaving(false);
+      setImageUploadProgress(null);
     }
   }
 
@@ -725,8 +754,9 @@ export default function Home() {
 
   async function sauvegarderEdition(noteId) {
     setErreur(null);
-    if (!editionTitre.trim() || noteSaving) return;
+    if (!editionTitre.trim() || noteBusy) return;
     setNoteSaving(true);
+    setImageUploadProgress({ percent: 3, label: "Préparation de la sauvegarde…" });
 
     let uploadedImages = [];
 
@@ -737,7 +767,10 @@ export default function Home() {
         noteId,
         content: editionContenu,
         pendingImages: editionPendingImages,
+        onProgress: (progress) => setImageUploadProgress(formatImageOperationProgress(progress)),
       });
+
+      setImageUploadProgress({ percent: 92, label: "Sauvegarde de la note…" });
 
       const { error } = await supabase
         .from("notes")
@@ -773,6 +806,7 @@ export default function Home() {
       setErreur("Erreur lors de la modification : " + saveError.message);
     } finally {
       setNoteSaving(false);
+      setImageUploadProgress(null);
     }
   }
 
@@ -1111,15 +1145,15 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => sauvegarderEdition(note.id)}
-                  disabled={noteSaving}
+                  disabled={noteBusy}
                   className="btn-brutal primary disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
-                  {noteSaving ? "Sauvegarde..." : "Sauver"}
+                  {imagePreparing ? "Optimisation..." : noteSaving ? "Sauvegarde..." : "Sauver"}
                 </button>
                 <button
                   onClick={annulerEdition}
-                  disabled={noteSaving}
+                  disabled={noteBusy}
                   className="btn-brutal ghost disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
@@ -1427,6 +1461,8 @@ export default function Home() {
                 minHeight="200px"
                 disabled={noteSaving}
                 imageDisabled={Boolean(imageFeatureError)}
+                uploadProgress={imageUploadProgress}
+                onProcessingChange={setImagePreparing}
               />
               {renderCouleurEditor()}
             </div>
@@ -1627,6 +1663,8 @@ export default function Home() {
                   minHeight="150px"
                   disabled={noteSaving}
                   imageDisabled={Boolean(imageFeatureError)}
+                  uploadProgress={imageUploadProgress}
+                  onProcessingChange={setImagePreparing}
                 />
                 {renderCouleurEditor()}
               </div>
@@ -1696,10 +1734,10 @@ export default function Home() {
           <div className="modal-footer space-y-2">
             {enEdition ? (
               <div className="flex items-center gap-2">
-                <button onClick={() => sauvegarderEdition(note.id)} disabled={noteSaving} className="btn-brutal primary disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                  {noteSaving ? "Sauvegarde..." : "Sauver"}
+                <button onClick={() => sauvegarderEdition(note.id)} disabled={noteBusy} className="btn-brutal primary disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                  {imagePreparing ? "Optimisation..." : noteSaving ? "Sauvegarde..." : "Sauver"}
                 </button>
-                <button onClick={annulerEdition} disabled={noteSaving} className="btn-brutal ghost disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                <button onClick={annulerEdition} disabled={noteBusy} className="btn-brutal ghost disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
                   Annuler
                 </button>
               </div>
@@ -2022,7 +2060,7 @@ export default function Home() {
             style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
             role="status"
           >
-            Sauvegarde des données et des images en cours...
+            {imageUploadProgress?.label || "Sauvegarde des données et des images en cours..."}
           </div>
         )}
       </div>
@@ -2778,6 +2816,8 @@ export default function Home() {
                     minHeight="120px"
                     disabled={noteSaving}
                     imageDisabled={Boolean(imageFeatureError)}
+                    uploadProgress={imageUploadProgress}
+                    onProcessingChange={setImagePreparing}
                   />
                 </div>
                 <div>
@@ -2822,15 +2862,15 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => ajouterNote()}
-                  disabled={!titre.trim() || noteSaving}
+                  disabled={!titre.trim() || noteBusy}
                   className="btn-brutal primary disabled:opacity-30"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
-                  {noteSaving ? "Enregistrement..." : "Créer"}
+                  {imagePreparing ? "Optimisation..." : noteSaving ? "Enregistrement..." : "Créer"}
                 </button>
                 <button
                   onClick={fermerModaleCreation}
-                  disabled={noteSaving}
+                  disabled={noteBusy}
                   className="btn-brutal ghost disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >

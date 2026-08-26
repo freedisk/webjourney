@@ -14,18 +14,25 @@ npm run security:audit -- --audit-level=high
 
 `npm test` couvre actuellement :
 
-- validation type/taille des images ;
+- validation des types et des limites source/finale des images ;
+- dimensionnement, compression WebP, tentatives de réduction et garde-fou pixels ;
 - création, parsing, insertion et remplacement des références Markdown ;
 - chemins Storage ;
-- upload filtré et compensation ;
+- upload filtré, progression et compensation ;
 - duplication et correspondance des URL signées ;
+- classification read-only des incohérences Markdown, métadonnées et Storage ;
 - manifeste, icônes et règles du service worker PWA.
 
 ### Recette navigateur authentifiée
 
 Elle reste obligatoire pour les flux Supabase. Utiliser `docs/IMAGES.md`, puis
-contrôler au minimum : connexion, note texte, collage, fichier, reload,
-duplication, suppression et partage.
+contrôler au minimum : connexion, note texte, collage, sélection, glisser-déposer,
+compression, progression, galerie, reload, duplication, suppression et partage.
+
+Quand la recette exige des écritures sur la production, utiliser uniquement un
+compte et des notes synthétiques temporaires. Supprimer dans cet ordre les objets
+Storage, les métadonnées, les notes et le compte, puis vérifier des compteurs à
+zéro. Ne jamais consigner les identifiants de test dans le journal.
 
 ### Smoke test production
 
@@ -54,6 +61,7 @@ Audit non destructif du contrat actuellement déployé :
 npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
 npx supabase migration list --linked
 npx supabase db push --dry-run --linked
+npm run ops:audit-images
 ```
 
 État de référence du 2026-08-26 : 12/12 invariants vrais, deux versions
@@ -88,6 +96,7 @@ Une release est refusée si :
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;
 - pas de test de charge sur les uploads ou `/api/resumer` ;
-- pas de contrôle automatisé des objets Storage orphelins.
+- le rapport automatisé des images orphelines est read-only ; aucun nettoyage
+  automatique n'est autorisé ;
 - Docker Desktop absent du poste de reprise ; le `db reset` local complet est
   suivi par `TOOL-002`.

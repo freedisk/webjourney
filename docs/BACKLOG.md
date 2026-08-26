@@ -9,10 +9,32 @@
 
 États : `TODO`, `IN_PROGRESS`, `REVIEW_REQUIRED`, `DONE`, `BLOCKED`.
 
-## En cours
+## En revue
 
-Aucun chantier actif après la clôture de `DB-001`. Sélectionner explicitement
-le prochain item avant de commencer une nouvelle évolution.
+### UX-001 — Pipeline image amélioré
+
+- **Priorité** : P2.
+- **ROI / effort** : élevé côté UX / 1–2 jours.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : compression locale, progression, glisser-déposer, erreurs
+  détaillées et galerie responsive accessible.
+- **Plan de sprint** : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
+
+### OPS-001 — Images orphelines
+
+- **Priorité** : P1.
+- **ROI / effort** : élevé / 1 jour.
+- **État** : `REVIEW_REQUIRED`.
+- **Sortie livrée** : rapport read-only Markdown / métadonnées / Storage,
+  code de sortie non nul en cas d'écart et aucune suppression automatique.
+
+### TOOL-001 — Verrouiller le runtime Node
+
+- **Priorité** : P2.
+- **ROI / effort** : moyen/élevé / 1–2 heures.
+- **État** : `REVIEW_REQUIRED`.
+- **Sortie livrée** : Node 24.19 et npm 11 cohérents entre fichiers de version,
+  `package.json` et CI.
 
 ## Prochaines priorités
 
@@ -32,14 +54,6 @@ le prochain item avant de commencer une nouvelle évolution.
 - **État** : `TODO`.
 - **Sortie** : limite par utilisateur, réponse 429, métriques et tests.
 
-### OPS-001 — Images orphelines
-
-- **Priorité** : P1.
-- **ROI / effort** : élevé / 1 jour.
-- **État** : `TODO`.
-- **Sortie** : rapport read-only puis nettoyage explicitement autorisé, sans
-  supprimer un objet encore référencé.
-
 ### OPS-002 — Observabilité
 
 - **Priorité** : P2.
@@ -47,13 +61,6 @@ le prochain item avant de commencer une nouvelle évolution.
 - **État** : `TODO`.
 - **Sortie** : erreurs serveur, uploads, signatures et compensations suivies
   sans contenu de note ni secret.
-
-### TOOL-001 — Verrouiller le runtime Node
-
-- **Priorité** : P2.
-- **ROI / effort** : moyen/élevé / 1–2 heures.
-- **État** : `TODO`.
-- **Sortie** : version Node cohérente entre développeur, CI et Vercel.
 
 ### TOOL-002 — Stack Supabase locale conteneurisée
 
@@ -64,13 +71,6 @@ le prochain item avant de commencer une nouvelle évolution.
   transaction PostgreSQL annulée. Docker n'est pas installé sur ce poste.
 - **Sortie** : Docker Desktop disponible, `supabase db reset` réussi depuis un
   environnement vierge, puis `supabase db lint` local archivé comme preuve.
-
-### UX-001 — Pipeline image amélioré
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé côté UX / 1–2 jours.
-- **État** : `TODO`.
-- **Périmètre** : compression, progression, glisser-déposer et erreurs détaillées.
 
 ### DATA-001 — Corbeille et restauration
 

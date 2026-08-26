@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { getImageIdFromSource } from "@/lib/note-images";
+import ImageLightbox from "@/components/ImageLightbox";
+import { extractImageReferences, getImageIdFromSource } from "@/lib/note-images";
 
 // Composants custom pour le rendu Markdown, compatibles brutalism + glassmorphism
 const markdownComponents = {
@@ -127,7 +131,17 @@ const markdownComponents = {
 };
 
 export default function MarkdownRenderer({ content, imageUrls = {}, compact = false }) {
+  const [activeImageId, setActiveImageId] = useState(null);
   if (!content) return null;
+
+  const galleryImages = extractImageReferences(content)
+    .map((reference) => ({
+      id: reference.id,
+      src: imageUrls[reference.id],
+      alt: reference.alt || "Image de la note",
+    }))
+    .filter((image) => Boolean(image.src));
+  const activeIndex = galleryImages.findIndex((image) => image.id === activeImageId);
 
   const components = {
     ...markdownComponents,
@@ -157,35 +171,28 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
         }
 
         return (
-          <span style={{ display: "block", margin: "0.6em 0" }}>
-            {/* L'URL signée est dynamique : next/image ne connaît pas ses dimensions. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={signedUrl}
-              alt={alt || "Image de la note"}
-              loading="lazy"
-              decoding="async"
-              style={{
-                display: "block",
-                width: "100%",
-                maxWidth: "100%",
-                maxHeight: compact ? "140px" : "70vh",
-                objectFit: "contain",
-                border: "2px solid var(--input-border)",
-                borderRadius: "3px",
-                background: "var(--panel-bg)",
+          <span className="markdown-note-image">
+            <button
+              type="button"
+              className={`markdown-note-image-button${compact ? " compact" : ""}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                setActiveImageId(imageId);
               }}
-            />
+              aria-label={`Agrandir ${alt || "l'image"}`}
+            >
+              {/* L'URL signée est dynamique : next/image ne connaît pas ses dimensions. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={signedUrl}
+                alt={alt || "Image de la note"}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="markdown-note-image-zoom" aria-hidden="true">Agrandir</span>
+            </button>
             {alt && !compact && (
-              <span
-                style={{
-                  display: "block",
-                  marginTop: "0.25em",
-                  color: "var(--text-muted)",
-                  fontSize: "0.72em",
-                  textAlign: "center",
-                }}
-              >
+              <span className="markdown-note-image-caption">
                 {alt}
               </span>
             )}
@@ -208,8 +215,14 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
   };
 
   return (
-    <div style={{ overflow: "hidden" }}>
+    <div className="markdown-renderer">
       <ReactMarkdown components={components}>{content}</ReactMarkdown>
+      <ImageLightbox
+        images={galleryImages}
+        activeIndex={activeIndex}
+        onChange={(index) => setActiveImageId(galleryImages[index]?.id || null)}
+        onClose={() => setActiveImageId(null)}
+      />
     </div>
   );
 }

@@ -51,9 +51,12 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `app/api/resumer/route.js` | Résumé IA | Auth avant appel externe |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |
+| `components/ImageLightbox.js` | Visionneuse clavier, boutons et geste horizontal | Reçoit uniquement blob local ou URL signée |
 | `components/StatsDrawer.js` | Agrégations et graphiques | Dépend de RLS sur trois tables |
 | `lib/note-images.js` | Format stable et validations pures | Testable sans Supabase |
+| `lib/image-compression.js` | Décodage, redimensionnement et WebP local | Source 20 Mio, sortie 5 Mio, garde mémoire 40 Mpx |
 | `lib/note-image-storage.js` | Upload, copie, suppression, signature | Compensation sur erreur |
+| `scripts/audit-note-images.mjs` | Audit read-only Markdown/SQL/Storage | Aucune méthode d'écriture ou suppression |
 | `lib/supabase.js` | Client navigateur | Variables publiques uniquement |
 | `lib/supabase-admin.js` | Client serveur secret | Import client interdit |
 | `public/sw.js` | Installation PWA et repli réseau | Aucune donnée privée en cache |
@@ -109,13 +112,16 @@ toute évolution.
 
 ### Création ou édition avec images
 
-1. Le fichier est validé localement : JPEG/PNG/WebP, 1 octet à 5 Mio.
-2. Un UUID et une référence `capsule-image/<uuid>` sont ajoutés au Markdown.
-3. L'aperçu reste un `blob:` local jusqu'à Sauver/Créer.
-4. La note existe avant l'upload afin de satisfaire la policy Storage.
-5. Le fichier est envoyé vers `<user>/<note>/<image>.<ext>`.
-6. La métadonnée est insérée dans `note_images`.
-7. En cas d'échec, les objets déjà envoyés sont supprimés en compensation.
+1. La source est validée localement : JPEG/PNG/WebP, 1 octet à 20 Mio.
+2. Elle est décodée séquentiellement, limitée à 2 048 px puis encodée en WebP
+   si une optimisation est utile ou nécessaire.
+3. Le fichier final est validé à 5 Mio maximum.
+4. Un UUID et une référence `capsule-image/<uuid>` sont ajoutés au Markdown.
+5. L'aperçu reste un `blob:` local jusqu'à Sauver/Créer.
+6. La note existe avant l'upload afin de satisfaire la policy Storage.
+7. Le fichier est envoyé vers `<user>/<note>/<image>.<ext>` avec progression par
+   fichier, puis la métadonnée est insérée dans `note_images`.
+8. En cas d'échec, les objets déjà envoyés sont supprimés en compensation.
 
 ### Duplication
 

@@ -11,11 +11,11 @@ const NOTE_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const IMAGE_ID = "11111111-1111-4111-8111-111111111111";
 const SECOND_IMAGE_ID = "22222222-2222-4222-8222-222222222222";
 
-function createUploadClient({ uploadError = null } = {}) {
+function createUploadClient({ uploadError = null, insertError = null } = {}) {
   const upload = vi.fn().mockResolvedValue({ error: uploadError });
   const remove = vi.fn().mockResolvedValue({ error: null });
   const insert = vi.fn((rows) => ({
-    select: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    select: vi.fn().mockResolvedValue({ data: insertError ? null : rows, error: insertError }),
   }));
 
   return {
@@ -32,8 +32,13 @@ function createUploadClient({ uploadError = null } = {}) {
 describe("envoi des images en attente", () => {
   it("n'envoie que les images encore référencées dans le Markdown", async () => {
     const { client, upload, insert } = createUploadClient();
+    const onProgress = vi.fn();
     const pendingImages = [
-      { id: IMAGE_ID, file: { name: "capture.png", type: "image/png", size: 1024 } },
+      {
+        id: IMAGE_ID,
+        originalName: "capture originale.png",
+        file: { name: "capture.webp", type: "image/webp", size: 1024 },
+      },
       { id: SECOND_IMAGE_ID, file: { name: "inutile.webp", type: "image/webp", size: 2048 } },
     ];
 
@@ -43,16 +48,29 @@ describe("envoi des images en attente", () => {
       noteId: NOTE_ID,
       content: createImageReference(IMAGE_ID, "Capture"),
       pendingImages,
+      onProgress,
     });
 
     expect(upload).toHaveBeenCalledTimes(1);
     expect(upload).toHaveBeenCalledWith(
-      `${USER_ID}/${NOTE_ID}/${IMAGE_ID}.png`,
+      `${USER_ID}/${NOTE_ID}/${IMAGE_ID}.webp`,
       pendingImages[0].file,
-      expect.objectContaining({ contentType: "image/png", upsert: false })
+      expect.objectContaining({ contentType: "image/webp", upsert: false })
     );
     expect(insert).toHaveBeenCalledTimes(1);
-    expect(rows[0]).toMatchObject({ id: IMAGE_ID, note_id: NOTE_ID, size_bytes: 1024 });
+    expect(rows[0]).toMatchObject({
+      id: IMAGE_ID,
+      note_id: NOTE_ID,
+      original_name: "capture originale.png",
+      size_bytes: 1024,
+    });
+    expect(onProgress.mock.calls.map(([progress]) => progress.phase)).toEqual([
+      "uploading",
+      "uploading",
+      "metadata",
+      "complete",
+    ]);
+    expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({ percent: 100 }));
   });
 
   it("ne crée aucune métadonnée quand aucune image n'est référencée", async () => {
@@ -68,6 +86,28 @@ describe("envoi des images en attente", () => {
     expect(rows).toEqual([]);
     expect(upload).not.toHaveBeenCalled();
     expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("supprime l'objet déjà envoyé si l'écriture des métadonnées échoue", async () => {
+    const { client, remove } = createUploadClient({
+      insertError: { message: "métadonnées indisponibles" },
+    });
+    const image = {
+      id: IMAGE_ID,
+      file: { name: "capture.png", type: "image/png", size: 1024 },
+    };
+
+    await expect(uploadPendingImages({
+      supabase: client,
+      userId: USER_ID,
+      noteId: NOTE_ID,
+      content: createImageReference(IMAGE_ID),
+      pendingImages: [image],
+    })).rejects.toThrow("métadonnées indisponibles");
+
+    expect(remove).toHaveBeenCalledWith([
+      `${USER_ID}/${NOTE_ID}/${IMAGE_ID}.png`,
+    ]);
   });
 });
 

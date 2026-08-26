@@ -16,12 +16,17 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 ## État validé au 2026-08-26
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
+- Pipeline image amélioré validé localement : glisser-déposer, compression WebP
+  2 048 px / 5 Mio, progression et visionneuse clavier/tactile ; livraison en
+  revue avant production.
 - Duplication et suppression d'images validées par recette utilisateur.
 - Bucket `note-images` privé, limite 5 Mio, JPEG/PNG/WebP.
 - Grants `note_images` pour `authenticated` limités à SELECT/INSERT/DELETE.
 - PWA installée et validée fonctionnelle sur iPad via Safari.
 - `main` protégé par PR et contrôle `Quality gate`.
-- Référence CI : lint, 21 tests, build Next.js et audit élevé.
+- Référence CI : lint, 31 tests, build Next.js et audit élevé.
+- Audit read-only des images disponible par `npm run ops:audit-images` ; état de
+  production observé propre le 2026-08-26.
 
 ## Invariants
 
@@ -37,7 +42,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 ## Environnement
 
 - Next.js 16.3.3, React 19.2.8, Supabase JS 2.112.4.
-- Node minimum déclaré : 20.9 ; GitHub Actions utilise Node 24.
+- Node de référence verrouillé : 24.19.0 avec npm 11 ; GitHub Actions utilise
+  la même version majeure.
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
@@ -66,6 +72,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 npm run dev
 npm run validate
 npm run security:audit -- --audit-level=high
+npm run ops:audit-images
 npx supabase migration list --linked
 npx supabase db push --dry-run --linked
 npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
@@ -77,5 +84,5 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 
 1. `QA-001` — E2E des parcours critiques.
 2. `SEC-001` — rate-limit du résumé Anthropic.
-3. `OPS-001` — détection des images orphelines et observabilité.
+3. `OPS-002` — observabilité sans données de note ni secret.
 4. `TOOL-002` — validation locale Supabase conteneurisée.

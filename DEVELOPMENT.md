@@ -13,7 +13,7 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Pré-requis : Node.js 20.9+ et npm 10+.
+Pré-requis : Node.js 24 (version de référence `24.19.0`) et npm 11.
 
 Ne jamais commiter `.env.local`. La clé `SUPABASE_SECRET_KEY` et la clé
 `ANTHROPIC_API_KEY` sont exclusivement serveur.
@@ -66,8 +66,13 @@ affiché.
 
 ## 5. Cycle de vie des images
 
-- Sélection/collage : validation locale et `blob:` d'aperçu.
+- Sélection/collage/glisser-déposer : validation de la source (20 Mio),
+  optimisation WebP locale et `blob:` d'aperçu.
+- Préparation : dimension maximale 2 048 px, garde-fou 40 mégapixels et fichier
+  final strictement limité à 5 Mio ; les fichiers sont traités séquentiellement.
 - Sauvegarde : note créée si nécessaire, upload Storage, insertion métadonnées.
+- Progression : préparation puis envoi/métadonnées, sans simuler des octets que
+  l'API Storage ne publie pas.
 - Échec : suppression compensatoire des objets déjà envoyés.
 - Retrait en édition : la référence disparaît immédiatement du brouillon ; le
   fichier est supprimé lors de la sauvegarde.
@@ -84,6 +89,7 @@ npm run lint
 npm test
 npm run build
 npm audit
+npm run ops:audit-images
 ```
 
 `npm run validate` enchaîne les trois premiers contrôles.
@@ -100,9 +106,10 @@ Cycle Git attendu :
 4. fusionner seulement lorsque GitHub autorise la fusion ;
 5. laisser l'intégration GitHub → Vercel déployer le `main` validé.
 
-Les tests unitaires couvrent les formats, la limite, l'insertion au curseur, le
-parsing Markdown, la copie, la suppression de référence, l'upload filtré, la
-duplication et la correspondance des URL signées.
+Les tests unitaires couvrent les formats, les limites, le dimensionnement, la
+compression, l'insertion au curseur, le parsing Markdown, la copie, la
+suppression de référence, l'upload filtré, sa progression et compensation, la
+duplication, les URL signées et la classification des images orphelines.
 
 ## 7. Points de sécurité à surveiller
 

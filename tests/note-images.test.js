@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_IMAGE_INPUT_SIZE_BYTES,
   MAX_IMAGE_SIZE_BYTES,
   buildImageStoragePath,
   createImageReference,
@@ -12,6 +13,7 @@ import {
   sanitizeImageAlt,
   stripImagesForText,
   validateImageFile,
+  validateImageInputFile,
 } from "../lib/note-images.js";
 
 const IMAGE_ID = "11111111-1111-4111-8111-111111111111";
@@ -28,6 +30,17 @@ describe("validation des fichiers image", () => {
     expect(validateImageFile({ type: "image/svg+xml", size: 100 })).toContain("Format");
     expect(validateImageFile({ type: "image/png", size: 0 })).toContain("vide");
     expect(validateImageFile({ type: "image/png", size: MAX_IMAGE_SIZE_BYTES + 1 })).toContain("5 Mio");
+  });
+
+  it("accepte une source lourde à compresser mais conserve une limite de préparation", () => {
+    expect(validateImageInputFile({
+      type: "image/jpeg",
+      size: MAX_IMAGE_SIZE_BYTES + 1,
+    })).toBeNull();
+    expect(validateImageInputFile({
+      type: "image/jpeg",
+      size: MAX_IMAGE_INPUT_SIZE_BYTES + 1,
+    })).toContain("20 Mio");
   });
 });
 
