@@ -2,9 +2,8 @@
 
 ## Statut
 
-`REVIEW_REQUIRED` — implémentation et recette locale terminées ; PR #6 ouverte
-et premier `Quality gate` vert. Fusion et validation Vercel Production encore
-requises.
+`DONE` — PR #6 fusionnée après les gates, production Vercel et audit
+post-déploiement validés le 2026-08-26.
 
 ## Objectif utilisateur
 
@@ -54,7 +53,7 @@ iPhone et iPad, sans affaiblir la confidentialité des notes.
 - PR fusionnée uniquement après `Quality gate` ;
 - déploiement Vercel Production `READY` et smoke tests conformes.
 
-## Preuves avant PR
+## Preuves de livraison
 
 - ESLint : zéro erreur et zéro avertissement ;
 - Vitest : 5 fichiers, 31/31 tests réussis ;
@@ -66,8 +65,14 @@ iPhone et iPad, sans affaiblir la confidentialité des notes.
 - recette Supabase authentifiée : galerie 2 images, navigation et nettoyage de
   toutes les données/comptes synthétiques confirmés ;
 - production Supabase : historique aligné, dry-run vide, audit schéma 12/12 ;
-- audit images read-only : 20 notes, 1 métadonnée, 1 objet, aucun écart.
-- PR GitHub #6 : commit `66a8ca6`, trois checks verts et Preview Vercel `READY`.
+- audit images read-only : 20 notes, 1 métadonnée, 1 objet, aucun écart ;
+- PR GitHub #6 : commits `66a8ca6` et `42ebd7d`, `Quality gate` vert sur
+  l'état final, fusion `4c77786` ;
+- Vercel Production : `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5`, cible `production`,
+  état `READY`, SHA `4c77786`, alias public actif et runtime Node 24.x ;
+- smoke public : cinq endpoints en 200, manifeste `standalone` avec trois
+  icônes, service worker `no-store` et API sans session en 401 ;
+- audit images post-déploiement : toujours propre dans les six catégories.
 
 ## Sprints complémentaires intégrés
 
