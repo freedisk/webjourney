@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "redactSecrets": true,
+  "scope": "database",
+  "loadOrder": [
+    "public/default_privileges.sql",
+    "public/schema.sql",
+    "_cluster/extensions/pgcrypto.sql",
+    "_cluster/extensions/uuid-ossp.sql",
+    "public/tables/note_images.sql",
+    "public/tables/notes_tags.sql",
+    "public/tables/notes.sql",
+    "public/tables/tags.sql",
+    "storage/tables/objects.sql",
+    "public/functions/rls_auto_enable.sql",
+    "_cluster/event_triggers.sql"
+  ],
+  "profile": "supabase",
+  "defaultOwner": "postgres",
+  "files": [
+    "_cluster/event_triggers.sql",
+    "_cluster/extensions/pgcrypto.sql",
+    "_cluster/extensions/uuid-ossp.sql",
+    "public/default_privileges.sql",
+    "public/functions/rls_auto_enable.sql",
+    "public/schema.sql",
+    "public/tables/note_images.sql",
+    "public/tables/notes.sql",
+    "public/tables/notes_tags.sql",
+    "public/tables/tags.sql",
+    "storage/tables/objects.sql"
+  ]
+}
