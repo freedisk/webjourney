@@ -2,179 +2,199 @@
 
 ## Contexte
 
-App de notes personnelles avec authentification, tags colorés, recherche instantanée et résumé IA. Projet d'apprentissage Next.js + Supabase + Vercel pour JC (développeur WinDev en transition vers le web moderne).
+Application personnelle de notes et projet d'apprentissage Next.js + Supabase
+pour JC, développeur WinDev en transition vers le web moderne.
 
-## Stack technique
+## Stack validée
 
-- **Next.js 16.1.6** (App Router, React 19, React Compiler activé)
-- **Supabase** (PostgreSQL + Auth + RLS)
-- **Vercel** (déploiement automatique via GitHub)
-- **Tailwind CSS 4** + CSS custom (variables, glassmorphism, brutalism)
-- **API Anthropic** (Claude Sonnet 4.5) pour les résumés IA
-- **Geist** (police Google Fonts : sans + mono)
+- **Next.js 16.3.3** (App Router, React Compiler)
+- **React 19.2.8**
+- **Supabase 2.112.4** (PostgreSQL, Auth, RLS, Storage)
+- **Vercel** (déploiement depuis GitHub)
+- **Tailwind CSS 4.3.3** + CSS custom
+- **Anthropic API** pour les résumés
+- **Vitest 4.1.11** pour les tests unitaires
 
 ## URLs
 
 - Production : https://webjourney-one.vercel.app/
-- Repo GitHub : https://github.com/freedisk/webjourney
-- Dashboard Supabase : (accès via supabase.com/dashboard)
+- GitHub : https://github.com/freedisk/webjourney
+- Supabase : accès via https://supabase.com/dashboard
 
 ## Règles de code
 
-- Commentaires en français
-- Noms de fichiers/variables en anglais
-- Pas de TypeScript (JavaScript uniquement, jsconfig.json avec alias `@/*`)
-- Composants simples, pas d'abstraction prématurée
-- Pas de state management externe (Redux, Zustand)
-- Toujours gérer les 4 états : chargement, erreur, vide, succès
-- Ne pas modifier de fichiers sans demande explicite
-- Les pages interactives utilisent `"use client"`, le layout reste Server Component
+- Commentaires en français.
+- Nouveaux noms de fichiers et variables en anglais.
+- JavaScript uniquement, pas de TypeScript.
+- Alias d'import `@/*` vers la racine.
+- Composants simples, sans abstraction prématurée.
+- Pas de state management externe.
+- Gérer chargement, erreur, vide et succès pour chaque flux asynchrone.
+- Ne pas modifier de fichier hors de la demande explicite.
+- Les pages interactives utilisent `"use client"`; le layout reste serveur.
+- Ne jamais exposer une clé Supabase secrète ou la clé Anthropic au navigateur.
 
-## Structure du projet
+## Structure
 
-```
-webjourney/
-├── app/
-│   ├── globals.css              # Design system : variables CSS clair/sombre, glass-card, btn-brutal, input-glass, tag, split panel, kanban, texture bruit
-│   ├── layout.js                # Layout racine (Server Component) : polices Geist, metadata, script anti-flash thème
-│   ├── page.js                  # Page principale : card/list/kanban view toggle, CRUD notes, édition inline, tags colorés, recherche, filtrage, résumé IA, copier, épinglage, Markdown, drag & drop kanban
-│   ├── login/
-│   │   └── page.js              # Page connexion/inscription : formulaire email + mot de passe, toggle thème
-│   ├── api/
-│   │   └── resumer/
-│   │       └── route.js         # API Route server-side : appel Anthropic Claude pour résumé de notes (clé secrète)
-│   ├── share/
-│   │   └── [token]/
-│   │       └── page.js           # Page publique de note partagée (Server Component, lecture seule, Markdown)
-│   └── favicon.ico
-├── components/
-│   ├── MarkdownRenderer.js      # Composant de rendu Markdown (react-markdown + styles custom brutalism)
-│   └── StatsDrawer.js           # Drawer statistiques (recharts, agrégations Supabase, chiffres clés)
-├── lib/
-│   └── supabase.js              # Client Supabase initialisé avec NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY
-├── public/                       # Assets statiques (file.svg, globe.svg, next.svg, vercel.svg, window.svg)
-├── CLAUDE.md                     # Ce fichier — documentation du projet
-├── package.json                  # Dépendances : next, react, @supabase/supabase-js, tailwindcss
-├── next.config.mjs               # Config Next.js (reactCompiler: true)
-├── jsconfig.json                 # Alias de chemin @/* → ./*
-├── postcss.config.mjs            # PostCSS avec plugin Tailwind
-├── eslint.config.mjs             # ESLint avec config next/core-web-vitals
-└── .env.local                    # Variables d'environnement (non versionné)
+```text
+app/
+├── api/resumer/route.js       API Anthropic protégée par session Supabase
+├── login/page.js              connexion et inscription
+├── share/[token]/page.js      note publique et images signées côté serveur
+├── globals.css                design system et styles images
+├── layout.js                  layout serveur et thème anti-flash
+└── page.js                    CRUD, vues, modales, tags, images et raccourcis
+components/
+├── MarkdownRenderer.js        rendu Markdown et sources capsule-image/<uuid>
+├── NoteContentEditor.js       textarea, fichier, collage et aperçus
+└── StatsDrawer.js             statistiques
+lib/
+├── note-images.js             format, validation, parsing et transformation
+├── note-image-storage.js      upload, copie, suppression et signature
+├── supabase-admin.js          client serveur à clé secrète
+└── supabase.js                client public Supabase
+supabase/migrations/           migrations SQL et politiques RLS
+tests/                         tests Vitest
+docs/                          architecture images et déploiement
 ```
 
-## Base de données Supabase
+`app/page.js` reste un composant historique volumineux. Les nouvelles règles
+réutilisables liées aux images doivent rester dans `components/` et `lib/`.
 
-### Table `notes`
+## Modèle Supabase observé
 
-| Colonne      | Type         | Description                                          |
-|-------------|-------------|------------------------------------------------------|
-| `id`        | uuid (PK)   | Identifiant unique, `gen_random_uuid()`              |
-| `user_id`   | uuid (FK)   | Référence vers `auth.users(id)`, cascade on delete   |
-| `titre`     | text         | Titre de la note (requis)                            |
-| `contenu`   | text         | Contenu de la note (optionnel)                       |
-| `couleur`   | text         | Code hex couleur de fond (ex: `#fef9c3`), `NULL` = défaut glassmorphism |
-| `created_at`| timestamptz  | Date de création, `now()` par défaut                 |
-| `kanban_colonne` | text      | Colonne kanban : `'todo'` / `'inprogress'` / `'done'`, défaut `'todo'` |
-| `kanban_ordre`   | integer   | Ordre dans la colonne kanban, défaut `0`             |
+### `notes`
 
-RLS : `auth.uid() = user_id` pour toutes les opérations (SELECT, INSERT, UPDATE, DELETE)
+| Colonne | Type | Usage |
+|---|---|---|
+| `id` | uuid PK | identifiant généré |
+| `user_id` | uuid FK | propriétaire |
+| `titre` | text | titre requis |
+| `contenu` | text | Markdown et références d'images |
+| `couleur` | text nullable | couleur personnalisée |
+| `created_at` | timestamptz | création |
+| `epinglee` | boolean | épinglage |
+| `share_token` | text nullable | partage public |
+| `kanban_colonne` | text | `todo`, `inprogress`, `done` |
+| `kanban_ordre` | integer | ordre Kanban |
+| `fait` | boolean | colonne historique actuellement inutilisée |
+| `resume` | text nullable | colonne historique actuellement inutilisée |
 
-### Table `tags`
+RLS attendue : l'utilisateur authentifié opère uniquement sur ses notes. Une
+politique SELECT anonyme distincte autorise seulement les notes dont
+`share_token` est actif. Les politiques effectives doivent être vérifiées dans
+le dashboard, car les migrations historiques ne sont pas présentes dans Git.
 
-| Colonne      | Type         | Description                                          |
-|-------------|-------------|------------------------------------------------------|
-| `id`        | uuid (PK)   | Identifiant unique, `gen_random_uuid()`              |
-| `user_id`   | uuid (FK)   | Référence vers `auth.users(id)`, cascade on delete   |
-| `nom`       | text         | Nom du tag (requis)                                  |
-| `couleur`   | text         | Code hexadécimal (ex: `#ef4444`)                     |
-| `created_at`| timestamptz  | Date de création, `now()` par défaut                 |
+### `tags`
 
-RLS : `auth.uid() = user_id` pour toutes les opérations
+`id`, `user_id`, `nom`, `couleur`, `created_at`. RLS par propriétaire.
 
-### Table `notes_tags` (liaison N-N)
+### `notes_tags`
 
-| Colonne    | Type       | Description                                            |
-|-----------|-----------|--------------------------------------------------------|
-| `note_id` | uuid (FK) | Référence vers `notes(id)`, cascade on delete          |
-| `tag_id`  | uuid (FK) | Référence vers `tags(id)`, cascade on delete           |
+Clé composite `(note_id, tag_id)`, avec cascades. La politique doit vérifier la
+propriété de la note et du tag ; le client effectue volontairement un SELECT
+sans filtre utilisateur et dépend donc de cette RLS.
 
-Clé primaire composite : `(note_id, tag_id)`
-RLS : basée sur la propriété de la note liée
+### `note_images`
+
+Créée par `supabase/migrations/20260826120000_add_note_images.sql`.
+
+| Colonne | Type | Usage |
+|---|---|---|
+| `id` | uuid PK | identifiant intégré au Markdown |
+| `note_id` | uuid FK | note, cascade à la suppression |
+| `storage_path` | text unique | chemin privé Supabase |
+| `original_name` | text | nom d'origine |
+| `mime_type` | text | JPEG, PNG ou WebP |
+| `size_bytes` | bigint | 1 à 5 Mio |
+| `created_at` | timestamptz | création |
+
+RLS : accès seulement si la note liée appartient à `auth.uid()`.
+
+## Images privées
+
+- Bucket : `note-images`, privé.
+- Chemin : `<user_id>/<note_id>/<image_id>.<extension>`.
+- Markdown stable : `![Description](capsule-image/<image_id>)`.
+- Les fichiers sélectionnés ou collés restent en mémoire jusqu'à Sauver/Créer.
+- Une annulation révoque seulement les aperçus locaux : aucun objet distant.
+- La création insère d'abord la note, puis envoie les fichiers et les métadonnées.
+- Une erreur déclenche une compensation et supprime les objets déjà envoyés.
+- La duplication copie chaque objet et réécrit les identifiants Markdown.
+- La suppression passe par l'API Storage, jamais par SQL seul.
+- Les URL signées du propriétaire expirent après une heure et sont renouvelées
+  toutes les 50 min ; celles de la page publique expirent après dix minutes.
+- Le partage public utilise `SUPABASE_SECRET_KEY` côté serveur, après validation
+  du token, du `note_id` et du préfixe de chemin attendu.
+
+Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 
 ## Variables d'environnement
 
-| Variable                        | Portée           | Description                    |
-|--------------------------------|-----------------|--------------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL`     | client + serveur | URL du projet Supabase         |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`| client + serveur | Clé anonyme Supabase           |
-| `ANTHROPIC_API_KEY`            | serveur uniquement | Clé API Anthropic (pas de préfixe NEXT_PUBLIC_) |
+| Variable | Portée |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | publique |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publique, recommandée |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publique, compatibilité historique |
+| `ANTHROPIC_API_KEY` | serveur uniquement |
+| `SUPABASE_SECRET_KEY` | serveur uniquement |
+| `SUPABASE_SERVICE_ROLE_KEY` | serveur uniquement, ancien fallback |
 
-Toutes configurées en local (`.env.local`) ET sur Vercel (Settings > Environment Variables).
+## Fonctionnalités
 
-## Fonctionnalités en place
+- Auth email/mot de passe.
+- CRUD notes, duplication, épinglage et couleurs.
+- Markdown, recherche insensible aux accents et taille de texte.
+- Ajout d'images par fichier et collage au curseur.
+- Images privées, aperçus, duplication et suppression cohérente.
+- Tags et filtres combinables.
+- Vues cartes, liste/split panel et Kanban.
+- Résumé Anthropic, réservé aux sessions authentifiées.
+- Statistiques Recharts.
+- Partage public par UUID opaque, y compris les images signées.
+- Thèmes clair/sombre, responsive mobile et réduction des animations.
+- Raccourcis clavier et protection contre la perte de modifications.
 
-- [x] Auth email/mot de passe (inscription + validation email + connexion + déconnexion)
-- [x] Redirection automatique si non connecté
-- [x] CRUD notes (créer via bouton "+ Nouvelle note" → modale de création, lire, modifier inline, supprimer avec confirmation, dupliquer avec tags)
-- [x] **Toggle Card View / List View / Kanban** (icônes grille ⊞ / liste ☰ / colonnes SVG dans le header, bouton actif visuellement distinct)
-- [x] **Card View** : grille responsive 1-2 colonnes, accordéon pour contenu long, modale détail au clic (via `createPortal`), boutons d'action complets sur chaque card (A-/A+, 📌, Modifier, Dupliquer, Partage, Résumer, +Tag, Supprimer)
-- [x] **List View — split panel** desktop (panneau gauche 300px liste + panneau droit détail) + mobile responsive (liste plein écran → note plein écran avec bouton retour ← Notes)
-- [x] Panneau gauche : liste compacte (titre tronqué, date courte, tags mini max 2 + "+N", indicateur couleur), recherche, filtres tags, tri chronologique toggle ↑↓
-- [x] Panneau droit : NoteDetail permanent (contenu complet, tags cliquables, résumé IA, actions Modifier/Dupliquer/Copier/Résumer/Supprimer/+Tag)
-- [x] Modale : max-width 700px, tous les boutons d'action sur une ligne avec flex-wrap (A-/A+, 📌, Modifier, Dupliquer, Partage, Résumer, Copier — même ordre que les cards), +Tag et Supprimer dans le header, variables CSS dédiées (`--modal-bg/border/separator`) pour contraste clair/sombre
-- [x] Protection perte de modifications : confirmation lors du changement de note, retour liste, ou fermeture modale si édition en cours. Protection perte données : confirmation si fermeture avec modifications non sauvegardées (modes création ET édition, tous les triggers de fermeture : overlay, Échap, bouton ×)
-- [x] Design brutalism + glassmorphism avec mode sombre/clair (toggle + persistance localStorage)
-- [x] Recherche instantanée (filtre temps réel sur titre + contenu, insensible aux accents et à la casse)
-- [x] Tags colorés (CRUD, 8 couleurs prédéfinies, panneau de gestion)
-- [x] Assignation de tags aux notes (bouton + Tag, dropdown, badges cliquables pour retirer)
-- [x] Filtrage par tags (combinable avec la recherche texte, intégré au panneau gauche)
-- [x] Copier une note dans le presse-papier (bouton dans le panneau détail, copie titre + contenu)
-- [x] Couleur de fond personnalisable sur les notes (8 pastels prédéfinis + aucune, sélecteur swatches, appliquée sur le détail et indicateur dans la liste, champ `couleur` TEXT nullable en base)
-- [x] Notes épinglées (champ `epinglee` BOOLEAN en base, tri prioritaire en tête de liste, toggle 📌 sur card/modale/list view, indicateur visuel)
-- [x] Support Markdown dans les notes (rendu formaté en lecture sur cards, modale et list view via `react-markdown`, composant `MarkdownRenderer`, gras/italique/titres/listes/code/blockquote/liens, compatible sombre/clair, textarea brut en édition, aide visuelle dans le formulaire)
-- [x] Résumé IA via API Route `/api/resumer` (clé protégée côté serveur)
-- [x] Animations de transition (fade-in + slide-up cards avec stagger, fade-in toggle view et panneau droit, scale-pulse épinglage, modale scale-up, boutons hover lift, `prefers-reduced-motion` respecté)
-- [x] **Kanban View** — 3 colonnes fixes (À faire / En cours / Terminé), drag & drop HTML5 natif, cards compactes (titre + 2 tags + icône épinglée), clic → modale, optimistic update avec rollback, colonnes scrollables, responsive (empilé sur mobile), champs `kanban_colonne` / `kanban_ordre` en base
-- [x] Raccourcis clavier (N=ouvre modale création, /=recherche, 1/2/3=card/list/kanban view, Échap=fermer/annuler, E=éditer modale, Suppr=supprimer modale, ↑↓=naviguer liste, Entrée=sélectionner, bouton ? aide contextuelle)
-- [x] Statistiques personnelles (drawer latéral slide-in, chiffres clés 2×2, activité 7j BarChart, répartition tags PieChart, évolution mois, `recharts`, composant `StatsDrawer`, bouton 📊 header)
-- [x] Partage public par token (champ `share_token` TEXT nullable, toggle 🔗 sur card/modale/list view, copie automatique du lien, badge "Partage actif" vert, bouton copier le lien + désactiver, route `/share/[token]` Server Component, page lecture seule avec Markdown + tags, 404 élégante, RLS publique)
-- [x] Taille des caractères : boutons A- / A+ dans chaque card, modale et panneau détail list view, plage 11-22px, persistée en localStorage (clé noteFontSize)
-- [x] Header 3 zones : gauche (logo + badge + toggles vue), centre (+ NOUVELLE NOTE, action primaire isolée), droite (Gérer tags | 📊 | thème · séparateur · email + Déconnexion)
-- [x] Feedback visuel : messages de succès temporaires (3s), erreurs, spinner de chargement
-- [x] RLS complet sur toutes les tables
-- [x] Déploiement auto via `git push` → Vercel
+## Architecture des appels
 
-## Architecture des appels API
+```text
+Navigateur authentifié ── Supabase Data API + Storage privé
+         │
+         ├── /api/resumer ── validation session ── Anthropic
+         │
+         └── textarea ── fichier/collage ── sauvegarde compensée
 
-```
-Navigateur → /api/resumer (API Route Next.js) → api.anthropic.com
+Page /share/[token] ── note publique via RLS
+         └── client serveur secret ── URL Storage signée
 ```
 
-- La clé `ANTHROPIC_API_KEY` ne transite jamais côté client
-- Modèle utilisé : `claude-sonnet-4-5-20250929`
-- Prompt système : résumé concis en 2 phrases max, en français, texte brut sans markdown
-- max_tokens : 150
-- Nettoyage côté serveur : suppression du markdown résiduel et préfixes "Résumé :"
+## Validation obligatoire
 
-## Design system
+```bash
+npm run validate
+npm audit
+```
 
-Style **brutalism + glassmorphism** avec mode sombre/clair :
+État de référence après l'ajout des images : 14 tests unitaires, lint sans
+erreur, build Next.js réussi et 0 vulnérabilité npm. Une recette navigateur
+authentifiée avec la migration appliquée reste obligatoire avant production.
 
-- `.glass-card` : fond semi-transparent, `backdrop-blur(16px)`, bordure 2px, ombre offset 4px brutale, hover lift
-- `.btn-brutal` : boutons uppercase bold 700, ombre décalée 3px, animations press/hover (variantes : `primary`, `danger`, `ghost`)
-- `.input-glass` : inputs vitreux avec glow accent au focus (`box-shadow` accent-glow)
-- `.tag` : badges typographiques uppercase, bordure fine
-- `.split-container` + `.panel-left` + `.panel-right` : layout split panel flex, panneau gauche 300px fixe, panneau droit flex-1, scrolls indépendants
-- `.note-item` : items de liste avec hover, état actif (bordure accent), indicateur couleur
-- `.detail-header` + `.detail-body` + `.detail-footer` : structure du panneau détail
-- Variables panel dédiées : `--panel-bg`, `--panel-border`, `--panel-hover`, `--panel-active`
-- Responsive mobile (`< 768px`) : panneaux empilés, classes `.hidden-mobile` pour toggle liste/détail
-- Thème : classe `.dark` sur `<html>`, persisté dans `localStorage`, script inline anti-flash
-- Formes floues colorées (accent + danger) en arrière-plan pour la profondeur
-- Texture de bruit SVG en overlay pour le côté brutaliste
+## Limites connues
 
-## Fonctionnalités à venir
+- Pas encore de rate-limit persistant sur `/api/resumer` ; l'authentification
+  empêche cependant les appels anonymes.
+- Pas de test E2E automatisé contre un projet Supabase réel.
+- Les anciennes migrations des tables `notes`, `tags` et `notes_tags` doivent
+  encore être reconstituées depuis le dashboard pour rendre le dépôt autonome.
+- Export PDF/JSON non implémenté.
 
-- [ ] Éditeur de contenu enrichi (Markdown)
-- [ ] Partage de notes
-- [ ] Export des notes (PDF, JSON)
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

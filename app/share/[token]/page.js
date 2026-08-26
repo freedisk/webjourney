@@ -1,12 +1,16 @@
 // Page publique de partage de note — Server Component (pas de "use client")
 import { createClient } from "@supabase/supabase-js";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { extractImageIds } from "@/lib/note-images";
+import { createSignedImageMap } from "@/lib/note-image-storage";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 // Client Supabase sans session auth (lecture publique via RLS policy)
 function getPublicSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 }
 
@@ -31,7 +35,7 @@ export default async function SharedNotePage({ params }) {
   // Récupérer la note avec ses tags
   const { data: note, error } = await supabase
     .from("notes")
-    .select("titre, contenu, created_at, couleur, notes_tags(tag_id, tags(nom, couleur))")
+    .select("id, user_id, titre, contenu, created_at, couleur, notes_tags(tag_id, tags(nom, couleur))")
     .eq("share_token", token)
     .single();
 
@@ -82,6 +86,32 @@ export default async function SharedNotePage({ params }) {
     month: "long",
     year: "numeric",
   });
+
+  // Signer uniquement les images réellement liées à cette note partagée.
+  let imageUrls = {};
+  const imageIds = extractImageIds(note.contenu);
+  if (imageIds.length > 0) {
+    const supabaseAdmin = getSupabaseAdmin();
+    if (supabaseAdmin) {
+      const { data: images } = await supabaseAdmin
+        .from("note_images")
+        .select("id, note_id, storage_path, original_name, mime_type, size_bytes")
+        .eq("note_id", note.id)
+        .in("id", imageIds);
+
+      const expectedPrefix = `${note.user_id}/${note.id}/`;
+      const safeImages = (images || []).filter((image) => (
+        image.note_id === note.id && image.storage_path.startsWith(expectedPrefix)
+      ));
+
+      try {
+        // Une URL publique courte limite la fenêtre résiduelle après dé-partage.
+        imageUrls = await createSignedImageMap(supabaseAdmin, safeImages, 10 * 60);
+      } catch (signError) {
+        console.error("Impossible de signer les images partagées :", signError.message);
+      }
+    }
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--text-primary)", fontFamily: "system-ui, sans-serif" }}>
@@ -150,7 +180,7 @@ export default async function SharedNotePage({ params }) {
         {/* Contenu Markdown */}
         {note.contenu ? (
           <div style={{ fontSize: "0.9375rem", lineHeight: 1.7 }}>
-            <MarkdownRenderer content={note.contenu} />
+            <MarkdownRenderer content={note.contenu} imageUrls={imageUrls} />
           </div>
         ) : (
           <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>

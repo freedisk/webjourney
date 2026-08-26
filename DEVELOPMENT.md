@@ -1,0 +1,118 @@
+# Capsule — Guide de développement et de reprise
+
+Ce guide décrit comment travailler sur le projet. `CLAUDE.md` reste la référence
+fonctionnelle et technique ; les fichiers SQL sous `supabase/migrations/` sont
+la source de vérité pour les changements de base récents.
+
+## 1. Installation
+
+```bash
+npm install
+copy .env.example .env.local
+npm run dev
+```
+
+Pré-requis : Node.js 20.9+ et npm 10+.
+
+Ne jamais commiter `.env.local`. La clé `SUPABASE_SECRET_KEY` et la clé
+`ANTHROPIC_API_KEY` sont exclusivement serveur.
+
+## 2. Reprise rapide
+
+1. `git status --short --branch` : identifier les modifications existantes.
+2. `npm install`.
+3. Vérifier `.env.local` sans afficher ses valeurs.
+4. Lire `CLAUDE.md` et les migrations non encore appliquées.
+5. Exécuter `npm run validate` et `npm audit`.
+6. Tester l'authentification et une note texte avant une migration fonctionnelle.
+
+## 3. Architecture
+
+```text
+Client Next.js
+├── Supabase Auth
+├── Data API protégée par RLS
+├── Storage privé protégé par RLS
+└── /api/resumer avec Bearer token
+
+Server Component /share/[token]
+├── lecture anonyme de la note partagée
+└── signature Storage avec clé secrète serveur
+```
+
+Le client Supabase principal conserve la session dans le navigateur. La page de
+partage n'utilise pas la session du visiteur. Le client administrateur doit donc
+rester dans `lib/supabase-admin.js` et ne jamais être importé par un Client
+Component.
+
+## 4. Activation des images
+
+Ordre obligatoire :
+
+1. appliquer `supabase/migrations/20260826120000_add_note_images.sql` ;
+2. vérifier le bucket privé, ses limites et les policies ;
+3. ajouter `SUPABASE_SECRET_KEY` dans Vercel ou, pour un projet historique,
+   `SUPABASE_SERVICE_ROLE_KEY` ;
+4. lancer la recette manuelle décrite dans `docs/IMAGES.md` ;
+5. déployer le code.
+
+Le code désactive uniquement l'ajout d'images si la table n'est pas disponible ;
+l'édition texte continue de fonctionner et un message de configuration est
+affiché.
+
+## 5. Cycle de vie des images
+
+- Sélection/collage : validation locale et `blob:` d'aperçu.
+- Sauvegarde : note créée si nécessaire, upload Storage, insertion métadonnées.
+- Échec : suppression compensatoire des objets déjà envoyés.
+- Retrait en édition : la référence disparaît immédiatement du brouillon ; le
+  fichier est supprimé lors de la sauvegarde.
+- Duplication : nouvel objet, nouvel UUID et réécriture du Markdown.
+- Suppression de note : suppression Storage puis suppression de la note ; la FK
+  cascade sur les métadonnées.
+- Partage : URL signée dix minutes côté public, jamais stockée dans `contenu` ;
+  l'interface propriétaire utilise une heure avec renouvellement à 50 minutes.
+
+## 6. Gates
+
+```bash
+npm run lint
+npm test
+npm run build
+npm audit
+```
+
+`npm run validate` enchaîne les trois premiers contrôles.
+
+Les tests unitaires couvrent les formats, la limite, l'insertion au curseur, le
+parsing Markdown, la copie, la suppression de référence, l'upload filtré, la
+duplication et la correspondance des URL signées.
+
+## 7. Points de sécurité à surveiller
+
+1. Confirmer dans Supabase que `notes_tags` ne laisse lire que les associations
+   appartenant à l'utilisateur.
+2. Ne jamais rendre le bucket `note-images` public.
+3. Conserver la validation stricte du préfixe `<user>/<note>/` avant signature
+   sur la page partagée.
+4. Ne jamais utiliser `upsert` pour les images : chaque chemin UUID est immuable.
+5. Ajouter ultérieurement un rate-limit persistant au résumé Anthropic.
+6. Les suppressions Storage doivent toujours passer par l'API Storage.
+
+## 8. Limites structurelles
+
+- `app/page.js` est un monolithe historique d'environ 3 000 lignes.
+- Les migrations initiales de `notes`, `tags` et `notes_tags` ne sont pas encore
+  dans Git ; seule l'évolution images est versionnée à ce stade.
+- Aucun E2E ne pilote encore une session Supabase réelle.
+- Le projet utilise encore le nom de package historique `webjourney`.
+
+Éviter un refactor global opportuniste. Extraire uniquement une logique lorsque
+la fonctionnalité en cours bénéficie réellement de sa réutilisation ou de tests.
+
+## 9. Déploiement et rollback
+
+Le détail se trouve dans `docs/DEPLOYMENT.md`. Ne pas pousser vers la production
+avant d'avoir confirmé que la migration est appliquée. En cas de rollback du
+code, conserver la table et le bucket : ils sont rétrocompatibles avec la
+version texte et empêchent la perte des images déjà enregistrées.

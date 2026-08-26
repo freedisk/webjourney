@@ -1,15 +1,39 @@
 // API Route — Résumé IA via Anthropic (server-side, clé secrète)
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const authorization = request.headers.get("authorization") || "";
+    const accessToken = authorization.startsWith("Bearer ")
+      ? authorization.slice("Bearer ".length).trim()
+      : null;
 
-    // Vérifier que la clé API est configurée
-    if (!apiKey) {
+    if (!accessToken) {
       return NextResponse.json(
-        { error: "Clé API Anthropic non configurée sur le serveur." },
+        { error: "Authentification requise." },
+        { status: 401 }
+      );
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: "Configuration Supabase incomplète." },
         { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Session invalide ou expirée." },
+        { status: 401 }
       );
     }
 
@@ -20,6 +44,21 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "Titre ou contenu requis pour générer un résumé." },
         { status: 400 }
+      );
+    }
+
+    if (String(titre || "").length > 500 || String(contenu || "").length > 20000) {
+      return NextResponse.json(
+        { error: "Note trop longue pour être résumée." },
+        { status: 413 }
+      );
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Clé API Anthropic non configurée sur le serveur." },
+        { status: 500 }
       );
     }
 

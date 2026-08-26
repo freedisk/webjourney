@@ -16,7 +16,10 @@ export default function LoginPage() {
 
   // Lire le thème au montage
   useEffect(() => {
-    setSombre(document.documentElement.classList.contains("dark"));
+    const frameId = requestAnimationFrame(() => {
+      setSombre(document.documentElement.classList.contains("dark"));
+    });
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
   // Basculer le thème sombre/clair

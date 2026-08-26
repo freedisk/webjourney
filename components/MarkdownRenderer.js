@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import { getImageIdFromSource } from "@/lib/note-images";
 
 // Composants custom pour le rendu Markdown, compatibles brutalism + glassmorphism
 const markdownComponents = {
@@ -125,12 +126,90 @@ const markdownComponents = {
   ),
 };
 
-export default function MarkdownRenderer({ content }) {
+export default function MarkdownRenderer({ content, imageUrls = {}, compact = false }) {
   if (!content) return null;
+
+  const components = {
+    ...markdownComponents,
+    img: ({ src, alt }) => {
+      const imageId = getImageIdFromSource(src);
+
+      if (imageId) {
+        const signedUrl = imageUrls[imageId];
+        if (!signedUrl) {
+          return (
+            <span
+              role="status"
+              style={{
+                display: "block",
+                margin: "0.6em 0",
+                padding: "0.75em",
+                border: "1.5px dashed var(--input-border)",
+                borderRadius: "3px",
+                color: "var(--text-muted)",
+                fontSize: "0.8em",
+                textAlign: "center",
+              }}
+            >
+              Image privée indisponible
+            </span>
+          );
+        }
+
+        return (
+          <span style={{ display: "block", margin: "0.6em 0" }}>
+            {/* L'URL signée est dynamique : next/image ne connaît pas ses dimensions. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={signedUrl}
+              alt={alt || "Image de la note"}
+              loading="lazy"
+              decoding="async"
+              style={{
+                display: "block",
+                width: "100%",
+                maxWidth: "100%",
+                maxHeight: compact ? "140px" : "70vh",
+                objectFit: "contain",
+                border: "2px solid var(--input-border)",
+                borderRadius: "3px",
+                background: "var(--panel-bg)",
+              }}
+            />
+            {alt && !compact && (
+              <span
+                style={{
+                  display: "block",
+                  marginTop: "0.25em",
+                  color: "var(--text-muted)",
+                  fontSize: "0.72em",
+                  textAlign: "center",
+                }}
+              >
+                {alt}
+              </span>
+            )}
+          </span>
+        );
+      }
+
+      // Les images HTTPS déjà saisies manuellement restent compatibles.
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt || "Image"}
+          loading="lazy"
+          decoding="async"
+          style={{ maxWidth: "100%", height: "auto" }}
+        />
+      );
+    },
+  };
 
   return (
     <div style={{ overflow: "hidden" }}>
-      <ReactMarkdown components={markdownComponents}>{content}</ReactMarkdown>
+      <ReactMarkdown components={components}>{content}</ReactMarkdown>
     </div>
   );
 }

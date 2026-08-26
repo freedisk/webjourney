@@ -6,7 +6,16 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import NoteContentEditor from "@/components/NoteContentEditor";
 import StatsDrawer from "@/components/StatsDrawer";
+import {
+  createSignedImageMap,
+  duplicateStoredImages,
+  removeStoredImageFiles,
+  removeStoredImages,
+  uploadPendingImages,
+} from "@/lib/note-image-storage";
+import { extractImageIds, stripImagesForText } from "@/lib/note-images";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -111,6 +120,14 @@ export default function Home() {
   // --- Résumé IA ---
   const [resumes, setResumes] = useState({});
 
+  // --- Images privées des notes ---
+  const [noteImages, setNoteImages] = useState({});
+  const [imageUrls, setImageUrls] = useState({});
+  const [creationPendingImages, setCreationPendingImages] = useState([]);
+  const [editionPendingImages, setEditionPendingImages] = useState([]);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [imageFeatureError, setImageFeatureError] = useState(null);
+
   // Obtenir la couleur de fond d'une note selon le thème actuel
   function getCouleurFond(couleur) {
     if (!couleur) return undefined;
@@ -129,7 +146,8 @@ export default function Home() {
     .filter((note) => {
       if (recherche.trim()) {
         const terme = normaliser(recherche);
-        const matchTexte = normaliser(note.titre).includes(terme) || normaliser(note.contenu).includes(terme);
+        const searchableContent = stripImagesForText(note.contenu);
+        const matchTexte = normaliser(note.titre).includes(terme) || normaliser(searchableContent).includes(terme);
         if (!matchTexte) return false;
       }
       if (filtreTagId) {
@@ -156,6 +174,8 @@ export default function Home() {
 
   // Vérifier la session et charger les données au montage
   useEffect(() => {
+    let active = true;
+    let imageRefreshTimer = null;
     setSombre(document.documentElement.classList.contains("dark"));
 
     // Restaurer la taille des caractères depuis localStorage
@@ -173,16 +193,25 @@ export default function Home() {
         return;
       }
 
+      if (!active) return;
       setUtilisateur(user);
       await Promise.all([
         chargerNotes(user.id),
         chargerTags(user.id),
         chargerNotesTags(),
+        chargerNoteImages(),
       ]);
+      if (!active) return;
       setChargement(false);
+      // Renouveler les URL signées avant leur expiration d'une heure.
+      imageRefreshTimer = setInterval(() => chargerNoteImages(), 50 * 60 * 1000);
     }
 
     init();
+    return () => {
+      active = false;
+      if (imageRefreshTimer) clearInterval(imageRefreshTimer);
+    };
   }, [router]);
 
   // Masquer le message de succès après 3 secondes
@@ -223,7 +252,9 @@ export default function Home() {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur]);
+  // Les fonctions de fermeture lisent volontairement les mêmes états listés ici.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur, editionPendingImages.length, creationPendingImages.length, noteSaving]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
@@ -408,15 +439,56 @@ export default function Home() {
     setNotesTags(map);
   }
 
+  async function chargerNoteImages() {
+    const { data, error } = await supabase
+      .from("note_images")
+      .select("id, note_id, storage_path, original_name, mime_type, size_bytes, created_at")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      setNoteImages({});
+      setImageUrls({});
+      setImageFeatureError(
+        error.code === "42P01" || error.code === "PGRST205"
+          ? "Les images ne sont pas encore configurées dans Supabase. Applique la migration avant utilisation."
+          : "Impossible de charger les images : " + error.message
+      );
+      return;
+    }
+
+    const map = {};
+    for (const image of data || []) {
+      if (!map[image.note_id]) map[image.note_id] = [];
+      map[image.note_id].push(image);
+    }
+    setNoteImages(map);
+    setImageFeatureError(null);
+
+    try {
+      setImageUrls(await createSignedImageMap(supabase, data || []));
+    } catch (signError) {
+      setImageUrls({});
+      setImageFeatureError(signError.message);
+    }
+  }
+
+  function clearPendingImagePreviews(images, setter) {
+    for (const image of images) {
+      if (image.previewUrl) URL.revokeObjectURL(image.previewUrl);
+    }
+    setter([]);
+  }
+
   // === SÉLECTION DE NOTE (list view, avec protection édition) ===
 
   function selectionnerNote(noteId) {
+    if (noteSaving) return;
     if (editionId) {
       const note = notes.find((n) => n.id === selectedNoteId);
       const titreModifie = note && editionTitre !== note.titre;
       const contenuModifie = note && editionContenu !== (note.contenu || "");
       const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee) {
+      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
         if (!window.confirm("Tu as des modifications non sauvegardées. Changer de note quand même ?")) {
           return;
         }
@@ -430,12 +502,13 @@ export default function Home() {
 
   // Retour à la liste sur mobile (list view)
   function retourListe() {
+    if (noteSaving) return;
     if (editionId) {
       const note = notes.find((n) => n.id === selectedNoteId);
       const titreModifie = note && editionTitre !== note.titre;
       const contenuModifie = note && editionContenu !== (note.contenu || "");
       const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee) {
+      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
         if (!window.confirm("Tu as des modifications non sauvegardées. Revenir quand même ?")) {
           return;
         }
@@ -447,12 +520,13 @@ export default function Home() {
 
   // Fermer la modale (card view, avec protection édition)
   function fermerModale() {
+    if (noteSaving) return;
     if (editionId) {
       const note = notes.find((n) => n.id === noteDetailId);
       const titreModifie = note && editionTitre !== note.titre;
       const contenuModifie = note && editionContenu !== (note.contenu || "");
       const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee) {
+      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
         if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
           return;
         }
@@ -465,7 +539,8 @@ export default function Home() {
 
   // Fermer la modale de création (sans créer, avec protection)
   function fermerModaleCreation() {
-    const modifie = titre.trim() !== "" || contenu.trim() !== "" || couleurNote !== null;
+    if (noteSaving) return;
+    const modifie = titre.trim() !== "" || contenu.trim() !== "" || couleurNote !== null || creationPendingImages.length > 0;
     if (modifie) {
       if (!window.confirm("Des modifications non sauvegard\u00e9es seront perdues. Quitter quand m\u00eame ?")) {
         return;
@@ -475,6 +550,7 @@ export default function Home() {
     setTitre("");
     setContenu("");
     setCouleurNote(null);
+    clearPendingImagePreviews(creationPendingImages, setCreationPendingImages);
   }
 
   // === CRUD NOTES ===
@@ -482,78 +558,156 @@ export default function Home() {
   async function ajouterNote(e) {
     if (e) e.preventDefault();
     setErreur(null);
-    if (!titre.trim()) return;
+    if (!titre.trim() || noteSaving) return;
 
-    const { error } = await supabase.from("notes").insert({
-      titre: titre.trim(),
-      contenu: contenu.trim(),
-      couleur: couleurNote,
-      user_id: utilisateur.id,
-    });
+    setNoteSaving(true);
+    const noteId = crypto.randomUUID();
+    let noteCreated = false;
 
-    if (error) {
-      setErreur("Erreur lors de l'ajout : " + error.message);
-      return;
+    try {
+      const { error } = await supabase.from("notes").insert({
+        id: noteId,
+        titre: titre.trim(),
+        contenu: contenu.trim(),
+        couleur: couleurNote,
+        user_id: utilisateur.id,
+      });
+
+      if (error) throw new Error(error.message);
+      noteCreated = true;
+
+      await uploadPendingImages({
+        supabase,
+        userId: utilisateur.id,
+        noteId,
+        content: contenu,
+        pendingImages: creationPendingImages,
+      });
+
+      setTitre("");
+      setContenu("");
+      setCouleurNote(null);
+      setModeCreation(false);
+      clearPendingImagePreviews(creationPendingImages, setCreationPendingImages);
+      setSucces("Note ajout\u00e9e !");
+      await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
+    } catch (saveError) {
+      if (noteCreated) {
+        await supabase.from("notes").delete().eq("id", noteId);
+      }
+      setErreur("Erreur lors de l'ajout : " + saveError.message);
+    } finally {
+      setNoteSaving(false);
     }
-
-    setTitre("");
-    setContenu("");
-    setCouleurNote(null);
-    setModeCreation(false);
-    setSucces("Note ajout\u00e9e !");
-    await chargerNotes(utilisateur.id);
   }
 
   async function supprimerNote(noteId) {
     setErreur(null);
-    const { error } = await supabase.from("notes").delete().eq("id", noteId);
+    if (noteSaving) return;
+    setNoteSaving(true);
 
-    if (error) {
-      setErreur("Erreur lors de la suppression : " + error.message);
-      return;
-    }
+    try {
+      await removeStoredImageFiles(supabase, noteImages[noteId] || []);
+      const { error } = await supabase.from("notes").delete().eq("id", noteId);
+      if (error) throw new Error(error.message);
 
-    setConfirmSuppId(null);
-    // Désélectionner si c'est la note active
-    if (selectedNoteId === noteId) {
-      setSelectedNoteId(null);
-      setMobileDetail(false);
+      setConfirmSuppId(null);
+      // Désélectionner si c'est la note active
+      if (selectedNoteId === noteId) {
+        setSelectedNoteId(null);
+        setMobileDetail(false);
+      }
+      // Fermer la modale si c'est la note affichée
+      if (noteDetailId === noteId) {
+        setNoteDetailId(null);
+      }
+      setSucces("Note supprimée.");
+      await Promise.all([
+        chargerNotes(utilisateur.id),
+        chargerNotesTags(),
+        chargerNoteImages(),
+      ]);
+    } catch (deleteError) {
+      setErreur("Erreur lors de la suppression : " + deleteError.message);
+    } finally {
+      setNoteSaving(false);
     }
-    // Fermer la modale si c'est la note affichée
-    if (noteDetailId === noteId) {
-      setNoteDetailId(null);
-    }
-    setSucces("Note supprimée.");
-    await Promise.all([chargerNotes(utilisateur.id), chargerNotesTags()]);
   }
 
   async function dupliquerNote(note) {
     setErreur(null);
-    const { data, error } = await supabase.from("notes").insert({
-      titre: "Copie de — " + note.titre,
-      contenu: note.contenu,
-      couleur: note.couleur,
-      user_id: utilisateur.id,
-    }).select();
+    if (noteSaving) return;
+    setNoteSaving(true);
 
-    if (error) {
-      setErreur("Erreur lors de la duplication : " + error.message);
-      return;
+    const targetNoteId = crypto.randomUUID();
+    const sourceImages = noteImages[note.id] || [];
+    const containsImages = extractImageIds(note.contenu).length > 0;
+    let duplicatedImages = [];
+    let targetCreated = false;
+
+    try {
+      const sourceImageIds = new Set(sourceImages.map((image) => image.id));
+      if (extractImageIds(note.contenu).some((imageId) => !sourceImageIds.has(imageId))) {
+        throw new Error("Une image de la note est indisponible. Recharge la page avant de dupliquer.");
+      }
+
+      const { error: insertError } = await supabase.from("notes").insert({
+        id: targetNoteId,
+        titre: "Copie de — " + note.titre,
+        contenu: containsImages ? stripImagesForText(note.contenu) : note.contenu,
+        couleur: note.couleur,
+        user_id: utilisateur.id,
+      });
+
+      if (insertError) throw new Error(insertError.message);
+      targetCreated = true;
+
+      const duplicateResult = await duplicateStoredImages({
+        supabase,
+        userId: utilisateur.id,
+        targetNoteId,
+        content: note.contenu || "",
+        sourceImages,
+      });
+      duplicatedImages = duplicateResult.images;
+
+      if (containsImages) {
+        const { error: updateError } = await supabase
+          .from("notes")
+          .update({ contenu: duplicateResult.content })
+          .eq("id", targetNoteId);
+        if (updateError) throw new Error(updateError.message);
+      }
+
+      const originalTagIds = notesTags[note.id] || [];
+      if (originalTagIds.length > 0) {
+        const { error: tagsError } = await supabase.from("notes_tags").insert(
+          originalTagIds.map((tagId) => ({ note_id: targetNoteId, tag_id: tagId }))
+        );
+        if (tagsError) throw new Error(tagsError.message);
+      }
+
+      setSucces("Note dupliquée !");
+      await Promise.all([
+        chargerNotes(utilisateur.id),
+        chargerNotesTags(),
+        chargerNoteImages(),
+      ]);
+    } catch (duplicateError) {
+      if (duplicatedImages.length > 0) {
+        await removeStoredImages(supabase, duplicatedImages).catch(() => {});
+      }
+      if (targetCreated) {
+        await supabase.from("notes").delete().eq("id", targetNoteId);
+      }
+      setErreur("Erreur lors de la duplication : " + duplicateError.message);
+    } finally {
+      setNoteSaving(false);
     }
-
-    const tagsOriginaux = notesTags[note.id] || [];
-    if (tagsOriginaux.length > 0 && data && data[0]) {
-      await supabase.from("notes_tags").insert(
-        tagsOriginaux.map((tagId) => ({ note_id: data[0].id, tag_id: tagId }))
-      );
-      await chargerNotesTags();
-    }
-
-    setSucces("Note dupliquée !");
-    await chargerNotes(utilisateur.id);
   }
 
   function commencerEdition(note) {
+    clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
     setEditionId(note.id);
     setEditionTitre(note.titre);
     setEditionContenu(note.contenu || "");
@@ -566,25 +720,60 @@ export default function Home() {
     setEditionTitre("");
     setEditionContenu("");
     setEditionCouleur(null);
+    clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
   }
 
   async function sauvegarderEdition(noteId) {
     setErreur(null);
-    if (!editionTitre.trim()) return;
+    if (!editionTitre.trim() || noteSaving) return;
+    setNoteSaving(true);
 
-    const { error } = await supabase
-      .from("notes")
-      .update({ titre: editionTitre.trim(), contenu: editionContenu.trim(), couleur: editionCouleur })
-      .eq("id", noteId);
+    let uploadedImages = [];
 
-    if (error) {
-      setErreur("Erreur lors de la modification : " + error.message);
-      return;
+    try {
+      uploadedImages = await uploadPendingImages({
+        supabase,
+        userId: utilisateur.id,
+        noteId,
+        content: editionContenu,
+        pendingImages: editionPendingImages,
+      });
+
+      const { error } = await supabase
+        .from("notes")
+        .update({ titre: editionTitre.trim(), contenu: editionContenu.trim(), couleur: editionCouleur })
+        .eq("id", noteId);
+
+      if (error) throw new Error(error.message);
+
+      const referencedIds = new Set(extractImageIds(editionContenu));
+      const removedImages = (noteImages[noteId] || []).filter((image) => !referencedIds.has(image.id));
+      let cleanupWarning = null;
+
+      if (removedImages.length > 0) {
+        try {
+          await removeStoredImages(supabase, removedImages);
+        } catch (cleanupError) {
+          cleanupWarning = cleanupError.message;
+        }
+      }
+
+      clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
+      setEditionId(null);
+      setEditionTitre("");
+      setEditionContenu("");
+      setEditionCouleur(null);
+      setSucces(cleanupWarning ? "Note modifiée, avec un nettoyage d'image à reprendre." : "Note modifiée !");
+      if (cleanupWarning) setErreur(cleanupWarning);
+      await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
+    } catch (saveError) {
+      if (uploadedImages.length > 0) {
+        await removeStoredImages(supabase, uploadedImages).catch(() => {});
+      }
+      setErreur("Erreur lors de la modification : " + saveError.message);
+    } finally {
+      setNoteSaving(false);
     }
-
-    setEditionId(null);
-    setSucces("Note modifiée !");
-    await chargerNotes(utilisateur.id);
   }
 
   // === CRUD TAGS ===
@@ -666,10 +855,19 @@ export default function Home() {
     setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: true, erreur: null } }));
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: false, erreur: "Session expirée. Reconnecte-toi." } }));
+        return;
+      }
+
       const res = await fetch("/api/resumer", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titre: note.titre, contenu: note.contenu }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ titre: note.titre, contenu: stripImagesForText(note.contenu) }),
       });
 
       const data = await res.json();
@@ -694,7 +892,8 @@ export default function Home() {
   }
 
   async function copierNote(note) {
-    const texte = note.contenu ? note.titre + "\n\n" + note.contenu : note.titre;
+    const copyableContent = stripImagesForText(note.contenu);
+    const texte = copyableContent ? note.titre + "\n\n" + copyableContent : note.titre;
     try {
       await navigator.clipboard.writeText(texte);
       setSucces("Note copiée !");
@@ -912,14 +1111,16 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => sauvegarderEdition(note.id)}
-                  className="btn-brutal primary"
+                  disabled={noteSaving}
+                  className="btn-brutal primary disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
-                  Sauver
+                  {noteSaving ? "Sauvegarde..." : "Sauver"}
                 </button>
                 <button
                   onClick={annulerEdition}
-                  className="btn-brutal ghost"
+                  disabled={noteSaving}
+                  className="btn-brutal ghost disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
                   Annuler
@@ -1215,12 +1416,17 @@ export default function Home() {
         <div className="detail-body flex-1 overflow-y-auto">
           {enEdition ? (
             <div className="space-y-3">
-              <textarea
+              <NoteContentEditor
                 value={editionContenu}
-                onChange={(e) => setEditionContenu(e.target.value)}
+                onChange={setEditionContenu}
+                pendingImages={editionPendingImages}
+                onPendingImagesChange={setEditionPendingImages}
+                existingImages={noteImages[note.id] || []}
+                imageUrls={imageUrls}
                 rows={12}
-                className="input-glass"
-                style={{ resize: "vertical", minHeight: "200px" }}
+                minHeight="200px"
+                disabled={noteSaving}
+                imageDisabled={Boolean(imageFeatureError)}
               />
               {renderCouleurEditor()}
             </div>
@@ -1263,7 +1469,7 @@ export default function Home() {
 
               {note.contenu ? (
                 <div className="leading-relaxed" style={{ fontSize: noteFontSize + "px" }}>
-                  <MarkdownRenderer content={note.contenu} />
+                  <MarkdownRenderer content={note.contenu} imageUrls={imageUrls} />
                 </div>
               ) : (
                 <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
@@ -1410,12 +1616,17 @@ export default function Home() {
           <div className="modal-body">
             {enEdition ? (
               <div className="space-y-3">
-                <textarea
+                <NoteContentEditor
                   value={editionContenu}
-                  onChange={(e) => setEditionContenu(e.target.value)}
+                  onChange={setEditionContenu}
+                  pendingImages={editionPendingImages}
+                  onPendingImagesChange={setEditionPendingImages}
+                  existingImages={noteImages[note.id] || []}
+                  imageUrls={imageUrls}
                   rows={10}
-                  className="input-glass"
-                  style={{ resize: "vertical", minHeight: "150px" }}
+                  minHeight="150px"
+                  disabled={noteSaving}
+                  imageDisabled={Boolean(imageFeatureError)}
                 />
                 {renderCouleurEditor()}
               </div>
@@ -1458,7 +1669,7 @@ export default function Home() {
 
                 {note.contenu ? (
                   <div className="leading-relaxed" style={{ fontSize: noteFontSize + "px" }}>
-                    <MarkdownRenderer content={note.contenu} />
+                    <MarkdownRenderer content={note.contenu} imageUrls={imageUrls} />
                   </div>
                 ) : (
                   <p className="text-sm" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
@@ -1485,10 +1696,10 @@ export default function Home() {
           <div className="modal-footer space-y-2">
             {enEdition ? (
               <div className="flex items-center gap-2">
-                <button onClick={() => sauvegarderEdition(note.id)} className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                  Sauver
+                <button onClick={() => sauvegarderEdition(note.id)} disabled={noteSaving} className="btn-brutal primary disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                  {noteSaving ? "Sauvegarde..." : "Sauver"}
                 </button>
-                <button onClick={annulerEdition} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
+                <button onClick={annulerEdition} disabled={noteSaving} className="btn-brutal ghost disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
                   Annuler
                 </button>
               </div>
@@ -1797,6 +2008,23 @@ export default function Home() {
             {erreur}
           </div>
         )}
+        {imageFeatureError && (
+          <div
+            className="glass-card p-3 text-xs font-bold mb-2"
+            style={{ color: "#b45309", borderColor: "#f59e0b" }}
+          >
+            Images désactivées : {imageFeatureError}
+          </div>
+        )}
+        {noteSaving && (
+          <div
+            className="glass-card p-3 text-xs font-bold mb-2"
+            style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
+            role="status"
+          >
+            Sauvegarde des données et des images en cours...
+          </div>
+        )}
       </div>
 
       {/* === CARD VIEW === */}
@@ -1957,7 +2185,7 @@ export default function Home() {
                             transition: "max-height 0.3s ease",
                           }}
                         >
-                          <MarkdownRenderer content={note.contenu} />
+                          <MarkdownRenderer content={note.contenu} imageUrls={imageUrls} compact />
                         </div>
                         {contenuLong && (
                           <button
@@ -2538,13 +2766,18 @@ export default function Home() {
                   <label className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
                     Contenu
                   </label>
-                  <textarea
+                  <NoteContentEditor
                     value={contenu}
-                    onChange={(e) => setContenu(e.target.value)}
+                    onChange={setContenu}
+                    pendingImages={creationPendingImages}
+                    onPendingImagesChange={setCreationPendingImages}
+                    existingImages={[]}
+                    imageUrls={imageUrls}
                     placeholder="Contenu (optionnel) — supporte le Markdown"
                     rows={8}
-                    className="input-glass"
-                    style={{ resize: "vertical", minHeight: "120px" }}
+                    minHeight="120px"
+                    disabled={noteSaving}
+                    imageDisabled={Boolean(imageFeatureError)}
                   />
                 </div>
                 <div>
@@ -2589,15 +2822,16 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => ajouterNote()}
-                  disabled={!titre.trim()}
+                  disabled={!titre.trim() || noteSaving}
                   className="btn-brutal primary disabled:opacity-30"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
-                  Cr&eacute;er
+                  {noteSaving ? "Enregistrement..." : "Créer"}
                 </button>
                 <button
                   onClick={fermerModaleCreation}
-                  className="btn-brutal ghost"
+                  disabled={noteSaving}
+                  className="btn-brutal ghost disabled:opacity-50"
                   style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
                 >
                   Annuler

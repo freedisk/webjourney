@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
+import { stripImagesForText } from "@/lib/note-images";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -114,7 +115,10 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
   const totalNotes = notes.length;
   const notesEpinglees = notes.filter((n) => n.epinglee).length;
   const totalTags = tags.length;
-  const totalMots = notes.reduce((acc, n) => acc + (n.contenu ? n.contenu.trim().split(/\s+/).filter(Boolean).length : 0), 0);
+  const totalMots = notes.reduce((acc, n) => {
+    const textContent = stripImagesForText(n.contenu);
+    return acc + (textContent ? textContent.split(/\s+/).filter(Boolean).length : 0);
+  }, 0);
 
   // Évolution mois en cours vs mois dernier
   const maintenant = new Date();
