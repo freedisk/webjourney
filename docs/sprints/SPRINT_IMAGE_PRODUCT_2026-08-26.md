@@ -2,8 +2,9 @@
 
 ## Statut
 
-`REVIEW_REQUIRED` — implémentation et recette locale terminées le 2026-08-26 ;
-PR, gate et validation Vercel encore requis.
+`REVIEW_REQUIRED` — implémentation et recette locale terminées ; PR #6 ouverte
+et premier `Quality gate` vert. Fusion et validation Vercel Production encore
+requises.
 
 ## Objectif utilisateur
 
@@ -66,6 +67,7 @@ iPhone et iPad, sans affaiblir la confidentialité des notes.
   toutes les données/comptes synthétiques confirmés ;
 - production Supabase : historique aligné, dry-run vide, audit schéma 12/12 ;
 - audit images read-only : 20 notes, 1 métadonnée, 1 objet, aucun écart.
+- PR GitHub #6 : commit `66a8ca6`, trois checks verts et Preview Vercel `READY`.
 
 ## Sprints complémentaires intégrés
 

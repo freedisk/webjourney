@@ -157,6 +157,8 @@ Supabase ni les invariants de confidentialité et d'upload différé.
 - Supabase : deux migrations alignées, dry-run vide et audit de schéma 12/12.
 - Smoke build local : `/`, `/login`, manifeste, service worker et `/offline` en
   200 ; `/api/resumer` sans session en 401.
+- PR #6 ouverte sur `66a8ca6` ; `Quality gate`, Vercel Preview et commentaire
+  Preview tous verts avant le commit documentaire de preuve.
 
 ### Décisions
 
@@ -173,6 +175,7 @@ Supabase ni les invariants de confidentialité et d'upload différé.
 ### Références
 
 - Branche : `codex/image-product-sprint`.
+- Pull request : GitHub #6.
 - Sprint : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
 
 ## Modèle d'entrée
