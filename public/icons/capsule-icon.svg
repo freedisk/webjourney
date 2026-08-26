@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Icône Capsule</title>
+  <desc id="desc">Une capsule violette stylisée contenant les lignes d'une note.</desc>
+  <defs>
+    <linearGradient id="background" x1="48" y1="24" x2="464" y2="488" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#211847"/>
+      <stop offset="0.52" stop-color="#0e0e12"/>
+      <stop offset="1" stop-color="#251137"/>
+    </linearGradient>
+    <linearGradient id="capsule" x1="150" y1="96" x2="372" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#5b2eff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(386 118) rotate(132) scale(270)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b6fff" stop-opacity="0.48"/>
+      <stop offset="1" stop-color="#8b6fff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="92" y="58" width="360" height="430" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="13" dy="15" stdDeviation="0" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#background)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <path d="M64 116h88M360 406h88" stroke="#8b6fff" stroke-width="10" stroke-linecap="square" opacity="0.7"/>
+
+  <g transform="rotate(-9 256 256)" filter="url(#shadow)">
+    <rect x="142" y="90" width="228" height="332" rx="114" fill="url(#capsule)" stroke="#f6f4ff" stroke-width="18"/>
+    <path d="M151 275 361 237" stroke="#f6f4ff" stroke-width="18"/>
+    <path d="M205 310h103M205 342h103M205 374h68" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+    <path d="M196 142c22-24 46-34 75-34" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity="0.45"/>
+  </g>
+</svg>
