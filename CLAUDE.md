@@ -8,6 +8,9 @@ pour JC, développeur WinDev en transition vers le web moderne.
 `docs/archive/prompt-claude-legacy.md` est un document historique obsolète. Il
 ne doit pas être interprété comme une instruction active du projet.
 
+Les instructions opérationnelles actives se trouvent dans `AGENTS.md`. Pour une
+reprise, lire d'abord `docs/MEMORY.md`, puis `docs/ARCHITECTURE.md` et le backlog.
+
 ## Stack validée
 
 - **Next.js 16.3.3** (App Router, React Compiler)
@@ -89,8 +92,8 @@ réutilisables liées aux images doivent rester dans `components/` et `lib/`.
 
 RLS attendue : l'utilisateur authentifié opère uniquement sur ses notes. Une
 politique SELECT anonyme distincte autorise seulement les notes dont
-`share_token` est actif. Les politiques effectives doivent être vérifiées dans
-le dashboard, car les migrations historiques ne sont pas présentes dans Git.
+`share_token` est actif. La baseline versionnée et l'audit SQL de production
+décrivent les politiques effectives.
 
 ### `tags`
 
@@ -194,8 +197,8 @@ authentifiée avec la migration appliquée reste obligatoire avant production.
 - Pas de test E2E automatisé contre un projet Supabase réel.
 - Pas de consultation ou d'édition hors ligne des notes : le service worker ne
   conserve volontairement aucune donnée privée.
-- Les anciennes migrations des tables `notes`, `tags` et `notes_tags` doivent
-  encore être reconstituées depuis le dashboard pour rendre le dépôt autonome.
+- Le `db reset` Supabase local complet nécessite encore Docker Desktop sur ce
+  poste ; la baseline est néanmoins versionnée et alignée avec la production.
 - Export PDF/JSON non implémenté.
 
 

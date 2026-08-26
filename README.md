@@ -51,18 +51,25 @@ préfixée par `NEXT_PUBLIC_`.
 ## Base de données et images
 
 Les changements Supabase sont versionnés dans `supabase/migrations/`.
-La migration `20260826120000_add_note_images.sql` crée :
+La baseline `20260826000000_baseline_existing_schema.sql` décrit le noyau
+historique. La migration `20260826120000_add_note_images.sql` crée :
 
 - la table `note_images` ;
 - le bucket privé `note-images` ;
 - la limite de 5 Mio et les types JPEG, PNG et WebP ;
 - les politiques RLS de lecture, ajout et suppression.
 
-Appliquer cette migration **avant** de déployer le code des images. Deux voies
-sont possibles :
+Pour une nouvelle évolution, créer une migration forward-only et utiliser le
+CLI lié :
 
-1. projet lié au CLI Supabase : `npx supabase db push` ;
-2. copier le SQL de la migration dans le SQL Editor du dashboard Supabase.
+```bash
+npx supabase migration list --linked
+npx supabase db push --dry-run --linked
+npx supabase db push --linked
+```
+
+Les deux migrations existantes sont déjà marquées appliquées sur Webjourney.
+Ne pas les modifier ni revenir au SQL Editor pour contourner l'historique.
 
 Les images restent privées. Le contenu Markdown conserve un identifiant stable,
 et l'application produit une URL signée d'une heure au moment du rendu. La page
@@ -101,13 +108,26 @@ lib/
   supabase.js                client navigateur
   supabase-admin.js          client serveur à clé secrète
 supabase/migrations/         schéma et politiques versionnés
+supabase/schemas/            photographie déclarative de production
+supabase/tests/              audit SQL non destructif
 tests/                       tests unitaires
 public/sw.js                 cache statique, jamais les notes privées
 public/icons/                icônes PWA et source SVG
 ```
 
-Documentation technique détaillée : [CLAUDE.md](CLAUDE.md) et
-[DEVELOPMENT.md](DEVELOPMENT.md).
+## Documentation
+
+- [Index documentaire](docs/README.md) ;
+- [architecture technique](docs/ARCHITECTURE.md) ;
+- [mémoire projet](docs/MEMORY.md) ;
+- [devbook](docs/DEVBOOK.md) et [backlog](docs/BACKLOG.md) ;
+- [runbook d'exploitation](docs/RUNBOOK.md) ;
+- [stratégie de test](docs/TESTING.md) ;
+- [décisions d'architecture](docs/DECISIONS.md) ;
+- [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
+
+`CLAUDE.md` conserve le contexte fonctionnel détaillé et `AGENTS.md` définit les
+règles obligatoires pour les agents et les automations.
 
 ## Production
 

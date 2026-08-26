@@ -1,8 +1,9 @@
 # Capsule — Guide de développement et de reprise
 
-Ce guide décrit comment travailler sur le projet. `CLAUDE.md` reste la référence
-fonctionnelle et technique ; les fichiers SQL sous `supabase/migrations/` sont
-la source de vérité pour les changements de base récents.
+Ce guide décrit comment travailler sur le projet. `docs/MEMORY.md` fournit la
+reprise rapide, `docs/ARCHITECTURE.md` décrit les frontières et `AGENTS.md`
+définit le cycle obligatoire. Les fichiers SQL sous `supabase/migrations/` sont
+la source de vérité des changements de base.
 
 ## 1. Installation
 
@@ -22,9 +23,10 @@ Ne jamais commiter `.env.local`. La clé `SUPABASE_SECRET_KEY` et la clé
 1. `git status --short --branch` : identifier les modifications existantes.
 2. `npm install`.
 3. Vérifier `.env.local` sans afficher ses valeurs.
-4. Lire `CLAUDE.md` et les migrations non encore appliquées.
+4. Lire `docs/MEMORY.md`, `docs/BACKLOG.md` et les migrations non appliquées.
 5. Exécuter `npm run validate` et `npm audit`.
 6. Tester l'authentification et une note texte avant une migration fonctionnelle.
+7. Ouvrir ou mettre à jour le journal de session selon `AGENTS.md`.
 
 ## 3. Architecture
 
@@ -47,9 +49,11 @@ Component.
 
 ## 4. Activation des images
 
-Ordre obligatoire :
+Sur la production Webjourney, la baseline et la migration images sont déjà
+alignées dans l'historique CLI. Pour un environnement neuf, l'ordre obligatoire
+est :
 
-1. appliquer `supabase/migrations/20260826120000_add_note_images.sql` ;
+1. appliquer toutes les migrations avec `npx supabase db push` ;
 2. vérifier le bucket privé, ses limites et les policies ;
 3. ajouter `SUPABASE_SECRET_KEY` dans Vercel ou, pour un projet historique,
    `SUPABASE_SERVICE_ROLE_KEY` ;
@@ -114,8 +118,8 @@ duplication et la correspondance des URL signées.
 ## 8. Limites structurelles
 
 - `app/page.js` est un monolithe historique d'environ 3 000 lignes.
-- Les migrations initiales de `notes`, `tags` et `notes_tags` ne sont pas encore
-  dans Git ; seule l'évolution images est versionnée à ce stade.
+- La baseline historique et la migration images sont versionnées et alignées en
+  production ; le `db reset` local conteneurisé reste à automatiser (`TOOL-002`).
 - Aucun E2E ne pilote encore une session Supabase réelle.
 - Le projet utilise encore le nom de package historique `webjourney`.
 - La PWA est installable et fournit un repli hors ligne, mais les notes restent

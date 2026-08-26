@@ -29,7 +29,19 @@ Après fusion, l'intégration GitHub → Vercel déclenche le déploiement Produ
 
 ## 1. Supabase
 
-Appliquer `supabase/migrations/20260826120000_add_note_images.sql`.
+Le projet Webjourney possède désormais un historique CLI aligné. Avant chaque
+release contenant une nouvelle migration :
+
+```powershell
+npx supabase migration list --linked
+npx supabase db push --dry-run --linked
+npx supabase db push --linked
+npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
+```
+
+Les versions `20260826000000` (baseline) et `20260826120000` (images) sont déjà
+appliquées en production. Ne pas les éditer ou les rejouer ; créer une nouvelle
+migration forward-only.
 
 Contrôles dashboard :
 
@@ -41,7 +53,7 @@ Contrôles dashboard :
 - trois policies SELECT/INSERT/DELETE sur `storage.objects`.
 
 Ne pas modifier directement les lignes `storage.objects` pour supprimer un
-fichier.
+fichier et ne jamais exécuter `supabase db reset --linked`.
 
 ## 2. Vercel
 

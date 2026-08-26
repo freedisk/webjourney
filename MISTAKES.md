@@ -1,0 +1,136 @@
+# Capsule — registre des erreurs et apprentissages
+
+Ce registre est factuel et sans recherche de responsabilité. Une entrée reste
+présente après correction afin d'éviter la répétition du problème.
+
+## M-001 — Documentation initiale en dérive
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : README générique et roadmap indiquant comme futures des
+  fonctions déjà livrées.
+- **Cause** : documentation mise à jour séparément du code.
+- **Impact** : reprise et estimation du périmètre incertaines.
+- **Correction** : README, CLAUDE, DEVELOPMENT et guides ciblés réécrits.
+- **Prévention** : documentation obligatoire dans la même PR et mémoire stable.
+- **Statut** : corrigé ; contrôle continu.
+
+## M-002 — Schéma Supabase historique non versionné
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : seules les images disposent d'une migration Git ; `notes`,
+  `tags` et `notes_tags` ne peuvent pas être recréées depuis le dépôt.
+- **Cause** : construction historique dans le Dashboard/SQL Editor sans CLI.
+- **Impact** : dérive possible, staging difficile, restauration non démontrée.
+- **Correction** : photographie stricte, baseline `20260826000000`, migration
+  images conservée et historique local/distant aligné sans rejeu du DDL.
+- **Prévention** : toute évolution future commence par une migration versionnée.
+- **Statut** : corrigé ; `db reset` Docker suivi séparément par `TOOL-002`.
+
+## M-003 — Rejeu involontaire dans le SQL Editor
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : le contrôle censé être en lecture a renvoyé le résultat du DDL
+  précédent ; la migration a été rejouée.
+- **Cause** : contenu ou sélection Monaco non remplacé proprement.
+- **Impact** : aucun dommage car la migration était idempotente, mais risque
+  réel pour un script non idempotent.
+- **Correction** : éditeur vidé explicitement avant la requête de contrôle.
+- **Prévention** : nouvel onglet SQL, sélection complète vérifiée, script relu,
+  puis contrôle indépendant.
+- **Statut** : corrigé.
+
+## M-004 — Privilèges implicites trop larges
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : `authenticated` conservait notamment `UPDATE`, `TRUNCATE`,
+  `REFERENCES` et `TRIGGER` sur `note_images`.
+- **Cause** : grants par défaut non révoqués avant les grants minimaux.
+- **Impact** : surface d'accès supérieure à l'intention, même avec RLS.
+- **Correction** : `REVOKE ALL`, puis `GRANT SELECT, INSERT, DELETE` ; production
+  contrôlée à 11/11 puis 10/10 vérifications.
+- **Prévention** : assertions explicites sur les grants après chaque migration.
+- **Statut** : corrigé.
+
+## M-005 — Serveur de développement bloquant `npm ci`
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : verrou Windows sur le binaire `lightningcss`.
+- **Cause** : `next dev` utilisait encore le fichier pendant l'installation
+  propre des dépendances.
+- **Impact** : gate local interrompu, sans défaut applicatif.
+- **Correction** : arrêt ciblé du serveur sur le port 3000, `npm ci`, validation,
+  puis redémarrage.
+- **Prévention** : arrêter les watchers avant `npm ci` sous Windows.
+- **Statut** : corrigé.
+
+## M-006 — Bootstrap GitHub Actions atypique
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : aucun run depuis la branche secondaire avant que le workflow
+  n'existe sur la branche par défaut ; événements ensuite retardés.
+- **Cause** : bootstrap initial du workflow et latence GitHub Actions.
+- **Impact** : push direct exceptionnel nécessaire avant activation du ruleset.
+- **Correction** : workflow installé, run manuel initial, ruleset
+  `main-quality-gate` activé puis validé par PR réelle.
+- **Prévention** : le workflow est désormais présent sur `main`; aucun nouveau
+  bootstrap ne doit être nécessaire.
+- **Statut** : corrigé.
+
+## M-007 — Sessions CLI et contrôle Chrome instables
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : session Vercel CLI initialement expirée et plusieurs timeouts de
+  prise de contrôle d'un onglet GitHub Chrome. Lors du baselining Supabase, un
+  ancien format de profil Windows a aussi refusé `--profile capsule`, puis le
+  mode agent a empêché le prompt interactif jusqu'à l'usage de `--agent no`.
+- **Cause** : authentifications et contrôle navigateur indépendants du dépôt.
+- **Impact** : délais opérationnels, sans modification incorrecte.
+- **Correction** : réauthentification Vercel et usage des identifiants Git déjà
+  authentifiés pour l'API GitHub.
+- **Prévention** : vérifier les CLI en lecture seule avant une release et garder
+  une voie API authentifiée sans afficher les jetons ; isoler et nommer les
+  nouveaux accès persistants lorsque le CLI le permet.
+- **Statut** : surveillé.
+
+## M-008 — Dette qualité et sécurité non bloquante à l'origine
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : huit erreurs lint, aucun test et cinq vulnérabilités élevées.
+- **Cause** : absence de gate automatisé.
+- **Impact** : risque de livrer une régression ou une dépendance vulnérable.
+- **Correction** : lint corrigé, 21 tests, dépendances mises à jour, audit à zéro
+  et `Quality gate` obligatoire.
+- **Prévention** : PR protégée et audit élevé bloquant.
+- **Statut** : corrigé.
+
+## M-009 — Outils de baseline dépendants de Docker et limites Windows
+
+- **Date constatée** : 2026-08-26.
+- **Symptôme** : `db dump` et la génération locale pg-delta ont exigé Docker
+  Desktop ; une validation SQL transmise en argument a dépassé la limite de
+  longueur de commande Windows. Le premier audit SQL comparait aussi deux types
+  de tableaux PostgreSQL incompatibles et `db lint --linked` a renvoyé 403 pour
+  le niveau d'accès de ce compte.
+- **Cause** : dépendances conteneurisées de certaines commandes CLI, limite de
+  `cmd.exe` et casts implicites insuffisants dans `information_schema`.
+- **Impact** : trois tentatives interrompues avant toute écriture persistante.
+- **Correction** : export déclaratif distant `--strict-coverage`, casts
+  explicites, puis transmission de la transaction de validation par l'entrée
+  standard de la CLI ; le lint local est reporté sur la stack conteneurisée.
+- **Prévention** : vérifier les prérequis de chaque sous-commande, préférer
+  `--file` ou stdin pour le SQL long et typer explicitement les agrégats d'audit.
+- **Statut** : contourné ; installation Docker suivie par `TOOL-002`.
+
+## Modèle d'entrée
+
+```markdown
+## M-XXX — Titre
+
+- **Date constatée** : YYYY-MM-DD.
+- **Symptôme** :
+- **Cause** :
+- **Impact** :
+- **Correction** :
+- **Prévention** :
+- **Statut** : ouvert | corrigé | surveillé.
+```
