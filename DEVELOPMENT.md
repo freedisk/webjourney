@@ -86,13 +86,13 @@ npm audit
 
 Le workflow `.github/workflows/ci.yml` exécute les mêmes contrôles sous Node 24
 sur chaque branche `codex/**`, chaque pull request vers `main` et chaque push sur
-`main`. Le contrôle distant `CI / Quality gate` doit être vert avant fusion.
+`main`. Le contrôle distant `Quality gate` doit être vert avant fusion.
 
 Cycle Git attendu :
 
 1. créer une branche `codex/<sujet>` ;
 2. pousser la branche et ouvrir une pull request vers `main` ;
-3. attendre `CI / Quality gate` ;
+3. attendre `Quality gate` ;
 4. fusionner seulement lorsque GitHub autorise la fusion ;
 5. laisser l'intégration GitHub → Vercel déployer le `main` validé.
 
