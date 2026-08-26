@@ -16,9 +16,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 ## État validé au 2026-08-26
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
-- Pipeline image amélioré validé localement : glisser-déposer, compression WebP
-  2 048 px / 5 Mio, progression et visionneuse clavier/tactile ; livraison en
-  revue avant production.
+- Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /
+  5 Mio, progression et visionneuse clavier/tactile.
 - Duplication et suppression d'images validées par recette utilisateur.
 - Bucket `note-images` privé, limite 5 Mio, JPEG/PNG/WebP.
 - Grants `note_images` pour `authenticated` limités à SELECT/INSERT/DELETE.
@@ -27,6 +26,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Référence CI : lint, 31 tests, build Next.js et audit élevé.
 - Audit read-only des images disponible par `npm run ops:audit-images` ; état de
   production observé propre le 2026-08-26.
+- Référence de livraison images : PR #6, fusion `4c77786`, Vercel
+  `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` en `READY` sur Node 24.x.
 
 ## Invariants
 

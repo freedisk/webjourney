@@ -32,6 +32,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- PR #6 fusionnée au commit `4c77786` ; sprint produit images en production.
+- Vercel Production `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` vérifié `READY` sur
+  Node 24.x, alias public et smoke tests conformes.
 - PR #3 fusionnée sur `main` au commit `1c634d2`.
 - Déploiement Vercel Production vérifié `READY`, alias public et smoke tests
   conformes.

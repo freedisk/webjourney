@@ -157,8 +157,17 @@ Supabase ni les invariants de confidentialité et d'upload différé.
 - Supabase : deux migrations alignées, dry-run vide et audit de schéma 12/12.
 - Smoke build local : `/`, `/login`, manifeste, service worker et `/offline` en
   200 ; `/api/resumer` sans session en 401.
-- PR #6 ouverte sur `66a8ca6` ; `Quality gate`, Vercel Preview et commentaire
-  Preview tous verts avant le commit documentaire de preuve.
+- PR #6 : commits `66a8ca6` et `42ebd7d`, deux passages du `Quality gate` verts.
+- GitHub a conservé temporairement `mergeable: unknown` malgré l'absence de
+  conflit ; l'API de fusion standard a appliqué le ruleset sans bypass et créé
+  le commit `4c77786`.
+- Vercel Production `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` : `READY`, branche
+  `main`, SHA exact `4c77786`, alias public actif et Node 24.x confirmé.
+- Smoke public : `/`, `/login`, manifeste, service worker et `/offline` en 200 ;
+  manifeste `standalone` avec trois icônes, service worker `no-store` et API
+  sans session en 401.
+- Audit images rejoué après déploiement : 20 notes, 1 métadonnée, 1 objet et
+  zéro incohérence.
 
 ### Décisions
 
@@ -176,6 +185,8 @@ Supabase ni les invariants de confidentialité et d'upload différé.
 
 - Branche : `codex/image-product-sprint`.
 - Pull request : GitHub #6.
+- Fusion : `4c77786a260b4f0a2cc286603ec22f0d593930e8`.
+- Déploiement : `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5`.
 - Sprint : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
 
 ## Modèle d'entrée

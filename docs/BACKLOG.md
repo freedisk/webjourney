@@ -9,32 +9,10 @@
 
 États : `TODO`, `IN_PROGRESS`, `REVIEW_REQUIRED`, `DONE`, `BLOCKED`.
 
-## En revue
+## En cours
 
-### UX-001 — Pipeline image amélioré
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé côté UX / 1–2 jours.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : compression locale, progression, glisser-déposer, erreurs
-  détaillées et galerie responsive accessible.
-- **Plan de sprint** : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
-
-### OPS-001 — Images orphelines
-
-- **Priorité** : P1.
-- **ROI / effort** : élevé / 1 jour.
-- **État** : `REVIEW_REQUIRED`.
-- **Sortie livrée** : rapport read-only Markdown / métadonnées / Storage,
-  code de sortie non nul en cas d'écart et aucune suppression automatique.
-
-### TOOL-001 — Verrouiller le runtime Node
-
-- **Priorité** : P2.
-- **ROI / effort** : moyen/élevé / 1–2 heures.
-- **État** : `REVIEW_REQUIRED`.
-- **Sortie livrée** : Node 24.19 et npm 11 cohérents entre fichiers de version,
-  `package.json` et CI.
+Aucun chantier actif après la clôture du sprint produit images. Sélectionner
+explicitement le prochain item avant de commencer une nouvelle évolution.
 
 ## Prochaines priorités
 
@@ -96,6 +74,9 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-001 | Compression, dépôt, progression et galerie | 2026-08-26 | PR #6, `4c77786`, 31 tests, recette Chrome, Vercel `READY` |
+| OPS-001 | Audit read-only des images orphelines | 2026-08-26 | PR #6, six catégories propres après déploiement |
+| TOOL-001 | Runtime Node/npm verrouillé | 2026-08-26 | PR #6, Node 24.x confirmé par Vercel |
 | DB-001 | Baseline Supabase et historique CLI | 2026-08-26 | PR #3, `1c634d2`, versions alignées, dry-run vide, audit 12/12, Vercel READY |
 | DOC-002 | Documentation durable et journal de session | 2026-08-26 | index, architecture, mémoire, devbook, backlog, décisions, runbook, tests, mistakes |
 | IMG-001 | Images privées fichier/collage | 2026-08-26 | `3a6c28e`, recette utilisateur |
