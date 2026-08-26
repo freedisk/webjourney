@@ -96,7 +96,7 @@ le prochain item avant de commencer une nouvelle évolution.
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
-| DB-001 | Baseline Supabase et historique CLI | 2026-08-26 | versions `20260826000000`/`20260826120000` alignées, dry-run vide, audit 12/12 |
+| DB-001 | Baseline Supabase et historique CLI | 2026-08-26 | PR #3, `1c634d2`, versions alignées, dry-run vide, audit 12/12, Vercel READY |
 | DOC-002 | Documentation durable et journal de session | 2026-08-26 | index, architecture, mémoire, devbook, backlog, décisions, runbook, tests, mistakes |
 | IMG-001 | Images privées fichier/collage | 2026-08-26 | `3a6c28e`, recette utilisateur |
 | CI-001 | Quality gate obligatoire | 2026-08-26 | PR #1, ruleset actif |

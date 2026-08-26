@@ -19,6 +19,12 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 - Historique distant aligné sur les deux migrations sans rejeu du DDL ; dry-run
   de production vide.
 
+### Déployé
+
+- PR #3 fusionnée sur `main` au commit `1c634d2`.
+- Déploiement Vercel Production vérifié `READY`, alias public et smoke tests
+  conformes.
+
 ## 2026-08-26 — PWA, CI et images privées
 
 ### Ajouté

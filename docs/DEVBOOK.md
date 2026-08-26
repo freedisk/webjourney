@@ -104,8 +104,10 @@ bucket privé, références Markdown stables et compensations explicites.
 - Historique distant réparé sans rejouer le SQL : les versions
   `20260826000000` et `20260826120000` sont alignées local/distant.
 - `supabase db push --dry-run --linked` confirme la base distante à jour.
-- Commit principal `889c16d`, PR GitHub #3 et premier `Quality gate` complet
-  réussis avant la fusion.
+- Commits `889c16d` et `b8d1148`, PR GitHub #3 fusionnée au commit `1c634d2`.
+- Les deux exécutions finales du `Quality gate` sont vertes.
+- Déploiement Vercel Production `dpl_75up2j5sSVdMfpTU9AGbNYbT356t` en `READY`,
+  SHA Git vérifié, alias public actif et six smoke tests conformes.
 
 ### Limite isolée
 
