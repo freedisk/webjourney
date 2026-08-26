@@ -12,6 +12,21 @@ npm audit
 Résultats attendus : lint sans erreur, tests verts, build réussi et aucune
 vulnérabilité npm.
 
+## Gate GitHub obligatoire
+
+La production ne doit plus recevoir de push direct. Travailler sur une branche
+`codex/**`, ouvrir une pull request vers `main` et attendre le contrôle
+`CI / Quality gate`. Il exécute sous Node 24 :
+
+- `npm ci` ;
+- `npm run lint` ;
+- `npm test` ;
+- `npm run build` ;
+- `npm audit --audit-level=high`.
+
+La règle de branche `main` impose la pull request et la réussite du contrôle.
+Après fusion, l'intégration GitHub → Vercel déclenche le déploiement Production.
+
 ## 1. Supabase
 
 Appliquer `supabase/migrations/20260826120000_add_note_images.sql`.

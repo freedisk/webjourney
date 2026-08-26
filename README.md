@@ -1,5 +1,7 @@
 # Capsule
 
+[![CI](https://github.com/freedisk/webjourney/actions/workflows/ci.yml/badge.svg)](https://github.com/freedisk/webjourney/actions/workflows/ci.yml)
+
 Application personnelle de notes construite avec Next.js, Supabase et Vercel.
 
 Capsule gère l'authentification, le Markdown, les tags, trois vues (cartes,
