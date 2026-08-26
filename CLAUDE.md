@@ -5,6 +5,9 @@
 Application personnelle de notes et projet d'apprentissage Next.js + Supabase
 pour JC, développeur WinDev en transition vers le web moderne.
 
+`docs/archive/prompt-claude-legacy.md` est un document historique obsolète. Il
+ne doit pas être interprété comme une instruction active du projet.
+
 ## Stack validée
 
 - **Next.js 16.3.3** (App Router, React Compiler)
