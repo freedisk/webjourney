@@ -118,11 +118,29 @@ duplication et la correspondance des URL signées.
   dans Git ; seule l'évolution images est versionnée à ce stade.
 - Aucun E2E ne pilote encore une session Supabase réelle.
 - Le projet utilise encore le nom de package historique `webjourney`.
+- La PWA est installable et fournit un repli hors ligne, mais les notes restent
+  volontairement en ligne uniquement afin de ne pas mettre de données privées
+  dans le cache du service worker.
 
 Éviter un refactor global opportuniste. Extraire uniquement une logique lorsque
 la fonctionnalité en cours bénéficie réellement de sa réutilisation ou de tests.
 
-## 9. Déploiement et rollback
+## 9. PWA
+
+Le service worker est enregistré uniquement en production. Ne pas l'activer
+avec `next dev`, car un cache persistant perturberait le rechargement à chaud.
+
+Après toute modification de `public/sw.js` ou des ressources précachées :
+
+1. incrémenter `CACHE_NAME` ;
+2. lancer `npm run validate` ;
+3. tester `npm run start` sur un port libre ;
+4. vérifier le manifeste, le scope `/` et la page `/offline` ;
+5. refaire une installation Safari sur un appareil iOS avant production.
+
+La recette détaillée se trouve dans `docs/PWA.md`.
+
+## 10. Déploiement et rollback
 
 Le détail se trouve dans `docs/DEPLOYMENT.md`. Ne pas pousser vers la production
 avant d'avoir confirmé que la migration est appliquée. En cas de rollback du

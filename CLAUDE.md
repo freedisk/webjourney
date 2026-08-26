@@ -5,6 +5,9 @@
 Application personnelle de notes et projet d'apprentissage Next.js + Supabase
 pour JC, développeur WinDev en transition vers le web moderne.
 
+`docs/archive/prompt-claude-legacy.md` est un document historique obsolète. Il
+ne doit pas être interprété comme une instruction active du projet.
+
 ## Stack validée
 
 - **Next.js 16.3.3** (App Router, React Compiler)
@@ -14,6 +17,7 @@ pour JC, développeur WinDev en transition vers le web moderne.
 - **Tailwind CSS 4.3.3** + CSS custom
 - **Anthropic API** pour les résumés
 - **Vitest 4.1.11** pour les tests unitaires
+- **PWA** : manifeste Next.js, service worker minimal et icônes Apple
 
 ## URLs
 
@@ -40,6 +44,8 @@ pour JC, développeur WinDev en transition vers le web moderne.
 app/
 ├── api/resumer/route.js       API Anthropic protégée par session Supabase
 ├── login/page.js              connexion et inscription
+├── manifest.js                manifeste PWA
+├── offline/page.js            repli réseau sans données privées
 ├── share/[token]/page.js      note publique et images signées côté serveur
 ├── globals.css                design system et styles images
 ├── layout.js                  layout serveur et thème anti-flash
@@ -47,6 +53,7 @@ app/
 components/
 ├── MarkdownRenderer.js        rendu Markdown et sources capsule-image/<uuid>
 ├── NoteContentEditor.js       textarea, fichier, collage et aperçus
+├── PWARegistration.js         enregistrement du service worker en production
 └── StatsDrawer.js             statistiques
 lib/
 ├── note-images.js             format, validation, parsing et transformation
@@ -153,6 +160,7 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 - Statistiques Recharts.
 - Partage public par UUID opaque, y compris les images signées.
 - Thèmes clair/sombre, responsive mobile et réduction des animations.
+- Installation PWA iPhone/iPad avec icône dédiée et mode autonome.
 - Raccourcis clavier et protection contre la perte de modifications.
 
 ## Architecture des appels
@@ -175,7 +183,7 @@ npm run validate
 npm audit
 ```
 
-État de référence après l'ajout des images : 14 tests unitaires, lint sans
+État de référence après l'ajout de la PWA : 21 tests unitaires, lint sans
 erreur, build Next.js réussi et 0 vulnérabilité npm. Une recette navigateur
 authentifiée avec la migration appliquée reste obligatoire avant production.
 
@@ -184,6 +192,8 @@ authentifiée avec la migration appliquée reste obligatoire avant production.
 - Pas encore de rate-limit persistant sur `/api/resumer` ; l'authentification
   empêche cependant les appels anonymes.
 - Pas de test E2E automatisé contre un projet Supabase réel.
+- Pas de consultation ou d'édition hors ligne des notes : le service worker ne
+  conserve volontairement aucune donnée privée.
 - Les anciennes migrations des tables `notes`, `tags` et `notes_tags` doivent
   encore être reconstituées depuis le dashboard pour rendre le dépôt autonome.
 - Export PDF/JSON non implémenté.

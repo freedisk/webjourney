@@ -1,5 +1,6 @@
 // Layout principal — initialisation du thème sombre/clair
 import { Geist, Geist_Mono } from "next/font/google";
+import PWARegistration from "@/components/PWARegistration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,36 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Capsule — Mes Notes",
-  description: "Application de notes personnelles",
+  description: "Notes personnelles avec Markdown, images, tags et vues Kanban.",
+  applicationName: "Capsule",
+  manifest: "/manifest.webmanifest",
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Capsule",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f0eee6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0e12" },
+  ],
 };
 
 export default function RootLayout({ children }) {
@@ -31,9 +61,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}>
+        <PWARegistration />
         {children}
       </body>
     </html>

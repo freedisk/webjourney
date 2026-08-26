@@ -60,6 +60,17 @@ Déclencher un nouveau déploiement après toute modification de variable.
 Suivre la recette de `docs/IMAGES.md`, au minimum : fichier, collage, reload,
 duplication, suppression et lien partagé en navigation privée.
 
+Contrôles PWA complémentaires :
+
+- `/manifest.webmanifest` répond en `200` avec `display: standalone` ;
+- `/sw.js` répond en JavaScript avec `Cache-Control: no-cache, no-store` ;
+- Safari propose **Sur l'écran d'accueil** et utilise l'icône Capsule ;
+- après installation, l'application s'ouvre sans barre d'adresse ;
+- une navigation sans réseau affiche la page Capsule hors ligne, sans note ni
+  image privée dans le cache.
+
+Voir `docs/PWA.md` pour la recette iPhone/iPad complète.
+
 ## Rollback
 
 1. Revenir au déploiement Vercel précédent.

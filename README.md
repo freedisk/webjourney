@@ -9,6 +9,11 @@ liste et Kanban), le partage public par token, les statistiques et les résumés
 Anthropic. Les notes peuvent également contenir des images privées ajoutées par
 fichier ou par copier/coller.
 
+Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
+d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
+dédiée. Voir [docs/PWA.md](docs/PWA.md) pour l'installation et le périmètre hors
+ligne.
+
 ## Stack
 
 - Next.js 16.3.3 et React 19.2.8 ;
@@ -16,6 +21,7 @@ fichier ou par copier/coller.
 - Vercel : déploiement depuis GitHub ;
 - Tailwind CSS 4 et CSS custom ;
 - Anthropic pour les résumés de notes.
+- Web App Manifest et service worker minimal pour l'installation PWA.
 
 ## Démarrage local
 
@@ -81,9 +87,12 @@ npm run security:audit  # audit complet des dépendances
 ```text
 app/
   page.js                    interface et opérations principales
+  manifest.js                manifeste d'installation PWA
+  offline/page.js            page de repli sans connexion
   api/resumer/route.js       résumé Anthropic authentifié
   share/[token]/page.js      lecture publique et signature serveur
 components/
+  PWARegistration.js         enregistrement du service worker
   NoteContentEditor.js       texte, fichier, collage et aperçus
   MarkdownRenderer.js        Markdown et images signées
 lib/
@@ -93,6 +102,8 @@ lib/
   supabase-admin.js          client serveur à clé secrète
 supabase/migrations/         schéma et politiques versionnés
 tests/                       tests unitaires
+public/sw.js                 cache statique, jamais les notes privées
+public/icons/                icônes PWA et source SVG
 ```
 
 Documentation technique détaillée : [CLAUDE.md](CLAUDE.md) et
