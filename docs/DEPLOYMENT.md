@@ -16,7 +16,7 @@ vulnérabilité npm.
 
 La production ne doit plus recevoir de push direct. Travailler sur une branche
 `codex/**`, ouvrir une pull request vers `main` et attendre le contrôle
-`CI / Quality gate`. Il exécute sous Node 24 :
+`Quality gate`. Il exécute sous Node 24 :
 
 - `npm ci` ;
 - `npm run lint` ;
