@@ -104,6 +104,8 @@ bucket privé, références Markdown stables et compensations explicites.
 - Historique distant réparé sans rejouer le SQL : les versions
   `20260826000000` et `20260826120000` sont alignées local/distant.
 - `supabase db push --dry-run --linked` confirme la base distante à jour.
+- Commit principal `889c16d`, PR GitHub #3 et premier `Quality gate` complet
+  réussis avant la fusion.
 
 ### Limite isolée
 
