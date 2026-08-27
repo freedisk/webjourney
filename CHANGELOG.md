@@ -15,6 +15,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
   uniquement après contrôle exact de présence, unicité et ordre des marqueurs.
 - Route BYOK authentifiée `no-store`, quota AI-001 partagé, sortie tronquée ou
   invalide rejetée sans modifier la note et aucune migration Supabase.
+- Correctif notes longues : sections bornées, raisonnement adaptatif désactivé
+  sur les modèles 5 compatibles, faits structurés masqués, reprise ciblée et
+  attente client limitée avec temps écoulé visible.
 
 ### HELP-001 — Centre d'aide contextuel
 

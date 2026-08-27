@@ -11,7 +11,15 @@
 
 ## En cours
 
-Aucun sprint actif.
+### AI-002-R1 — Fiabilité des notes longues
+
+- **Priorité** : P1.
+- **ROI / effort** : très élevé / correctif ciblé.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : segmentation, budget Sonnet 5, faits protégés, reprise ciblée,
+  temps écoulé et timeout client.
+- **Sortie** : note de reproduction 18 389 caractères traitée avant 100 secondes,
+  proposition atomique, 80 tests et smoke local authentifié 40/40.
 
 ## Prochaines priorités
 

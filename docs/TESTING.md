@@ -35,9 +35,10 @@ npm run security:audit -- --audit-level=high
   authentification et quota présents sur chaque route.
 - contenu HELP-001 complet, recherche insensible aux accents, progression locale
   nettoyée, points d'entrée contextuels et styles responsive.
-- invariants AI-002 : détection du texte utile, masquage/restauration exacte des
-  images, rejet des marqueurs perdus/dupliqués/réordonnés/inventés, sortie
-  tronquée refusée et application explicite sur snapshot inchangé.
+- invariants AI-002 : détection du texte utile, segmentation des notes longues,
+  masquage/restauration exacte des images, nombres, URL et tâches, reprise
+  ciblée unique, timeout explicite, sortie tronquée refusée et application sur
+  snapshot inchangé.
 
 ### Recette navigateur authentifiée
 
@@ -164,6 +165,18 @@ Le contrat complet est décrit dans `docs/AI_FORMATTING.md`. Contrôler :
 Le smoke BYOK couvre aussi 401, 428, les deux modes réels, la restauration d'une
 référence privée et le nettoyage du compte synthétique. Sa sortie ne doit
 contenir ni clé, ni identifiant utilisateur, ni texte généré.
+
+Une régression longue peut être ajoutée au même smoke sans afficher son contenu :
+
+```powershell
+$env:AI_SMOKE_ALLOW_SYNTHETIC_WRITES = '1'
+npm run test:ai:smoke -- --base-url=http://localhost:3101 --long-format-file="C:\chemin\note-longue.txt"
+Remove-Item Env:AI_SMOKE_ALLOW_SYNTHETIC_WRITES
+```
+
+Le résultat doit annoncer `longFormat.ok=true`, terminer avant 100 secondes et
+confirmer la restauration des faits. Le fichier source n'est jamais copié dans
+le dépôt, le journal ou la sortie du script.
 
 ## 7. Recette HELP-001
 

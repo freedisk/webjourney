@@ -387,6 +387,48 @@ Aucune migration ou donnée Supabase n'a été modifiée.
 - Sprint : `docs/sprints/SPRINT_AI_002_2026-08-27.md`.
 - Guide : `docs/AI_FORMATTING.md`.
 
+## 2026-08-27 — AI-002-R1 Fiabilité des notes longues
+
+### Diagnostic
+
+- note de reproduction : 18 389 caractères, 3 211 mots, 140 phrases et un
+  paragraphe principal de 18 370 caractères ; contenu jamais journalisé ;
+- requête monolithique Sonnet 5 arrêtée après 75 secondes avec
+  `AI_FORMAT_RESPONSE_TRUNCATED` ;
+- métadonnées fournisseur : 3 224 tokens consommés pour seulement 903
+  caractères visibles sur une section, à cause du thinking adaptatif par défaut.
+
+### Correction
+
+- découpage à partir de 10 000 caractères, blocs de 5 000 maximum et deux
+  requêtes concurrentes ;
+- `thinking: disabled` uniquement pour Sonnet/Opus 5 compatibles sur cette tâche
+  mécanique, sans changer le modèle sélectionné ;
+- masquage opaque des nombres, URL et tâches en plus des images, restauration
+  stricte et validation globale de l'ordre et de la taille ;
+- une seule reprise automatique de la section invalide, sans proposition
+  partielle ; annulation propagée au serveur ;
+- compteur visible et timeout client à 1 min 40 avec erreur réessayable.
+
+### Validation locale
+
+- lint, **80/80 tests**, build Next.js 16.3.3 et audit npm élevé à zéro ;
+- appel fournisseur direct sur le cas exact : succès en 38,9 secondes ;
+- smoke authentifié via la route : **40/40**, cas exact en 35,4 secondes,
+  faits restaurés et compte synthétique supprimé ;
+- recette du composant final à 1 416 px : temps et sections visibles, aucun
+  débordement, annulation active et focus restitué ; harnais ensuite supprimé.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — PR protégée et validation production encore requises.
+
+### Références
+
+- Branche : `codex/ai-002-long-note-reliability`.
+- Sprint : `docs/sprints/SPRINT_AI_002_R1_2026-08-27.md`.
+- Guide : `docs/AI_FORMATTING.md`.
+
 ## Modèle d'entrée
 
 ```markdown

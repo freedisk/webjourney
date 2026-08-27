@@ -204,6 +204,9 @@ npm audit
 État de référence AI-002 : PR #16 fusionnée au commit `029183a`, 72 tests
 unitaires, lint sans erreur, build Next.js réussi, `Quality gate` vert, Vercel
 Production `READY`, smoke public 9/9 et smoke BYOK production 36/36.
+Le correctif AI-002-R1 des notes longues est validé localement avec 80 tests et
+un smoke authentifié 40/40 sur 18 389 caractères ; sa livraison reste soumise à
+PR, `Quality gate` et recette Vercel.
 
 ## Limites connues
 

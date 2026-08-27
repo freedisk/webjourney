@@ -66,6 +66,11 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT` en `READY` sur Node 24.x, lint,
   72/72 tests, smoke BYOK production 36/36, smoke public 9/9 et recette
   visuelle à 390, 1 024 et 1 416 px sans débordement.
+- Correctif AI-002-R1 validé localement : les notes de plus de 10 000 caractères
+  sont segmentées, Sonnet/Opus 5 n'utilisent pas de thinking pour cette tâche,
+  et nombres/URL/tâches sont masqués puis restaurés exactement. Le cas réel de
+  18 389 caractères termine en 35,4 secondes via la route, avec smoke 40/40,
+  80/80 tests et nettoyage synthétique ; livraison production encore requise.
 
 ## Invariants
 

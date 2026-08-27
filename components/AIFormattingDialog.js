@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Dialog from "@/components/ui/Dialog";
 import Icon from "@/components/ui/Icon";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { estimateAIFormattingSections } from "@/lib/ai-formatting";
 
 export default function AIFormattingDialog({
   open,
   source,
   proposal,
   loading,
+  startedAt = 0,
   error,
   imageUrls = {},
   onClose,
@@ -19,8 +21,22 @@ export default function AIFormattingDialog({
   onOpenHelp,
 }) {
   const [comparisonMode, setComparisonMode] = useState("preview");
+  const [clockMs, setClockMs] = useState(() => Date.now());
 
   const unchanged = Boolean(proposal) && proposal === source;
+  const sectionCount = estimateAIFormattingSections(source);
+  const isLongNote = sectionCount > 1;
+  const elapsedSeconds = open && loading && startedAt
+    ? Math.max(0, Math.floor((clockMs - startedAt) / 1000))
+    : 0;
+
+  useEffect(() => {
+    if (!open || !loading) return undefined;
+    const interval = window.setInterval(() => {
+      setClockMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [open, loading, source]);
 
   return (
     <Dialog
@@ -117,8 +133,17 @@ export default function AIFormattingDialog({
               {loading ? (
                 <div className="ai-formatting-loading" role="status">
                   <span aria-hidden="true" />
-                  <strong>Mise en forme en cours…</strong>
-                  <small>La note restera intacte si tu annules.</small>
+                  <strong>
+                    {isLongNote ? "Traitement de la note longue…" : "Mise en forme en cours…"}
+                  </strong>
+                  <small>
+                    {isLongNote
+                      ? `Traitement sécurisé en environ ${sectionCount} sections. La proposition apparaîtra seulement quand tout sera validé.`
+                      : "La note restera intacte si tu annules."}
+                  </small>
+                  <span className="ai-formatting-elapsed" aria-hidden="true">
+                    {elapsedSeconds} s écoulée{elapsedSeconds > 1 ? "s" : ""} · arrêt automatique à 1 min 40
+                  </span>
                 </div>
               ) : error ? (
                 <div className="ai-formatting-error" role="alert">
