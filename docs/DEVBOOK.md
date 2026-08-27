@@ -321,12 +321,16 @@ forcée, assistant distant ni nouvelle donnée serveur.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — implémentation et validation locale terminées ; PR, gate,
-Vercel et recette production restent à exécuter.
+`DONE` — PR #14 fusionnée après 4/4 contrôles verts, déploiement Vercel
+Production `READY`, smoke public 8/8 et recette UI authentifiée conformes. Le
+compte synthétique a été supprimé avec tous les compteurs contrôlés à zéro.
 
 ### Références
 
 - Branche : `codex/help-001-contextual-help`.
+- Pull request : GitHub #14.
+- Fusion : `21f5a0c3c5fc65fff19cb3de8d44a7728c61adfd`.
+- Déploiement : `dpl_Aei4LLUvZjAfakpV9gno9Fposk4Z`.
 - Sprint : `docs/sprints/SPRINT_HELP_001_2026-08-27.md`.
 - Guide : `docs/HELP_CENTER.md`.
 

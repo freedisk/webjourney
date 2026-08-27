@@ -50,6 +50,14 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   `dpl_Hqd243nNWJc3c8asExazAi4XN4GN` en `READY`, lint, 59/59 tests, build,
   smoke production 30/30 et recette UI authentifiée. Le nettoyage final compte
   zéro réglage IA, quota, secret Vault Capsule et note synthétique résiduels.
+- HELP-001 fournit neuf rubriques d'aide statiques, une recherche locale, cinq
+  repères de démarrage et des accès contextuels depuis le menu, la palette,
+  l'état vide, l'éditeur et les paramètres IA. Seule une progression minimale
+  non sensible peut persister dans le navigateur ; aucune donnée Supabase ni
+  télémétrie n'est créée.
+- Référence de livraison HELP-001 : PR #14, fusion `21f5a0c`, Vercel
+  `dpl_Aei4LLUvZjAfakpV9gno9Fposk4Z` en `READY`, 64/64 tests, gate 4/4, smoke
+  public 8/8, recette UI authentifiée et nettoyage synthétique à zéro.
 
 ## Invariants
 
@@ -66,6 +74,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     réponse, une note, Git ou un journal.
 11. Toute sortie Anthropic exige auth, bornes et quota ; une clé Vault n'est
     accessible qu'aux RPC serveur et disparaît avec son réglage ou son compte.
+12. L'aide embarquée ne lit aucun contenu utilisateur et ne persiste que des
+    identifiants de checklist non sensibles dans le navigateur.
 
 ## Environnement
 
