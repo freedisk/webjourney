@@ -77,6 +77,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- AI-002 : PR #16, fusion `029183a`, Vercel Production
+  `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT`, smoke public 9/9 et smoke BYOK
+  authentifié 36/36.
 - HELP-001 : PR #14, fusion `21f5a0c`, Vercel Production
   `dpl_Aei4LLUvZjAfakpV9gno9Fposk4Z`, gate 4/4, smoke public 8/8, recette UI
   authentifiée et nettoyage synthétique vérifiés.
