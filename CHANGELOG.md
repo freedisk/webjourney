@@ -5,6 +5,18 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### AI-001 — BYOK Anthropic sécurisé
+
+- Modes clé de session en mémoire et clé synchronisée chiffrée par Supabase
+  Vault, sans relecture du secret dans l'interface.
+- Catalogue Anthropic dynamique et modèle choisi parmi ceux réellement
+  disponibles avec la clé utilisateur.
+- Authentification systématique, entrées/sorties bornées, erreurs fournisseur
+  normalisées et quota atomique de 10 appels par minute et par utilisateur.
+- Routes `no-store`, purge Vault à la suppression et aucun fallback implicite
+  vers la clé Vercel historique.
+- Migration `20260827094500`, audit SQL 9/9 et 59 tests locaux verts.
+
 ### UX-002 — Neo-brutalism fonctionnel
 
 - En-tête responsive hiérarchisé, menu secondaire et navigation mobile iOS.

@@ -47,6 +47,7 @@ npx supabase db reset
 npx supabase db lint
 npx supabase db push --dry-run --linked
 npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
+npx supabase db query --linked --file supabase/tests/ai_security_audit.sql
 ```
 
 ### Application
@@ -74,8 +75,9 @@ que le schéma correspond. Avant de l'utiliser :
 Baseline Webjourney du 2026-08-26 :
 
 - photographie stricte dans `supabase/schemas` ;
-- baseline `20260826000000` et images `20260826120000` ;
-- les deux versions sont déjà `applied` sur la production ;
+- baseline `20260826000000`, images `20260826120000` et BYOK
+  `20260827094500` ;
+- les trois versions sont déjà `applied` sur la production ;
 - ne jamais les modifier ni les rejouer ; toute correction est une nouvelle
   migration.
 
@@ -112,9 +114,30 @@ Invoke-WebRequest https://webjourney-one.vercel.app/offline
 ```
 
 Puis réaliser une vérification authentifiée non destructive et, si le périmètre
-le demande, la recette spécialisée images ou PWA.
+le demande, la recette spécialisée images, PWA ou AI-001.
 
-## 6. Audit d'intégrité des images
+## 6. Exploitation AI-001
+
+- Une clé synchronisée se supprime depuis **Paramètres IA** ; ne jamais modifier
+  directement `vault.secrets` hors procédure d'incident.
+- Un 428 signifie qu'aucune configuration explicite n'est disponible.
+- Un 429 Capsule indique le quota 10/minute ; respecter `Retry-After`.
+- Un 429 fournisseur indique le quota du compte Anthropic de l'utilisateur.
+- Un 503 de stockage impose de contrôler la migration, les RPC et la clé
+  `SUPABASE_SECRET_KEY`, sans afficher leurs valeurs.
+- Après suppression d'un compte, vérifier l'absence de ligne dans
+  `user_ai_settings`, `ai_rate_limits` et de secret portant son nom déterministe.
+
+Audit sûr :
+
+```powershell
+npx supabase db query --linked --file supabase/tests/ai_security_audit.sql
+```
+
+Le rollback est applicatif : réassigner le dernier Vercel sain et laisser les
+objets AI-001 en place. Toute correction SQL est forward-only.
+
+## 7. Audit d'intégrité des images
 
 ```powershell
 npm run ops:audit-images
@@ -127,7 +150,7 @@ identifiants techniques nécessaires au diagnostic ; il ne doit pas être copié
 dans un journal public. Tout nettoyage reste une opération séparée, revue et
 explicitement autorisée.
 
-## 7. Rollback applicatif
+## 8. Rollback applicatif
 
 1. Identifier le dernier déploiement Vercel sain.
 2. Réassigner/promouvoir ce déploiement selon la procédure Vercel.
@@ -138,7 +161,7 @@ explicitement autorisée.
 Les migrations de production sont forward-only. Une correction de schéma est
 une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
 
-## 8. Incident Supabase
+## 9. Incident Supabase
 
 1. Stopper les nouvelles écritures applicatives si la corruption est possible.
 2. Identifier la cible et l'heure exacte.
@@ -149,7 +172,7 @@ une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
 7. Vérifier RLS et accès croisés avec deux utilisateurs.
 8. Documenter dans devbook, mistakes et journal.
 
-## 9. Incident secret exposé
+## 10. Incident secret exposé
 
 1. Révoquer ou faire tourner immédiatement le secret.
 2. Mettre à jour Vercel et les environnements autorisés.
@@ -158,7 +181,7 @@ une nouvelle migration ; ne pas éditer rétroactivement une version appliquée.
    procédure dédiée si un secret a été commité.
 5. Vérifier les accès Supabase/Anthropic suspects.
 
-## 10. Journalisation de fin
+## 11. Journalisation de fin
 
 Avant clôture :
 

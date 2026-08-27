@@ -3,8 +3,8 @@
 ## 1. Vue d'ensemble
 
 Capsule est une application de notes Next.js déployée sur Vercel. Le navigateur
-utilise Supabase pour l'authentification, les données et le Storage privé. Deux
-flux serveur existent : le résumé Anthropic et le partage public d'une note.
+utilise Supabase pour l'authentification, les données et le Storage privé. Les
+flux serveur sensibles gèrent le BYOK Anthropic et le partage public d'une note.
 
 ```mermaid
 flowchart LR
@@ -12,9 +12,10 @@ flowchart LR
     N --> C[Client React Capsule]
     C -->|Auth + Data API| S[(Supabase PostgreSQL)]
     C -->|Storage API| B[(Bucket privé note-images)]
-    C -->|Bearer token| A[/api/resumer]
-    A -->|Validation session| S
-    A -->|API serveur| H[Anthropic]
+    C -->|Bearer + clé session facultative| A[/api/ai + /api/resumer]
+    A -->|Validation session + quota| S
+    A -->|Clé synchronisée| X[(Supabase Vault)]
+    A -->|Catalogue et résumé| H[Anthropic]
     V[Visiteur lien partagé] --> P[/share/token]
     P -->|Lecture anonyme RLS| S
     P -->|Clé serveur après validation| B
@@ -31,7 +32,12 @@ PostgreSQL/Storage appliquer RLS.
 
 ### Serveur Next.js
 
-- `app/api/resumer/route.js` authentifie le Bearer token, puis appelle Anthropic.
+- `app/api/ai/settings/route.js` expose seulement le statut et le modèle ; les
+  écritures passent par des RPC serveur et Supabase Vault.
+- `app/api/ai/models/route.js` charge le catalogue avec la clé de session ou la
+  clé synchronisée, après authentification et quota.
+- `app/api/resumer/route.js` borne la note, choisit la configuration explicite,
+  consomme le quota atomique puis appelle Anthropic.
 - `app/share/[token]/page.js` lit une note partageable avec le client public.
 - `lib/supabase-admin.js` crée un client serveur secret uniquement pour signer
   les images déjà validées comme appartenant à la note partagée.
@@ -54,7 +60,12 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
 | `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
-| `app/api/resumer/route.js` | Résumé IA | Auth avant appel externe |
+| `components/AISettingsDialog.js` | Modes session/Vault et choix du modèle | Aucun stockage navigateur persistant |
+| `app/api/ai/settings/route.js` | Statut et cycle du BYOK | Ne renvoie jamais la clé |
+| `app/api/ai/models/route.js` | Catalogue de modèles Anthropic | Auth, quota et erreurs normalisées |
+| `app/api/resumer/route.js` | Résumé IA | Auth, limites et quota avant appel externe |
+| `lib/ai-settings-server.js` | Accès aux réglages, Vault et quota | Client Supabase secret serveur uniquement |
+| `lib/anthropic.js` | Requêtes fournisseur bornées | Aucun corps d'erreur amont relayé |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |
 | `components/ImageLightbox.js` | Visionneuse clavier, boutons et geste horizontal | Reçoit uniquement blob local ou URL signée |
@@ -78,6 +89,8 @@ erDiagram
     NOTES ||--o{ NOTES_TAGS : classifies
     TAGS ||--o{ NOTES_TAGS : classifies
     NOTES ||--o{ NOTE_IMAGES : contains
+    AUTH_USERS ||--o| USER_AI_SETTINGS : configures
+    AUTH_USERS ||--o| AI_RATE_LIMITS : throttles
 
     NOTES {
       uuid id PK
@@ -110,10 +123,23 @@ erDiagram
       bigint size_bytes
       timestamptz created_at
     }
+    USER_AI_SETTINGS {
+      uuid user_id PK
+      text provider
+      text model_id
+      uuid vault_secret_id UK
+      timestamptz updated_at
+    }
+    AI_RATE_LIMITS {
+      uuid user_id PK
+      timestamptz window_started_at
+      integer request_count
+    }
 ```
 
 Le noyau historique est versionné par la baseline `20260826000000` et la
-migration images `20260826120000`. Toute évolution suivante est forward-only.
+migration images `20260826120000`. AI-001 est ajouté par `20260827094500`.
+Toute évolution suivante est forward-only.
 
 ## 5. Flux critiques
 
@@ -152,9 +178,19 @@ supprime ensuite les métadonnées. Un échec de nettoyage doit rester visible e
 
 ### Résumé Anthropic
 
-Le client transmet le token de session. La route valide l'utilisateur avant de
-vérifier la configuration Anthropic et d'appeler l'API. Un rate-limit
-persistant reste à ajouter.
+1. Le client transmet le token Supabase et, en mode session seulement, la clé
+   éphémère avec le modèle sélectionné.
+2. Le serveur valide d'abord l'utilisateur, les longueurs et les formats.
+3. En mode synchronisé, une RPC `SECURITY DEFINER` lit la clé déchiffrée dans
+   Vault sans l'inclure dans une réponse.
+4. `consume_ai_quota` verrouille la ligne utilisateur et applique 10 sorties
+   externes par fenêtre de 60 secondes.
+5. Le serveur appelle `/v1/models` ou `/v1/messages` avec `no-store`, un délai
+   borné et des erreurs normalisées.
+6. La suppression du réglage ou du compte déclenche la purge du secret Vault.
+
+La clé Vercel historique n'est jamais utilisée implicitement. Voir
+`docs/AI_BYOK.md` pour le contrat détaillé et la recette.
 
 ### Interaction moderne progressive
 
@@ -188,6 +224,9 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 - Bucket privé et préfixe Storage lié à `auth.uid()`.
 - Grants minimaux indépendamment des policies RLS.
 - Clé serveur absente du bundle client.
+- Clé Anthropic absente des stockages persistants navigateur, réponses et logs.
+- Tables IA sous RLS forcée, sans grant navigateur ; RPC de secret réservées au
+  `service_role` et quota atomique avant chaque sortie fournisseur.
 - Aucune donnée privée dans le cache PWA ou les journaux.
 - Migrations forward-only et rollback applicatif non destructif.
 
@@ -196,6 +235,7 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 - `app/page.js` concentre environ 3 000 lignes et de nombreux états.
 - Aucun E2E n'exécute encore un parcours contre une vraie session Supabase.
 - Le nettoyage d'images orphelines n'est pas automatisé.
-- `/api/resumer` n'a pas de quota persistant.
+- Le quota IA est volontairement une fenêtre fixe en base ; les métriques
+  agrégées et alertes fournisseur restent à traiter dans `OPS-002`.
 - Le noyau Supabase historique est baseliné ; le `db reset` conteneurisé reste
   suivi par `TOOL-002`.

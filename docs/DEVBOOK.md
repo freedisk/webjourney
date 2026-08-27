@@ -241,6 +241,47 @@ session reste en 401 et l'audit images demeure propre.
 - Déploiement fonctionnel final : `dpl_DdJPSbouBg8eGzKS2N7P333SQsr2`.
 - Sprint : `docs/sprints/SPRINT_UX_002_2026-08-27.md`.
 
+## 2026-08-27 — AI-001 BYOK Anthropic sécurisé
+
+### Objectif
+
+Remplacer le modèle et la clé partagée codés en dur par une configuration
+Anthropic explicite par utilisateur, sans persistance navigateur dangereuse ni
+régression sur les notes, images et la PWA.
+
+### Changements
+
+- dialogue **Paramètres IA** accessible depuis le menu et `Ctrl/Cmd+K` ;
+- clé éphémère conservée uniquement en mémoire ou clé multi-appareil chiffrée
+  dans Supabase Vault ;
+- catalogue `/v1/models`, sélection validée et préférence synchronisée ;
+- routes serveur authentifiées, `no-store`, entrées bornées et erreurs sûres ;
+- quota PostgreSQL atomique de 10 sorties externes par minute/utilisateur ;
+- suppression explicite du secret et purge automatique à la suppression du
+  compte ; aucun fallback vers `ANTHROPIC_API_KEY`.
+
+### Validation avant livraison
+
+- migration `20260827094500` prévisualisée dans `BEGIN`/`ROLLBACK`, puis
+  appliquée atomiquement et inscrite dans l'historique distant ;
+- un premier dry-run a identifié une révocation Vault trop large, corrigée avant
+  toute écriture persistante ;
+- audit production AI-001 : 9/9 ; cycle factice chiffrer/lire/purger exécuté
+  dans une transaction annulée, sans résidu ;
+- `npm run validate` : ESLint propre, 12 fichiers et 59/59 tests, build Next.js
+  réussi.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — migration compatible déjà en production ; PR, gate, Vercel
+et recette synthétique restent à consigner dans cette entrée.
+
+### Références
+
+- Branche : `codex/ai-byok-analysis`.
+- Sprint : `docs/sprints/SPRINT_AI_001_2026-08-27.md`.
+- Guide : `docs/AI_BYOK.md`.
+
 ## Modèle d'entrée
 
 ```markdown

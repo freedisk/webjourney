@@ -26,7 +26,7 @@ ligne.
 - Supabase : PostgreSQL, Auth, RLS et Storage ;
 - Vercel : déploiement depuis GitHub ;
 - Tailwind CSS 4 et CSS custom ;
-- Anthropic pour les résumés de notes.
+- Anthropic en BYOK pour les résumés de notes.
 - Web App Manifest et service worker minimal pour l'installation PWA.
 
 ## Démarrage local
@@ -48,11 +48,12 @@ Variables à renseigner dans `.env.local` :
 | `NEXT_PUBLIC_SUPABASE_URL` | navigateur + serveur | URL du projet Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | navigateur + serveur | Clé publique Supabase recommandée |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | navigateur + serveur | Compatibilité avec l'ancienne clé `anon` |
-| `ANTHROPIC_API_KEY` | serveur uniquement | Résumé IA |
 | `SUPABASE_SECRET_KEY` | serveur uniquement | Signature des images sur les notes partagées |
+| `ANTHROPIC_API_KEY` | serveur uniquement | Repli historique, ignoré par AI-001 |
 
-Ne jamais ajouter `SUPABASE_SECRET_KEY` ou `ANTHROPIC_API_KEY` à une variable
-préfixée par `NEXT_PUBLIC_`.
+Ne jamais ajouter `SUPABASE_SECRET_KEY` ou une clé Anthropic à une variable
+préfixée par `NEXT_PUBLIC_`. La clé Anthropic active est configurée dans
+**Paramètres IA** : mémoire vive uniquement ou Supabase Vault chiffré.
 
 ## Base de données et images
 
@@ -65,6 +66,9 @@ historique. La migration `20260826120000_add_note_images.sql` crée :
 - la limite de 5 Mio et les types JPEG, PNG et WebP ;
 - les politiques RLS de lecture, ajout et suppression.
 
+La migration `20260827094500_add_user_ai_settings.sql` ajoute le BYOK Anthropic,
+la préférence de modèle, le stockage chiffré Vault et le quota atomique.
+
 Pour une nouvelle évolution, créer une migration forward-only et utiliser le
 CLI lié :
 
@@ -74,7 +78,7 @@ npx supabase db push --dry-run --linked
 npx supabase db push --linked
 ```
 
-Les deux migrations existantes sont déjà marquées appliquées sur Webjourney.
+Les trois migrations existantes sont déjà marquées appliquées sur Webjourney.
 Ne pas les modifier ni revenir au SQL Editor pour contourner l'historique.
 
 Les images restent privées. Le contenu Markdown conserve un identifiant stable,
@@ -92,6 +96,7 @@ npm run lint            # analyse statique
 npm test                # tests unitaires Vitest
 npm run build           # build de production
 npm run validate        # lint + tests + build
+npm run test:ai:smoke   # recette BYOK synthétique, garde d'écriture requise
 npm run security:audit  # audit complet des dépendances
 npm run ops:audit-images # rapport read-only Markdown / métadonnées / Storage
 ```
@@ -103,9 +108,12 @@ app/
   page.js                    interface et opérations principales
   manifest.js                manifeste d'installation PWA
   offline/page.js            page de repli sans connexion
-  api/resumer/route.js       résumé Anthropic authentifié
+  api/resumer/route.js       résumé Anthropic BYOK authentifié
+  api/ai/models/route.js     catalogue des modèles autorisés par la clé
+  api/ai/settings/route.js   statut, enregistrement et suppression BYOK
   share/[token]/page.js      lecture publique et signature serveur
 components/
+  AISettingsDialog.js        modes session/Vault et choix du modèle
   AppHeader.js               en-tête responsive et actions prioritaires
   CommandPalette.js          navigation et commandes Ctrl/Cmd+K
   MobileNavigation.js        navigation tactile iPhone
@@ -114,6 +122,9 @@ components/
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  ai-config.js               validations, limites et quota IA
+  anthropic.js               appels Anthropic bornés et erreurs normalisées
+  ai-settings-server.js      accès serveur aux RPC Vault et quota
   markdown-editor.js         transformations Markdown testables
   ui-capabilities.js         partage et transitions progressives
   note-images.js             format stable et validations
@@ -141,6 +152,7 @@ public/icons/                icônes PWA et source SVG
 - [runbook d'exploitation](docs/RUNBOOK.md) ;
 - [stratégie de test](docs/TESTING.md) ;
 - [décisions d'architecture](docs/DECISIONS.md) ;
+- [guide BYOK Anthropic](docs/AI_BYOK.md) ;
 - [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
 
 `CLAUDE.md` conserve le contexte fonctionnel détaillé et `AGENTS.md` définit les

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AISettingsDialog from "@/components/AISettingsDialog";
 import AppHeader from "@/components/AppHeader";
 import CommandPalette from "@/components/CommandPalette";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
@@ -26,6 +27,7 @@ import {
 import { extractImageIds, stripImagesForText } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
+import { ANTHROPIC_KEY_HEADER } from "@/lib/ai-config";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -154,6 +156,8 @@ export default function Home() {
 
   // --- Résumé IA ---
   const [resumes, setResumes] = useState({});
+  const [aiSettingsOpen, setAISettingsOpen] = useState(false);
+  const [sessionAICredential, setSessionAICredential] = useState(null);
 
   // --- Images privées des notes ---
   const [noteImages, setNoteImages] = useState({});
@@ -346,7 +350,7 @@ export default function Home() {
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aideOuverte || statsOuvert || noteDetailId || modeCreation;
+      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || noteDetailId || modeCreation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -986,13 +990,23 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
+          ...(sessionAICredential?.apiKey
+            ? { [ANTHROPIC_KEY_HEADER]: sessionAICredential.apiKey }
+            : {}),
         },
-        body: JSON.stringify({ titre: note.titre, contenu: stripImagesForText(note.contenu) }),
+        body: JSON.stringify({
+          titre: note.titre,
+          contenu: stripImagesForText(note.contenu),
+          modelId: sessionAICredential?.modelId,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "AI_CONFIGURATION_REQUIRED") {
+          setAISettingsOpen(true);
+        }
         setResumes((prev) => ({ ...prev, [note.id]: { texte: null, chargement: false, erreur: data.error || "Erreur inconnue" } }));
         return;
       }
@@ -2041,6 +2055,14 @@ export default function Home() {
       onSelect: () => changerVue(id),
     })),
     {
+      id: "open-ai-settings",
+      label: "Configurer l'IA",
+      description: "Clé Anthropic, modèle et confidentialité",
+      keywords: "anthropic claude modèle api clé résumé",
+      icon: "sparkles",
+      onSelect: () => setAISettingsOpen(true),
+    },
+    {
       id: "manage-tags",
       label: panneauTagsOuvert ? "Fermer les tags" : "Gérer les tags",
       description: "Créer, filtrer et supprimer des tags",
@@ -2112,6 +2134,7 @@ export default function Home() {
         tagsOpen={panneauTagsOuvert}
         onToggleTags={() => setPanneauTagsOuvert((open) => !open)}
         onOpenStats={() => setStatsOuvert(true)}
+        onOpenAISettings={() => setAISettingsOpen(true)}
         isDark={sombre}
         onToggleTheme={toggleTheme}
         onOpenHelp={() => setAideOuverte(true)}
@@ -3098,6 +3121,15 @@ export default function Home() {
         tags={tags}
         notesTags={notesTags}
         sombre={sombre}
+      />
+
+      <AISettingsDialog
+        open={aiSettingsOpen}
+        onClose={() => setAISettingsOpen(false)}
+        sessionCredential={sessionAICredential}
+        onUseSessionCredential={setSessionAICredential}
+        onClearSessionCredential={() => setSessionAICredential(null)}
+        onConfigured={setSucces}
       />
 
       {/* Modale aide raccourcis */}
