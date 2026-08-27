@@ -58,6 +58,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Référence de livraison HELP-001 : PR #14, fusion `21f5a0c`, Vercel
   `dpl_Aei4LLUvZjAfakpV9gno9Fposk4Z` en `READY`, 64/64 tests, gate 4/4, smoke
   public 8/8, recette UI authentifiée et nettoyage synthétique à zéro.
+- AI-002 est implémenté localement sans migration : proposition Markdown dans
+  un comparatif rendu/source, application explicite au brouillon et sauvegarde
+  manuelle. Les références et légendes des images privées sont masquées avant
+  Anthropic puis restaurées seulement si tous les marqueurs sont intacts.
+- Référence de validation locale AI-002 : lint, 72/72 tests, build Next.js,
+  smoke BYOK réel 36/36 et recette visuelle à 390, 1 024 et 1 416 px sans
+  débordement. La livraison production reste à valider.
 
 ## Invariants
 
@@ -76,6 +83,9 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     accessible qu'aux RPC serveur et disparaît avec son réglage ou son compte.
 12. L'aide embarquée ne lit aucun contenu utilisateur et ne persiste que des
     identifiants de checklist non sensibles dans le navigateur.
+13. Une transformation IA ne sauvegarde jamais automatiquement ; elle s'applique
+    uniquement à un snapshot de brouillon inchangé, après validation stricte de
+    toutes les références privées masquées.
 
 ## Environnement
 

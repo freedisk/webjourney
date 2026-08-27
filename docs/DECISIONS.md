@@ -142,6 +142,24 @@ journal avec un lien vers celle qui la remplace.
   ligne conserve volontairement l'écran de repli, car aucune page privée n'est
   mise en cache.
 
+## ADR-012 — Proposition IA réversible et images privées opaques
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : améliorer la lisibilité d'une note exige d'envoyer son texte au
+  modèle, mais une sortie générative ne doit jamais écraser silencieusement le
+  contenu ni exposer les identifiants ou légendes des images privées.
+- **Décision** : la mise en forme produit seulement une proposition comparée à
+  un snapshot exact. Son application explicite modifie le brouillon, jamais la
+  base ; la sauvegarde reste distincte. Avant l'appel externe, le serveur masque
+  toute référence `capsule-image` par un marqueur aléatoire et n'accepte la
+  sortie que si chaque marqueur revient exactement une fois, dans le même ordre.
+- **Raison** : conserver le contrôle humain, éviter les écrasements concurrents
+  et réduire les métadonnées privées confiées au fournisseur.
+- **Conséquences** : une réponse tronquée ou un seul marqueur altéré invalide la
+  proposition entière. Le quota, la clé et le modèle d'AI-001 sont réutilisés ;
+  aucune migration ni persistance de résultat IA n'est ajoutée.
+
 ## Modèle ADR
 
 ```markdown

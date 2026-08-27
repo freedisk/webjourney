@@ -114,15 +114,20 @@ Invoke-WebRequest https://webjourney-one.vercel.app/offline
 ```
 
 Puis réaliser une vérification authentifiée non destructive et, si le périmètre
-le demande, la recette spécialisée images, PWA ou AI-001.
+le demande, la recette spécialisée images, PWA, AI-001 ou AI-002.
 
-## 6. Exploitation AI-001
+## 6. Exploitation AI-001 / AI-002
 
 - Une clé synchronisée se supprime depuis **Paramètres IA** ; ne jamais modifier
   directement `vault.secrets` hors procédure d'incident.
 - Un 428 signifie qu'aucune configuration explicite n'est disponible.
 - Un 429 Capsule indique le quota 10/minute ; respecter `Retry-After`.
 - Un 429 fournisseur indique le quota du compte Anthropic de l'utilisateur.
+- `AI_FORMAT_RESPONSE_TRUNCATED` ou `AI_FORMAT_RESPONSE_INVALID` laisse toujours
+  le brouillon intact. Contrôler le modèle choisi et relancer ; ne jamais
+  contourner la validation des marqueurs d'images.
+- Si le brouillon a changé pendant la génération, relancer depuis l'éditeur au
+  lieu d'appliquer l'ancienne proposition.
 - Un 503 de stockage impose de contrôler la migration, les RPC et la clé
   `SUPABASE_SECRET_KEY`, sans afficher leurs valeurs.
 - Après suppression d'un compte, vérifier l'absence de ligne dans

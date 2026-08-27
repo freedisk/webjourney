@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AIFormattingDialog from "@/components/AIFormattingDialog";
 import AISettingsDialog from "@/components/AISettingsDialog";
 import AppHeader from "@/components/AppHeader";
 import CommandPalette from "@/components/CommandPalette";
@@ -28,6 +29,7 @@ import { extractImageIds, stripImagesForText } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 import { ANTHROPIC_KEY_HEADER } from "@/lib/ai-config";
+import { containsFormattableText } from "@/lib/ai-formatting";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -77,6 +79,12 @@ function formatImageOperationProgress(progress) {
     percent,
     label: `${action} de l'image ${progress.current}/${progress.total}`,
   };
+}
+
+function createClientAIError(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
 }
 
 export default function Home() {
@@ -159,6 +167,8 @@ export default function Home() {
   const [resumes, setResumes] = useState({});
   const [aiSettingsOpen, setAISettingsOpen] = useState(false);
   const [sessionAICredential, setSessionAICredential] = useState(null);
+  const [aiFormatting, setAIFormatting] = useState(null);
+  const aiFormattingRequestRef = useRef({ id: 0, controller: null });
 
   // --- Images privées des notes ---
   const [noteImages, setNoteImages] = useState({});
@@ -322,6 +332,7 @@ export default function Home() {
 
     function handleModalKeyDown(event) {
       if (document.querySelector(".image-lightbox")) return;
+      if (!isWithinModalFocus(modalPanelRef.current, document.activeElement)) return;
       if (event.key === "Escape") {
         event.preventDefault();
         modalCloseRef.current?.();
@@ -329,7 +340,6 @@ export default function Home() {
       }
 
       if (event.key !== "Tab" || !modalPanelRef.current) return;
-      if (!isWithinModalFocus(modalPanelRef.current, document.activeElement)) return;
       const focusable = getModalFocusable(modalPanelRef.current);
       if (focusable.length === 0) return;
       const first = focusable[0];
@@ -356,7 +366,7 @@ export default function Home() {
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || noteDetailId || modeCreation;
+      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || noteDetailId || modeCreation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -372,7 +382,7 @@ export default function Home() {
 
       // Échap — fermer aide, annuler édition (modale gérée séparément)
       if (e.key === "Escape") {
-        if (aideOuverte) { setAideOuverte(false); return; }
+        if (aideOuverte || aiSettingsOpen || aiFormatting) return;
         if (!noteDetailId && editionId) { annulerEdition(); return; }
         return;
       }
@@ -1031,6 +1041,186 @@ export default function Home() {
     });
   }
 
+  function formattingImageUrls(pendingImages = []) {
+    const urls = { ...imageUrls };
+    for (const image of pendingImages) urls[image.id] = image.previewUrl;
+    return urls;
+  }
+
+  async function demanderMiseEnForme(target) {
+    aiFormattingRequestRef.current.controller?.abort();
+    const requestId = aiFormattingRequestRef.current.id + 1;
+    const controller = new AbortController();
+    aiFormattingRequestRef.current = { id: requestId, controller };
+    setAIFormatting({ ...target, proposal: "", loading: true, error: null });
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw createClientAIError("AUTH_INVALID", "Session expirée. Reconnecte-toi.");
+      }
+
+      const response = await fetch("/api/ai/format", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          ...(sessionAICredential?.apiKey
+            ? { [ANTHROPIC_KEY_HEADER]: sessionAICredential.apiKey }
+            : {}),
+        },
+        body: JSON.stringify({
+          contenu: target.source,
+          modelId: sessionAICredential?.modelId,
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw createClientAIError(
+          payload.code || "AI_PROVIDER_ERROR",
+          payload.error || "La mise en forme est temporairement indisponible.",
+        );
+      }
+      if (typeof payload.formattedContent !== "string" || !payload.formattedContent) {
+        throw createClientAIError(
+          "AI_FORMAT_RESPONSE_INVALID",
+          "La proposition IA n'a pas pu être validée. Ton contenu reste inchangé.",
+        );
+      }
+
+      if (aiFormattingRequestRef.current.id !== requestId) return;
+      setAIFormatting((current) => current ? {
+        ...current,
+        proposal: payload.formattedContent,
+        loading: false,
+        error: null,
+      } : current);
+    } catch (requestError) {
+      if (requestError?.name === "AbortError" || aiFormattingRequestRef.current.id !== requestId) {
+        return;
+      }
+      const error = {
+        code: requestError?.code || "AI_PROVIDER_UNREACHABLE",
+        message: requestError?.message || "Impossible de contacter le serveur.",
+      };
+      setAIFormatting((current) => current ? {
+        ...current,
+        proposal: "",
+        loading: false,
+        error,
+      } : current);
+    } finally {
+      if (aiFormattingRequestRef.current.id === requestId) {
+        aiFormattingRequestRef.current.controller = null;
+      }
+    }
+  }
+
+  function ouvrirMiseEnFormeCreation() {
+    if (!containsFormattableText(contenu)) {
+      setErreur("Ajoute du texte à mettre en forme.");
+      return;
+    }
+    void demanderMiseEnForme({
+      kind: "creation",
+      noteId: null,
+      source: contenu,
+      imageUrls: formattingImageUrls(creationPendingImages),
+    });
+  }
+
+  function ouvrirMiseEnFormeEdition(noteId) {
+    if (!containsFormattableText(editionContenu)) {
+      setErreur("Ajoute du texte à mettre en forme.");
+      return;
+    }
+    void demanderMiseEnForme({
+      kind: "edition",
+      noteId,
+      source: editionContenu,
+      imageUrls: formattingImageUrls(editionPendingImages),
+    });
+  }
+
+  function fermerMiseEnForme() {
+    aiFormattingRequestRef.current.controller?.abort();
+    aiFormattingRequestRef.current = {
+      id: aiFormattingRequestRef.current.id + 1,
+      controller: null,
+    };
+    setAIFormatting(null);
+  }
+
+  function relancerMiseEnForme() {
+    if (!aiFormatting) return;
+    if (aiFormatting.kind === "creation") {
+      if (!containsFormattableText(contenu)) {
+        setAIFormatting((current) => current ? {
+          ...current,
+          error: { code: "AI_FORMAT_CONTENT_REQUIRED", message: "Ajoute du texte à mettre en forme." },
+        } : current);
+        return;
+      }
+      void demanderMiseEnForme({
+        ...aiFormatting,
+        source: contenu,
+        imageUrls: formattingImageUrls(creationPendingImages),
+      });
+      return;
+    }
+
+    if (editionId !== aiFormatting.noteId || !containsFormattableText(editionContenu)) {
+      setAIFormatting((current) => current ? {
+        ...current,
+        error: {
+          code: "AI_DRAFT_CHANGED",
+          message: "Le brouillon d'origine n'est plus ouvert. Ferme cette proposition puis relance-la depuis l'éditeur.",
+        },
+      } : current);
+      return;
+    }
+    void demanderMiseEnForme({
+      ...aiFormatting,
+      source: editionContenu,
+      imageUrls: formattingImageUrls(editionPendingImages),
+    });
+  }
+
+  function appliquerMiseEnForme() {
+    if (!aiFormatting?.proposal) return;
+    if (aiFormatting.kind === "creation") {
+      if (!modeCreation || contenu !== aiFormatting.source) {
+        setAIFormatting((current) => current ? {
+          ...current,
+          proposal: "",
+          error: {
+            code: "AI_DRAFT_CHANGED",
+            message: "Le brouillon a changé pendant la génération. Relance la mise en forme pour éviter d'écraser tes modifications.",
+          },
+        } : current);
+        return;
+      }
+      setContenu(aiFormatting.proposal);
+    } else {
+      if (editionId !== aiFormatting.noteId || editionContenu !== aiFormatting.source) {
+        setAIFormatting((current) => current ? {
+          ...current,
+          proposal: "",
+          error: {
+            code: "AI_DRAFT_CHANGED",
+            message: "Le brouillon a changé pendant la génération. Relance la mise en forme pour éviter d'écraser tes modifications.",
+          },
+        } : current);
+        return;
+      }
+      setEditionContenu(aiFormatting.proposal);
+    }
+    fermerMiseEnForme();
+    setSucces("Mise en forme appliquée au brouillon. Sauvegarde la note pour la conserver.");
+  }
+
   async function copierNote(note) {
     const copyableContent = stripImagesForText(note.contenu);
     const texte = copyableContent ? note.titre + "\n\n" + copyableContent : note.titre;
@@ -1685,6 +1875,8 @@ export default function Home() {
                 uploadProgress={imageUploadProgress}
                 onProcessingChange={setImagePreparing}
                 onOpenHelp={openHelp}
+                onSmartFormat={() => ouvrirMiseEnFormeEdition(note.id)}
+                smartFormatBusy={aiFormatting?.loading}
               />
               {renderCouleurEditor()}
             </div>
@@ -1897,6 +2089,8 @@ export default function Home() {
                   uploadProgress={imageUploadProgress}
                   onProcessingChange={setImagePreparing}
                   onOpenHelp={openHelp}
+                  onSmartFormat={() => ouvrirMiseEnFormeEdition(note.id)}
+                  smartFormatBusy={aiFormatting?.loading}
                 />
                 {renderCouleurEditor()}
               </div>
@@ -3054,6 +3248,8 @@ export default function Home() {
                     uploadProgress={imageUploadProgress}
                     onProcessingChange={setImagePreparing}
                     onOpenHelp={openHelp}
+                    onSmartFormat={ouvrirMiseEnFormeCreation}
+                    smartFormatBusy={aiFormatting?.loading}
                   />
                 </div>
                 <div>
@@ -3132,6 +3328,20 @@ export default function Home() {
         tags={tags}
         notesTags={notesTags}
         sombre={sombre}
+      />
+
+      <AIFormattingDialog
+        open={Boolean(aiFormatting)}
+        source={aiFormatting?.source || ""}
+        proposal={aiFormatting?.proposal || ""}
+        loading={Boolean(aiFormatting?.loading)}
+        error={aiFormatting?.error || null}
+        imageUrls={aiFormatting?.imageUrls || {}}
+        onClose={fermerMiseEnForme}
+        onRetry={relancerMiseEnForme}
+        onApply={appliquerMiseEnForme}
+        onConfigure={() => setAISettingsOpen(true)}
+        onOpenHelp={() => openHelp("ai")}
       />
 
       <AISettingsDialog

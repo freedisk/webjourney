@@ -334,7 +334,7 @@ export default function AISettingsDialog({
         <div className="ai-privacy-note">
           <Icon name="key" size={18} />
           <div>
-            <p>Lors d’un résumé, le titre et le texte de la note sont transmis à Anthropic via le serveur Capsule. Les images et le résumé ne sont pas persistés par Capsule.</p>
+            <p>Lors d’un résumé ou d’une mise en forme, le texte utile est transmis à Anthropic via le serveur Capsule. Les images et les propositions IA ne sont pas persistées par Capsule.</p>
             {onOpenHelp && (
               <button type="button" className="help-inline-link" onClick={onOpenHelp} disabled={busy}>
                 Comprendre les modes et la confidentialité

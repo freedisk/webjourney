@@ -35,6 +35,9 @@ npm run security:audit -- --audit-level=high
   authentification et quota présents sur chaque route.
 - contenu HELP-001 complet, recherche insensible aux accents, progression locale
   nettoyée, points d'entrée contextuels et styles responsive.
+- invariants AI-002 : détection du texte utile, masquage/restauration exacte des
+  images, rejet des marqueurs perdus/dupliqués/réordonnés/inventés, sortie
+  tronquée refusée et application explicite sur snapshot inchangé.
 
 ### Recette navigateur authentifiée
 
@@ -55,8 +58,9 @@ Après chaque déploiement :
 2. une session existante charge les notes ;
 3. `/api/resumer` sans session répond 401 ;
 4. `/api/ai/settings` et `/api/ai/models` sans session répondent 401 ;
-5. une opération non destructive représentative fonctionne ;
-6. la console ne révèle ni secret ni erreur nouvelle.
+5. `/api/ai/format` sans session répond 401 ;
+6. une opération non destructive représentative fonctionne ;
+7. la console ne révèle ni secret ni erreur nouvelle.
 
 ## 2. Tests Supabase
 
@@ -118,6 +122,8 @@ La recette complète est décrite dans `docs/AI_BYOK.md`. Elle couvre au minimum
 - 401 sans session et 428 avec session sans configuration ;
 - rejet sûr d'une clé invalide ;
 - catalogue réel, sélection d'un modèle disponible et résumé en mode session ;
+- mise en forme réelle en modes session et Vault, avec référence privée
+  restaurée strictement à l'identique ;
 - oubli au rechargement ;
 - enregistrement Vault, résumé sans renvoyer la clé et suppression explicite ;
 - contrôle du quota et en-tête `Retry-After` ;
@@ -139,7 +145,27 @@ de recette depuis `AI_SMOKE_ANTHROPIC_API_KEY` ou, pour compatibilité locale,
 `ANTHROPIC_API_KEY`. Il n'affiche ni clé, ni identifiant, ni résumé et supprime
 le compte synthétique dans son bloc de nettoyage.
 
-## 6. Recette HELP-001
+## 6. Recette AI-002
+
+Le contrat complet est décrit dans `docs/AI_FORMATTING.md`. Contrôler :
+
+- bouton IA désactivé sans texte et accessible dans les éditeurs de création et
+  de modification ;
+- états génération, erreur et succès annoncés, annulation réseau disponible ;
+- comparatif **Aperçu/Markdown**, source inchangée et application explicite ;
+- `Échap`, fermeture et erreur sans mutation ; focus restitué au déclencheur ;
+- après application, le contenu n'est qu'un brouillon et le bouton Sauver/Créer
+  reste nécessaire ;
+- à 390 px, une seule colonne sans débordement ; à 1 024 et 1 416 px, deux
+  colonnes lisibles et dialogue contenu dans le viewport ;
+- en présence d'une image privée, référence Markdown identique avant/après et
+  aucun UUID/légende présent dans la requête fournisseur testée.
+
+Le smoke BYOK couvre aussi 401, 428, les deux modes réels, la restauration d'une
+référence privée et le nettoyage du compte synthétique. Sa sortie ne doit
+contenir ni clé, ni identifiant utilisateur, ni texte généré.
+
+## 7. Recette HELP-001
 
 Avec une session synthétique sans note, contrôler :
 
@@ -162,7 +188,7 @@ contenir que `completed: string[]` et `checklistHidden: boolean`. Une session PW
 déjà chargée conserve l'aide grâce aux assets statiques ; un rechargement hors
 ligne affiche volontairement `/offline` et jamais une page privée mise en cache.
 
-## 7. Critères de release
+## 8. Critères de release
 
 Une release est refusée si :
 
@@ -172,7 +198,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 8. Lacunes connues
+## 9. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

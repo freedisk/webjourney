@@ -5,6 +5,17 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### AI-002 — Mise en forme intelligente
+
+- Bouton IA dans les éditeurs de création et de modification, avec proposition
+  Markdown destinée à améliorer la lisibilité sans résumé ni enrichissement.
+- Dialogue comparatif rendu/source, annulation sûre et application explicite au
+  brouillon ; la sauvegarde reste une action utilisateur distincte.
+- Masquage serveur des références et légendes d'images privées, restauration
+  uniquement après contrôle exact de présence, unicité et ordre des marqueurs.
+- Route BYOK authentifiée `no-store`, quota AI-001 partagé, sortie tronquée ou
+  invalide rejetée sans modifier la note et aucune migration Supabase.
+
 ### HELP-001 — Centre d'aide contextuel
 
 - Centre d'aide statique, recherchable et utilisable au clavier avec neuf

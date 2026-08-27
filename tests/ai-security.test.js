@@ -17,16 +17,42 @@ describe("frontières de sécurité AI-001", () => {
   });
 
   it("n'utilise plus implicitement la clé Anthropic globale", async () => {
-    const [summaryRoute, settingsRoute, modelsRoute] = await Promise.all([
+    const [summaryRoute, formattingRoute, settingsRoute, modelsRoute] = await Promise.all([
       source("app/api/resumer/route.js"),
+      source("app/api/ai/format/route.js"),
       source("app/api/ai/settings/route.js"),
       source("app/api/ai/models/route.js"),
     ]);
-    const routes = summaryRoute + settingsRoute + modelsRoute;
+    const routes = summaryRoute + formattingRoute + settingsRoute + modelsRoute;
     expect(routes).not.toContain("process.env.ANTHROPIC_API_KEY");
     expect(routes).toContain("requireSupabaseUser(request)");
     expect(routes).toContain("consumeAIQuota");
     expect(summaryRoute).toContain("AI_CONFIGURATION_REQUIRED");
+    expect(formattingRoute).toContain("createAnthropicFormatting");
+    expect(formattingRoute).toContain("containsFormattableText");
+  });
+
+  it("n'applique jamais une proposition de mise en forme sans validation explicite", async () => {
+    const [page, dialog, editor, formatting, styles] = await Promise.all([
+      source("app/page.js"),
+      source("components/AIFormattingDialog.js"),
+      source("components/NoteContentEditor.js"),
+      source("lib/ai-formatting.js"),
+      source("app/globals.css"),
+    ]);
+
+    expect(page).toContain("appliquerMiseEnForme");
+    expect(page).toContain("Sauvegarde la note pour la conserver");
+    expect(page).toContain("contenu !== aiFormatting.source");
+    expect(dialog).toContain("Appliquer à l&apos;éditeur");
+    expect(dialog).toContain("rien n'est modifié ni enregistré sans ton accord");
+    expect(editor).toContain("onSmartFormat");
+    expect(editor).toContain('aria-label="Mettre en forme avec l’IA"');
+    expect(formatting).toContain("maskPrivateImageReferences");
+    expect(formatting).not.toContain("localStorage");
+    expect(styles).toContain(".ai-formatting-comparison");
+    expect(styles).toContain("grid-template-columns: minmax(0, 1fr)");
+    expect(page).toContain("!isWithinModalFocus(modalPanelRef.current, document.activeElement)");
   });
 
   it("interdit le Vault au navigateur et purge les secrets", async () => {

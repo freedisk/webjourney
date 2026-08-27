@@ -44,14 +44,19 @@ Les clés serveur ne doivent jamais porter le préfixe `NEXT_PUBLIC_`.
   les RPC de secret sont réservées au rôle serveur.
 - Toute sortie vers Anthropic exige une session valide, des entrées bornées et
   un quota atomique consommé avant l'appel.
+- La mise en forme masque côté serveur toute référence et légende d'image
+  privée ; une sortie ayant perdu, dupliqué, réordonné ou inventé un marqueur
+  est rejetée sans toucher au brouillon.
+- Une proposition IA n'est jamais enregistrée ou appliquée implicitement ; le
+  client vérifie que le snapshot source n'a pas changé avant l'application.
 - Les corps d'erreur Anthropic et les en-têtes contenant une clé ne sont jamais
   journalisés ni relayés au client.
 
 ## PWA
 
 Le service worker peut mettre en cache le shell statique et `/offline`. Il ne
-doit jamais mettre en cache les notes, images signées, réponses Supabase ou
-résumés Anthropic.
+doit jamais mettre en cache les notes, images signées, réponses Supabase,
+résumés ou propositions Anthropic.
 
 ## Dépendances et livraison
 

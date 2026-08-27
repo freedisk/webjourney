@@ -35,7 +35,7 @@ let failure = null;
 const checks = [];
 
 function assert(condition, label) {
-  if (!condition) throw new Error(`Échec smoke AI-001 : ${label}`);
+  if (!condition) throw new Error(`Échec smoke IA BYOK : ${label}`);
   checks.push(label);
 }
 
@@ -59,6 +59,7 @@ try {
   for (const [path, method] of [
     ["/api/ai/settings", "GET"],
     ["/api/ai/models", "POST"],
+    ["/api/ai/format", "POST"],
     ["/api/resumer", "POST"],
   ]) {
     const { response } = await api(path, {
@@ -99,6 +100,13 @@ try {
   assert(result.response.status === 428 && result.payload?.code === "AI_CONFIGURATION_REQUIRED",
     "résumé sans configuration refusé en 428");
 
+  result = await api("/api/ai/format", {
+    method: "POST",
+    body: { contenu: "Texte sans configuration." },
+  });
+  assert(result.response.status === 428 && result.payload?.code === "AI_CONFIGURATION_REQUIRED",
+    "mise en forme sans configuration refusée en 428");
+
   const invalidKey = "sk-ant-invalide";
   result = await api("/api/ai/models", { method: "POST", apiKey: invalidKey });
   assert(result.response.status === 400 && result.payload?.code === "AI_KEY_INVALID_FORMAT",
@@ -124,6 +132,23 @@ try {
     && result.payload.resume.length > 0, "résumé réel en mode session");
   assert(!JSON.stringify(result.payload).includes(anthropicKey), "clé session absente de la réponse");
 
+  const privateImageReference = `![Image smoke](capsule-image/${crypto.randomUUID()})`;
+  result = await api("/api/ai/format", {
+    method: "POST",
+    apiKey: anthropicKey,
+    body: {
+      contenu: `objectif vérifier la mise en forme\npoints premier point second point\n\n${privateImageReference}`,
+      modelId,
+    },
+  });
+  assert(result.response.status === 200 && typeof result.payload?.formattedContent === "string"
+    && result.payload.formattedContent.length > 0,
+  `mise en forme réelle en mode session (HTTP ${result.response.status}, ${result.payload?.code || "sans code"})`);
+  assert(result.payload.formattedContent.includes(privateImageReference),
+    "référence privée restaurée à l'identique");
+  assert(!JSON.stringify(result.payload).includes(anthropicKey),
+    "clé session absente de la proposition");
+
   result = await api("/api/ai/settings", {
     method: "PUT",
     body: { apiKey: anthropicKey, modelId },
@@ -145,6 +170,13 @@ try {
   });
   assert(result.response.status === 200 && typeof result.payload?.resume === "string",
     "résumé réel avec la clé Vault");
+
+  result = await api("/api/ai/format", {
+    method: "POST",
+    body: { contenu: "titre préparation étapes choisir écrire vérifier" },
+  });
+  assert(result.response.status === 200 && typeof result.payload?.formattedContent === "string",
+    "mise en forme réelle avec la clé Vault");
 
   result = await api("/api/ai/settings", { method: "DELETE" });
   assert(result.response.status === 204, "suppression explicite du réglage Vault");

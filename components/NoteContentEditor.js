@@ -30,6 +30,8 @@ export default function NoteContentEditor({
   uploadProgress = null,
   onProcessingChange,
   onOpenHelp,
+  onSmartFormat,
+  smartFormatBusy = false,
 }) {
   const inputId = useId();
   const textareaRef = useRef(null);
@@ -316,6 +318,19 @@ export default function NoteContentEditor({
                   {format.text}
                 </button>
               ))}
+              {onSmartFormat && (
+                <button
+                  type="button"
+                  className="markdown-ai-format-button"
+                  onClick={onSmartFormat}
+                  disabled={disabled || isPreparing || smartFormatBusy || !value.trim()}
+                  title={value.trim() ? "Améliorer la lisibilité avec l’IA" : "Ajoute du texte à mettre en forme"}
+                  aria-label="Mettre en forme avec l’IA"
+                >
+                  <Icon name="sparkles" size={15} />
+                  <span>IA</span>
+                </button>
+              )}
               {onOpenHelp && (
                 <button
                   type="button"
