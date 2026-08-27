@@ -5,6 +5,15 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### UX-002 — Neo-brutalism fonctionnel
+
+- En-tête responsive hiérarchisé, menu secondaire et navigation mobile iOS.
+- Dialogues accessibles, toasts avec annulation, skeletons et états vides.
+- Palette `Ctrl/Cmd+K` et barre Markdown avec écriture, double vue et aperçu.
+- Kanban tactile Pointer Events avec déplacement explicite de repli.
+- Partage système, transitions progressives et mouvement réduit.
+- Raccourcis PWA Nouvelle note/Rechercher et cache statique `v2`.
+
 ### Expérience images
 
 - Compression WebP locale, limite source de 20 Mio, dimension maximale de

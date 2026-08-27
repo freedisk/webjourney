@@ -10,6 +10,11 @@ Anthropic. Les notes peuvent également contenir des images privées ajoutées p
 sélection, copier/coller ou glisser-déposer. Elles sont optimisées localement,
 accompagnées d'une progression et consultables dans une galerie plein écran.
 
+L'interface neo-brutaliste privilégie désormais une hiérarchie compacte, une
+navigation mobile dédiée, des retours non bloquants, une palette de commandes
+`Ctrl/Cmd+K`, un éditeur Markdown assisté avec aperçu et un Kanban utilisable
+au tactile comme au clavier.
+
 Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
 d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
 dédiée. Voir [docs/PWA.md](docs/PWA.md) pour l'installation et le périmètre hors
@@ -101,11 +106,16 @@ app/
   api/resumer/route.js       résumé Anthropic authentifié
   share/[token]/page.js      lecture publique et signature serveur
 components/
+  AppHeader.js               en-tête responsive et actions prioritaires
+  CommandPalette.js          navigation et commandes Ctrl/Cmd+K
+  MobileNavigation.js        navigation tactile iPhone
   PWARegistration.js         enregistrement du service worker
   NoteContentEditor.js       texte, sélection, collage, dépôt et progression
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  markdown-editor.js         transformations Markdown testables
+  ui-capabilities.js         partage et transitions progressives
   note-images.js             format stable et validations
   image-compression.js       optimisation WebP locale et garde-fous
   note-image-storage.js      upload, copie, suppression, signature

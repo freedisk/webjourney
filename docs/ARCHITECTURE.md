@@ -47,6 +47,11 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 |---|---|---|
 | `app/page.js` | Orchestration principale et UI historique | Client Component, monolithe à réduire progressivement |
 | `app/login/page.js` | Connexion et inscription | Clé publique seulement |
+| `components/AppHeader.js` | Hiérarchie, vues et actions prioritaires | Responsive sans perdre les noms accessibles |
+| `components/MobileNavigation.js` | Navigation tactile persistante | Respecte les zones sûres iOS |
+| `components/CommandPalette.js` | Recherche de commandes et notes | Aucune indexation ni persistance externe |
+| `components/ui/Dialog.js` | Modale accessible réutilisable | Focus confiné, restitué et fermeture Échap |
+| `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
 | `app/api/resumer/route.js` | Résumé IA | Auth avant appel externe |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
@@ -55,6 +60,8 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `components/StatsDrawer.js` | Agrégations et graphiques | Dépend de RLS sur trois tables |
 | `lib/note-images.js` | Format stable et validations pures | Testable sans Supabase |
 | `lib/image-compression.js` | Décodage, redimensionnement et WebP local | Source 20 Mio, sortie 5 Mio, garde mémoire 40 Mpx |
+| `lib/markdown-editor.js` | Transformations de sélection Markdown | Fonctions pures testées |
+| `lib/ui-capabilities.js` | Partage et transitions de vues | Dégradation progressive et mouvement réduit |
 | `lib/note-image-storage.js` | Upload, copie, suppression, signature | Compensation sur erreur |
 | `scripts/audit-note-images.mjs` | Audit read-only Markdown/SQL/Storage | Aucune méthode d'écriture ou suppression |
 | `lib/supabase.js` | Client navigateur | Variables publiques uniquement |
@@ -104,9 +111,8 @@ erDiagram
     }
 ```
 
-Les migrations historiques du noyau sont en cours de baselining sous `DB-001`.
-Jusqu'à sa clôture, le schéma effectif de production doit être vérifié avant
-toute évolution.
+Le noyau historique est versionné par la baseline `20260826000000` et la
+migration images `20260826120000`. Toute évolution suivante est forward-only.
 
 ## 5. Flux critiques
 
@@ -148,6 +154,16 @@ supprime ensuite les métadonnées. Un échec de nettoyage doit rester visible e
 Le client transmet le token de session. La route valide l'utilisateur avant de
 vérifier la configuration Anthropic et d'appeler l'API. Un rate-limit
 persistant reste à ajouter.
+
+### Interaction moderne progressive
+
+- le changement cartes/liste/Kanban utilise View Transition si le navigateur le
+  permet, sinon la mise à jour React reste immédiate ;
+- le partage préfère la feuille système, avec copie du lien en repli ;
+- le Kanban utilise Pointer Events au tactile et conserve un sélecteur explicite
+  de colonne comme solution clavier/accessibilité ;
+- la palette et les dialogues n'enregistrent ni requête ni contenu de note ;
+- `prefers-reduced-motion` neutralise les animations non essentielles.
 
 ## 6. Déploiement
 

@@ -2,7 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import ImageLightbox from "@/components/ImageLightbox";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { formatImageBytes, optimizeImageFile } from "@/lib/image-compression";
+import { applyMarkdownFormat } from "@/lib/markdown-editor";
 import {
   createImageReference,
   extractImageIds,
@@ -39,6 +41,7 @@ export default function NoteContentEditor({
   const [isPreparing, setIsPreparing] = useState(false);
   const [preparationProgress, setPreparationProgress] = useState(null);
   const [activePreviewId, setActivePreviewId] = useState(null);
+  const [editorMode, setEditorMode] = useState("write");
   const referencedIds = new Set(extractImageIds(value));
   const visiblePendingImages = pendingImages.filter((image) => referencedIds.has(image.id));
   const visibleExistingImages = existingImages.filter((image) => referencedIds.has(image.id));
@@ -226,6 +229,24 @@ export default function NoteContentEditor({
     if (activePreviewId === image.id) setActivePreviewId(null);
   }
 
+  function applyFormat(type) {
+    const textarea = textareaRef.current;
+    const result = applyMarkdownFormat(
+      value,
+      textarea?.selectionStart,
+      textarea?.selectionEnd,
+      type,
+    );
+    onChange(result.value);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(
+        result.selectionStart,
+        result.selectionEnd,
+      );
+    });
+  }
+
   const galleryImages = [
     ...visibleExistingImages
       .filter((image) => Boolean(imageUrls[image.id]))
@@ -244,6 +265,23 @@ export default function NoteContentEditor({
   ];
   const activePreviewIndex = galleryImages.findIndex((image) => image.id === activePreviewId);
   const currentProgress = preparationProgress || uploadProgress;
+  const previewImageUrls = {
+    ...imageUrls,
+    ...visiblePendingImages.reduce((map, image) => {
+      map[image.id] = image.previewUrl;
+      return map;
+    }, {}),
+  };
+  const markdownFormats = [
+    { type: "bold", label: "Gras", text: "B" },
+    { type: "italic", label: "Italique", text: "I" },
+    { type: "heading", label: "Titre", text: "H2" },
+    { type: "bullet", label: "Liste à puces", text: "•" },
+    { type: "numbered", label: "Liste numérotée", text: "1." },
+    { type: "quote", label: "Citation", text: "❝" },
+    { type: "link", label: "Lien", text: "↗" },
+    { type: "code", label: "Code", text: "<>" },
+  ];
 
   return (
     <div
@@ -260,17 +298,71 @@ export default function NoteContentEditor({
         </div>
       )}
 
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onPaste={handlePaste}
-        rows={rows}
-        placeholder={placeholder}
-        className="input-glass"
-        disabled={disabled || isPreparing}
-        style={{ resize: "vertical", minHeight }}
-      />
+      <div className="markdown-editor-shell">
+        <div className="markdown-editor-topbar">
+          {editorMode !== "preview" ? (
+            <div className="markdown-format-toolbar" role="toolbar" aria-label="Mise en forme Markdown">
+              {markdownFormats.map((format) => (
+                <button
+                  key={format.type}
+                  type="button"
+                  onClick={() => applyFormat(format.type)}
+                  disabled={disabled || isPreparing}
+                  title={format.label}
+                  aria-label={format.label}
+                >
+                  {format.text}
+                </button>
+              ))}
+            </div>
+          ) : <span />}
+          <div className="markdown-view-switcher" role="group" aria-label="Mode de l'éditeur">
+            {[
+              ["write", "Écrire"],
+              ["split", "Double"],
+              ["preview", "Aperçu"],
+            ].map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                className={editorMode === mode ? "is-active" : ""}
+                aria-pressed={editorMode === mode}
+                onClick={() => setEditorMode(mode)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={`markdown-editor-workspace${editorMode === "split" ? " is-split" : ""}`}>
+          {editorMode !== "preview" && (
+            <div className="markdown-editor-pane">
+              <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                onPaste={handlePaste}
+                rows={rows}
+                placeholder={placeholder}
+                aria-label="Contenu Markdown"
+                className="input-glass"
+                disabled={disabled || isPreparing}
+                style={{ resize: "vertical", minHeight }}
+              />
+            </div>
+          )}
+          {editorMode !== "write" && (
+            <div className="markdown-preview-pane" style={{ minHeight }} aria-label="Aperçu Markdown">
+              {value.trim() ? (
+                <MarkdownRenderer content={value} imageUrls={previewImageUrls} />
+              ) : (
+                <div className="markdown-preview-empty">L&apos;aperçu apparaîtra ici.</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="note-image-toolbar">
         <input

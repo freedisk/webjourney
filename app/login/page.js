@@ -3,6 +3,7 @@
 // Page de connexion / inscription — design brutalism + glassmorphism
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import IconButton from "@/components/ui/IconButton";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -67,15 +68,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative" style={{ zIndex: 1 }}>
+    <main className="auth-shell">
       {/* Bouton thème en haut à droite */}
-      <button
+      <IconButton
+        label={sombre ? "Activer le thème clair" : "Activer le thème sombre"}
+        icon={sombre ? "sun" : "moon"}
         onClick={toggleTheme}
-        className="btn-brutal ghost fixed top-4 right-4"
-        style={{ fontSize: "1.2rem", padding: "0.5rem 0.7rem" }}
-      >
-        {sombre ? "\u2600" : "\u263E"}
-      </button>
+        className="auth-theme-button"
+      />
 
       {/* Forme décorative en arrière-plan */}
       <div
@@ -87,7 +87,7 @@ export default function LoginPage() {
         style={{ background: "var(--danger)", zIndex: -1 }}
       />
 
-      <div className="w-full max-w-sm">
+      <div className="auth-panel">
         {/* Titre brutaliste */}
         <div className="mb-8 text-center">
           <h1
@@ -97,12 +97,16 @@ export default function LoginPage() {
             <span className="logo-capsule">CAPSULE</span>
           </h1>
           <p className="text-xs font-bold uppercase tracking-widest mt-2" style={{ color: "var(--text-muted)" }}>
-            Connexion
+            Ton espace de notes privé
           </p>
         </div>
 
         {/* Formulaire glass + brutal */}
-        <form onSubmit={handleLogin} className="glass-card p-6 space-y-4">
+        <form onSubmit={handleLogin} className="glass-card auth-card p-6 space-y-4">
+          <div className="auth-card-heading">
+            <span>Bienvenue</span>
+            <strong>Connexion</strong>
+          </div>
           <div>
             <label
               htmlFor="email"
@@ -144,12 +148,12 @@ export default function LoginPage() {
 
           {/* Messages d'erreur ou de succès */}
           {erreur && (
-            <div className="tag" style={{ color: "var(--danger)", borderColor: "var(--danger)", display: "block", padding: "0.5rem", fontSize: "0.75rem" }}>
+            <div role="alert" className="tag" style={{ color: "var(--danger)", borderColor: "var(--danger)", display: "block", padding: "0.5rem", fontSize: "0.75rem" }}>
               {erreur}
             </div>
           )}
           {message && (
-            <div className="tag" style={{ color: "var(--success)", borderColor: "var(--success)", display: "block", padding: "0.5rem", fontSize: "0.75rem" }}>
+            <div role="status" aria-live="polite" className="tag" style={{ color: "var(--success)", borderColor: "var(--success)", display: "block", padding: "0.5rem", fontSize: "0.75rem" }}>
               {message}
             </div>
           )}
@@ -161,7 +165,7 @@ export default function LoginPage() {
               disabled={chargement}
               className="btn-brutal primary flex-1 disabled:opacity-50"
             >
-              {chargement ? "..." : "Connexion"}
+              {chargement ? "Connexion…" : "Connexion"}
             </button>
             <button
               type="button"
@@ -174,6 +178,6 @@ export default function LoginPage() {
           </div>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

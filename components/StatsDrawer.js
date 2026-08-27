@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { stripImagesForText } from "@/lib/note-images";
@@ -13,10 +13,17 @@ import {
 const JOURS_COURTS = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
 
 export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, sombre }) {
+  const panelRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const onCloseRef = useRef(onFermer);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [activite7j, setActivite7j] = useState([]);
   const [repartitionTags, setRepartitionTags] = useState([]);
+
+  useEffect(() => {
+    onCloseRef.current = onFermer;
+  }, [onFermer]);
 
   // Charger les données à l'ouverture
   useEffect(() => {
@@ -26,17 +33,41 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
 
   // Fermer avec Échap
   useEffect(() => {
-    if (!ouvert) return;
+    if (!ouvert) return undefined;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    function handleEsc(e) {
-      if (e.key === "Escape") onFermer();
+    closeButtonRef.current?.focus({ preventScroll: true });
+
+    function handleKeyDown(event) {
+      if (!panelRef.current?.contains(document.activeElement)) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(panelRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
-    document.addEventListener("keydown", handleEsc);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      if (document.contains(previousFocus)) previousFocus?.focus({ preventScroll: true });
     };
-  }, [ouvert, onFermer]);
+  }, [ouvert]);
 
   async function chargerStats() {
     setChargement(true);
@@ -163,6 +194,11 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
 
       {/* Drawer */}
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stats-drawer-title"
+        tabIndex={-1}
         style={{
           position: "relative",
           width: "400px",
@@ -188,11 +224,13 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
             flexShrink: 0,
           }}
         >
-          <h2 className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
+          <h2 id="stats-drawer-title" className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
             Mes statistiques
           </h2>
           <button
+            ref={closeButtonRef}
             onClick={onFermer}
+            aria-label="Fermer les statistiques"
             className="btn-brutal ghost"
             style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1 }}
           >

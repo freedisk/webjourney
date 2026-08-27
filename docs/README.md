@@ -25,6 +25,7 @@ ne sont jamais des instructions actives.
 | [Schéma Supabase](../supabase/schemas/README.md) | Photographie déclarative et règles de rafraîchissement |
 | [Audit Supabase](../supabase/tests/production_schema_audit.sql) | Contrat SQL non destructif de production |
 | [Sprint produit images](sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md) | Objectifs, critères et preuves du pipeline image amélioré |
+| [Sprint UX-002](sprints/SPRINT_UX_002_2026-08-27.md) | Neo-brutalism fonctionnel, recette et preuves de livraison |
 | [journal/](journal/) | Transcriptions horodatées des tâches |
 | [archive/](archive/) | Documents historiques obsolètes |
 

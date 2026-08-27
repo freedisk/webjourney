@@ -13,7 +13,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - **Données** : Supabase PostgreSQL, Auth et Storage.
 - **Langue du code existant** : UI et messages majoritairement en français.
 
-## État validé au 2026-08-26
+## État validé au 2026-08-27
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
 - Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /
@@ -22,8 +22,15 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Bucket `note-images` privé, limite 5 Mio, JPEG/PNG/WebP.
 - Grants `note_images` pour `authenticated` limités à SELECT/INSERT/DELETE.
 - PWA installée et validée fonctionnelle sur iPad via Safari.
+- UX-002 implémente une hiérarchie neo-brutaliste responsive, une navigation
+  mobile, des dialogues accessibles, toasts et skeletons, la palette
+  `Ctrl/Cmd+K`, l'aperçu Markdown et un Kanban tactile avec repli explicite.
+- Le partage système et les transitions de vues sont progressifs ; le
+  presse-papiers et la mise à jour React immédiate restent les replis.
+- Le manifeste propose les raccourcis Nouvelle note et Rechercher ; le cache
+  statique `v2` reste strictement sans donnée privée.
 - `main` protégé par PR et contrôle `Quality gate`.
-- Référence CI : lint, 31 tests, build Next.js et audit élevé.
+- Référence CI UX-002 : lint, 43 tests, build Next.js et audit élevé.
 - Audit read-only des images disponible par `npm run ops:audit-images` ; état de
   production observé propre le 2026-08-26.
 - Référence de livraison images : PR #6, fusion `4c77786`, Vercel
@@ -39,6 +46,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 6. Le service worker ne met aucune donnée privée en cache.
 7. `main` n'est modifié que par PR après `Quality gate`.
 8. Une évolution Supabase est versionnée et prévisualisée avant application.
+9. Une capacité navigateur moderne doit avoir un repli sans perte fonctionnelle.
 
 ## Environnement
 

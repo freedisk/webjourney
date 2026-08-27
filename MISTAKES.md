@@ -141,6 +141,37 @@ présente après correction afin d'éviter la répétition du problème.
   connexion liée ; paralléliser seulement les contrôles sans session partagée.
 - **Statut** : corrigé ; procédure inscrite dans ce registre.
 
+## M-011 — Libellé visuel masqué devenu nom accessible vide
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : au breakpoint iPad, le texte du bouton Nouvelle note était
+  masqué pour compacter l'en-tête et son nom accessible disparaissait avec lui.
+- **Cause** : le composant comptait sur son texte visible sans fournir de nom
+  stable au bouton icône responsive.
+- **Impact** : action ambiguë pour un lecteur d'écran à 1 024 px, sans perte de
+  fonctionnalité visuelle.
+- **Correction** : ajout de `aria-label` explicites aux actions principales,
+  épingles, couleurs, suppression et fermeture, puis contrôle du DOM aux trois
+  viewports de recette.
+- **Prévention** : toute étiquette masquée par CSS doit conserver un nom
+  accessible indépendant ; l'invariant est couvert par un test UX statique.
+- **Statut** : corrigé.
+
+## M-012 — Annulation Kanban capturant un état React périmé
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : la première implémentation de l'action Annuler rappelait la
+  fonction de déplacement fermée sur le tableau `notes` antérieur ; elle pouvait
+  considérer à tort que la note était déjà dans sa colonne d'origine.
+- **Cause** : fermeture JavaScript conservée dans un toast asynchrone.
+- **Impact** : l'annulation affichée aurait pu ne produire aucun déplacement.
+- **Correction** : référence synchronisée vers l'état courant, restauration SQL
+  explicite de la colonne et de l'ordre, puis garde contre une modification plus
+  récente de la même note.
+- **Prévention** : une action différée ne décide jamais depuis un snapshot React
+  capturé ; test d'invariant et revue des callbacks asynchrones.
+- **Statut** : corrigé avant publication.
+
 ## Modèle d'entrée
 
 ```markdown

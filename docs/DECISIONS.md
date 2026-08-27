@@ -93,6 +93,23 @@ journal avec un lien vers celle qui la remplace.
   la finalisation des métadonnées, pas un compteur d'octets réseau ; une source
   de plus de 40 Mpx est refusée pour protéger le navigateur.
 
+## ADR-009 — Neo-brutalism fonctionnel et capacités progressives
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : l'identité visuelle était cohérente, mais l'en-tête, les
+  retours d'état et les actions secondaires manquaient de hiérarchie, surtout
+  sur mobile et au tactile.
+- **Décision** : conserver bordures franches, ombres décalées, faible rayon et
+  accent violet, puis construire la modernisation avec des primitives
+  accessibles et des capacités Web progressives.
+- **Raison** : améliorer vitesse, lisibilité et confiance sans refonte de marque
+  ni dépendance supplémentaire.
+- **Conséquences** : Web Share, View Transition et raccourcis de manifeste sont
+  optionnels ; chaque fonction dispose d'un repli. Les dialogues confinent et
+  restituent le focus, les contrôles tactiles visent 44 px et le mouvement réduit
+  reste prioritaire.
+
 ## Modèle ADR
 
 ```markdown

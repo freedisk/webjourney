@@ -4,6 +4,11 @@ Capsule est installable depuis Safari comme une application autonome. Elle
 dispose d'un manifeste, d'icônes dédiées, des métadonnées Apple et d'un service
 worker enregistré uniquement dans le build de production.
 
+Le manifeste expose deux raccourcis progressifs, lorsqu'ils sont pris en charge
+par le système : **Nouvelle note** et **Rechercher**. Leur URL ouvre directement
+l'action demandée après restauration de la session. L'interface conserve ses
+boutons habituels sur les plateformes qui ignorent ces raccourcis.
+
 ## Installer depuis Safari
 
 1. Ouvrir <https://webjourney-one.vercel.app/> dans **Safari**.
@@ -66,5 +71,7 @@ public/icons/                   source SVG et rendus PNG
 public/apple-touch-icon.png     icône Safari iOS 180 × 180
 ```
 
-Si la liste des fichiers précachés change, modifier `CACHE_NAME` dans
-`public/sw.js` afin de nettoyer l'ancien cache lors de l'activation.
+Si la liste des fichiers précachés ou le manifeste change, modifier
+`CACHE_NAME` dans `public/sw.js` afin de nettoyer l'ancien cache lors de
+l'activation. UX-002 utilise `capsule-static-v2` pour diffuser les raccourcis
+sans conserver l'ancien manifeste.

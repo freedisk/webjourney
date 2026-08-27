@@ -189,6 +189,49 @@ Supabase ni les invariants de confidentialité et d'upload différé.
 - Déploiement : `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5`.
 - Sprint : `docs/sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md`.
 
+## 2026-08-27 — UX-002 Neo-brutalism fonctionnel
+
+### Objectif
+
+Faire évoluer l'identité brutaliste vers une expérience plus lisible,
+productive et tactile, sans changer le modèle Supabase ni la confidentialité.
+
+### Changements
+
+- en-tête hiérarchisé, sélecteur de vues, menu secondaire et navigation mobile
+  tenant compte des zones sûres iOS ;
+- primitives `IconButton`, `Dialog`, `ToastViewport`, `Skeleton` et
+  `EmptyState`, avec focus visible, confinement/restauration et annonces ARIA ;
+- palette `Ctrl/Cmd+K` pour créer, rechercher, changer de vue ou ouvrir une note ;
+- barre de mise en forme Markdown, modes écrire/double/aperçu et transformations
+  pures testées ;
+- Kanban Pointer Events tactile avec poignée dédiée et sélecteur de colonne ;
+- partage Web Share avec repli presse-papiers, transitions de vues progressives
+  et mouvement réduit ;
+- raccourcis PWA Nouvelle note/Rechercher et cache statique renouvelé en `v2` ;
+- annulation réversible des déplacements et épinglages, feedback en toasts,
+  skeleton initial et états vides orientés action ;
+- écran de connexion aligné sur la nouvelle hiérarchie visuelle.
+
+### Validation locale
+
+- ESLint propre et **43/43 tests** répartis dans huit fichiers ;
+- recette synthétique sans donnée privée : 390 × 844, 1 024 × 1 366 et
+  1 416 × 975 sans débordement horizontal ;
+- thèmes clair/sombre, palette, dialogue, focus initial, aperçu Markdown double,
+  toast Annuler et menu secondaire contrôlés dans le navigateur ;
+- aucune migration ni écriture Supabase nécessaire.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — les références GitHub, Vercel et smoke publics sont ajoutées
+après passage des gates et déploiement.
+
+### Références
+
+- Branche : `codex/ux-002-neo-brutalism`.
+- Sprint : `docs/sprints/SPRINT_UX_002_2026-08-27.md`.
+
 ## Modèle d'entrée
 
 ```markdown
