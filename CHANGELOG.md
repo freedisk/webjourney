@@ -5,6 +5,17 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### HELP-001 — Centre d'aide contextuel
+
+- Centre d'aide statique, recherchable et utilisable au clavier avec neuf
+  rubriques couvrant notes, images, organisation, partage, PWA, IA et dépannage.
+- Démarrage rapide facultatif dont la progression non sensible reste uniquement
+  dans le navigateur et peut être masquée ou réinitialisée.
+- Accès depuis le menu, `Ctrl/Cmd+K`, l'état vide, la barre Markdown, le guide
+  images et les paramètres IA, avec ouverture directe de la bonne rubrique.
+- Mise en page neo-brutaliste responsive, focus confiné/restitué et aucun appel
+  réseau propre au centre d'aide.
+
 ### AI-001 — BYOK Anthropic sécurisé
 
 - Modes clé de session en mémoire et clé synchronisée chiffrée par Supabase

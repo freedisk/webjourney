@@ -8,11 +8,11 @@ import { supabase } from "@/lib/supabase";
 import AISettingsDialog from "@/components/AISettingsDialog";
 import AppHeader from "@/components/AppHeader";
 import CommandPalette from "@/components/CommandPalette";
+import HelpCenterDialog from "@/components/HelpCenterDialog";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import MobileNavigation from "@/components/MobileNavigation";
 import NoteContentEditor from "@/components/NoteContentEditor";
 import StatsDrawer from "@/components/StatsDrawer";
-import Dialog from "@/components/ui/Dialog";
 import EmptyState from "@/components/ui/EmptyState";
 import Icon from "@/components/ui/Icon";
 import { AppSkeleton } from "@/components/ui/Skeleton";
@@ -134,8 +134,9 @@ export default function Home() {
   const [triAscendant, setTriAscendant] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(false);
 
-  // --- Aide raccourcis clavier ---
+  // --- Centre d’aide contextuel ---
   const [aideOuverte, setAideOuverte] = useState(false);
+  const [helpInitialSection, setHelpInitialSection] = useState("quick-start");
 
   // --- Palette de commandes ---
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -181,6 +182,11 @@ export default function Home() {
 
   function setErreur(message) {
     if (message) pushToast(message, { tone: "error", duration: 8000 });
+  }
+
+  function openHelp(sectionId = "quick-start") {
+    setHelpInitialSection(sectionId);
+    setAideOuverte(true);
   }
 
   // Obtenir la couleur de fond d'une note selon le thème actuel
@@ -1678,6 +1684,7 @@ export default function Home() {
                 imageDisabled={Boolean(imageFeatureError)}
                 uploadProgress={imageUploadProgress}
                 onProcessingChange={setImagePreparing}
+                onOpenHelp={openHelp}
               />
               {renderCouleurEditor()}
             </div>
@@ -1889,6 +1896,7 @@ export default function Home() {
                   imageDisabled={Boolean(imageFeatureError)}
                   uploadProgress={imageUploadProgress}
                   onProcessingChange={setImagePreparing}
+                  onOpenHelp={openHelp}
                 />
                 {renderCouleurEditor()}
               </div>
@@ -2088,11 +2096,11 @@ export default function Home() {
     },
     {
       id: "open-help",
-      label: "Afficher les raccourcis",
-      description: "Toutes les commandes clavier disponibles",
-      keywords: "aide clavier",
+      label: "Ouvrir le centre d’aide",
+      description: "Fonctionnalités, usages, IA, PWA et raccourcis",
+      keywords: "aide guide tutoriel clavier image anthropic pwa partage",
       icon: "help",
-      onSelect: () => setAideOuverte(true),
+      onSelect: () => openHelp("quick-start"),
     },
     ...notes.slice(0, 8).map((note) => ({
       id: `note-${note.id}`,
@@ -2137,7 +2145,7 @@ export default function Home() {
         onOpenAISettings={() => setAISettingsOpen(true)}
         isDark={sombre}
         onToggleTheme={toggleTheme}
-        onOpenHelp={() => setAideOuverte(true)}
+        onOpenHelp={() => openHelp("quick-start")}
         email={utilisateur.email}
         onLogout={handleLogout}
         busy={noteBusy}
@@ -2339,6 +2347,8 @@ export default function Home() {
                 description="Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l'auras pas partagée."
                 actionLabel="Créer une note"
                 onAction={() => setModeCreation(true)}
+                secondaryActionLabel="Découvrir Capsule"
+                onSecondaryAction={() => openHelp("quick-start")}
               />
             </div>
           ) : notesFiltrees.length === 0 ? (
@@ -3043,6 +3053,7 @@ export default function Home() {
                     imageDisabled={Boolean(imageFeatureError)}
                     uploadProgress={imageUploadProgress}
                     onProcessingChange={setImagePreparing}
+                    onOpenHelp={openHelp}
                   />
                 </div>
                 <div>
@@ -3130,39 +3141,18 @@ export default function Home() {
         onUseSessionCredential={setSessionAICredential}
         onClearSessionCredential={() => setSessionAICredential(null)}
         onConfigured={setSucces}
+        onOpenHelp={() => openHelp("ai")}
       />
 
-      {/* Modale aide raccourcis */}
-      <Dialog
-        open={aideOuverte}
-        onClose={() => setAideOuverte(false)}
-        title="Raccourcis clavier"
-        description="Les commandes restent désactivées pendant la saisie dans un champ."
-        panelStyle={{ maxWidth: "390px" }}
-      >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <tbody>
-            {[
-              ["Ctrl / ⌘ + K", "Palette de commandes"],
-              ["N", "Nouvelle note"],
-              ["/", "Rechercher"],
-              ["1 / 2 / 3", "Cartes / Liste / Kanban"],
-              ["Échap", "Fermer / Annuler"],
-              ["↑ ↓", "Naviguer dans la liste"],
-              ["Entrée", "Sélectionner"],
-              ["E", "Éditer la note ouverte"],
-              ["Suppr", "Supprimer la note ouverte"],
-            ].map(([touche, action]) => (
-              <tr key={touche} style={{ borderBottom: "1px solid var(--panel-border)" }}>
-                <td style={{ padding: "0.48rem 0.5rem", width: "7rem" }}><kbd>{touche}</kbd></td>
-                <td style={{ padding: "0.48rem 0.5rem", fontSize: "0.72rem", color: "var(--text-secondary)" }}>
-                  {action}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Dialog>
+      {aideOuverte && (
+        <HelpCenterDialog
+          open
+          onClose={() => setAideOuverte(false)}
+          initialSection={helpInitialSection}
+          onCreateNote={() => setModeCreation(true)}
+          onOpenAISettings={() => setAISettingsOpen(true)}
+        />
+      )}
 
       <CommandPalette
         open={commandPaletteOpen}

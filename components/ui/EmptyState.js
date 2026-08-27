@@ -6,6 +6,8 @@ export default function EmptyState({
   description,
   actionLabel,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
   compact = false,
 }) {
   return (
@@ -15,10 +17,19 @@ export default function EmptyState({
         <h3>{title}</h3>
         {description && <p>{description}</p>}
       </div>
-      {actionLabel && onAction && (
-        <button type="button" className="btn-brutal primary" onClick={onAction}>
-          {actionLabel}
-        </button>
+      {((actionLabel && onAction) || (secondaryActionLabel && onSecondaryAction)) && (
+        <div className="empty-state-actions">
+          {actionLabel && onAction && (
+            <button type="button" className="btn-brutal primary" onClick={onAction}>
+              {actionLabel}
+            </button>
+          )}
+          {secondaryActionLabel && onSecondaryAction && (
+            <button type="button" className="btn-brutal ghost" onClick={onSecondaryAction}>
+              {secondaryActionLabel}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

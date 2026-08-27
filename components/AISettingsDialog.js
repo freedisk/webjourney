@@ -45,6 +45,7 @@ export default function AISettingsDialog({
   onUseSessionCredential,
   onClearSessionCredential,
   onConfigured,
+  onOpenHelp,
 }) {
   const keyInputRef = useRef(null);
   const [storageMode, setStorageMode] = useState("stored");
@@ -332,7 +333,14 @@ export default function AISettingsDialog({
 
         <div className="ai-privacy-note">
           <Icon name="key" size={18} />
-          <p>Lors d’un résumé, le titre et le texte de la note sont transmis à Anthropic via le serveur Capsule. Les images et le résumé ne sont pas persistés par Capsule.</p>
+          <div>
+            <p>Lors d’un résumé, le titre et le texte de la note sont transmis à Anthropic via le serveur Capsule. Les images et le résumé ne sont pas persistés par Capsule.</p>
+            {onOpenHelp && (
+              <button type="button" className="help-inline-link" onClick={onOpenHelp} disabled={busy}>
+                Comprendre les modes et la confidentialité
+              </button>
+            )}
+          </div>
         </div>
 
         {(sessionCredential?.apiKey || storedConfigured) && (

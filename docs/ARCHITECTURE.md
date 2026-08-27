@@ -56,6 +56,7 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `components/AppHeader.js` | Hiérarchie, vues et actions prioritaires | Responsive sans perdre les noms accessibles |
 | `components/MobileNavigation.js` | Navigation tactile persistante | Respecte les zones sûres iOS |
 | `components/CommandPalette.js` | Recherche de commandes et notes | Aucune indexation ni persistance externe |
+| `components/HelpCenterDialog.js` | Aide recherchable et démarrage rapide | Contenu statique ; progression locale non sensible seulement |
 | `components/ui/Dialog.js` | Modale accessible réutilisable | Focus confiné, restitué et fermeture Échap |
 | `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
 | `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
@@ -66,6 +67,7 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `app/api/resumer/route.js` | Résumé IA | Auth, limites et quota avant appel externe |
 | `lib/ai-settings-server.js` | Accès aux réglages, Vault et quota | Client Supabase secret serveur uniquement |
 | `lib/anthropic.js` | Requêtes fournisseur bornées | Aucun corps d'erreur amont relayé |
+| `lib/help-content.js` | Rubriques, raccourcis et recherche pure | Aucun appel réseau ni contenu utilisateur |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |
 | `components/ImageLightbox.js` | Visionneuse clavier, boutons et geste horizontal | Reçoit uniquement blob local ou URL signée |
@@ -200,6 +202,9 @@ La clé Vercel historique n'est jamais utilisée implicitement. Voir
 - le Kanban utilise Pointer Events au tactile et conserve un sélecteur explicite
   de colonne comme solution clavier/accessibilité ;
 - la palette et les dialogues n'enregistrent ni requête ni contenu de note ;
+- l'aide embarquée filtre localement ses rubriques ; seule la checklist de
+  démarrage peut persister dans `localStorage`, sans identifiant ni donnée
+  métier ;
 - `prefers-reduced-motion` neutralise les animations non essentielles.
 
 ## 6. Déploiement
