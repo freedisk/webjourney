@@ -40,6 +40,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   authentifiée synthétique et nettoyage contrôlé.
 - Référence de livraison images : PR #6, fusion `4c77786`, Vercel
   `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` en `READY` sur Node 24.x.
+- AI-001 fournit une clé Anthropic explicite par utilisateur, en mémoire de page
+  ou chiffrée par Supabase Vault, avec catalogue de modèles et quota atomique
+  10/minute. Le serveur n'utilise plus implicitement la clé Vercel historique.
+- Migration AI-001 `20260827094500` appliquée et enregistrée en production après
+  prévisualisation annulée ; audit de sécurité 9/9 et cycle Vault transactionnel
+  sans résidu.
+- Référence locale AI-001 avant livraison : lint, 59/59 tests et build Next.js.
 
 ## Invariants
 
@@ -52,6 +59,10 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 7. `main` n'est modifié que par PR après `Quality gate`.
 8. Une évolution Supabase est versionnée et prévisualisée avant application.
 9. Une capacité navigateur moderne doit avoir un repli sans perte fonctionnelle.
+10. Une clé Anthropic ne va jamais dans un stockage persistant navigateur, une
+    réponse, une note, Git ou un journal.
+11. Toute sortie Anthropic exige auth, bornes et quota ; une clé Vault n'est
+    accessible qu'aux RPC serveur et disparaît avec son réglage ou son compte.
 
 ## Environnement
 
@@ -63,7 +74,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - JavaScript uniquement, pas de TypeScript.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.
-- Variables serveur : clé Anthropic et clé secrète/service-role Supabase.
+- Variable serveur requise : clé secrète/service-role Supabase. La clé Anthropic
+  Vercel est un repli historique chiffré que le code AI-001 ignore.
 
 ## État Supabase validé
 
@@ -73,10 +85,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - `20260826000000_baseline_existing_schema.sql` reconstitue le noyau historique.
 - `20260826120000_add_note_images.sql` ajoute/réaffirme les images et crée le
   bucket privé, absent des exports de schéma.
-- Les deux versions sont présentes dans `supabase_migrations.schema_migrations`
-  et parfaitement alignées avec le dépôt.
+- `20260827094500_add_user_ai_settings.sql` ajoute les réglages BYOK, Vault et le
+  quota sans modifier les notes ni les images.
+- Les trois versions sont présentes dans `supabase_migrations.schema_migrations`
+  et alignées avec le dépôt.
 - Le dry-run distant est vide et l'audit `production_schema_audit.sql` passe à
   12/12.
+- L'audit `ai_security_audit.sql` passe à 9/9 en production.
 - La validation SQL a été exécutée dans une transaction puis annulée. Le test
   `supabase db reset` sous Docker reste un confort local suivi par `TOOL-002`.
 
@@ -90,6 +105,7 @@ npm run ops:audit-images
 npx supabase migration list --linked
 npx supabase db push --dry-run --linked
 npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
+npx supabase db query --linked --file supabase/tests/ai_security_audit.sql
 ```
 
 Ne jamais lancer `supabase db reset --linked` sur la production.
@@ -97,6 +113,5 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 ## Prochaines priorités
 
 1. `QA-001` — E2E des parcours critiques.
-2. `SEC-001` — rate-limit du résumé Anthropic.
-3. `OPS-002` — observabilité sans données de note ni secret.
-4. `TOOL-002` — validation locale Supabase conteneurisée.
+2. `OPS-002` — observabilité sans données de note ni secret.
+3. `TOOL-002` — validation locale Supabase conteneurisée.

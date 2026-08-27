@@ -11,6 +11,8 @@ export default function Icon({ name, size = 18, strokeWidth = 2, className = "" 
     menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
     tags: <><path d="M20.6 13.6 11 23l-10-10V3h10l9.6 9.6a1.4 1.4 0 0 1 0 2Z"/><circle cx="6.5" cy="8.5" r="1.5"/></>,
     help: <><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.7 2.7 0 1 1 4.1 2.3c-1 .6-1.6 1.1-1.6 2.2M12 17h.01"/></>,
+    key: <><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l3 3"/></>,
+    sparkles: <><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14ZM5 14l.7 1.8L7.5 16l-1.8.7L5 18.5l-.7-1.8L2.5 16l1.8-.7L5 14Z"/></>,
     logout: <><path d="M10 17l5-5-5-5M15 12H3"/><path d="M14 3h6a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-6"/></>,
     close: <><path d="m6 6 12 12M18 6 6 18"/></>,
     command: <><path d="M9 6V5a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v14a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3Z"/></>,

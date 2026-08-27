@@ -1,30 +1,12 @@
-// Résumé IA Anthropic : authentification, BYOK, quota et appel strictement serveur.
-import {
-  AI_INPUT_LIMITS,
-  ANTHROPIC_KEY_HEADER,
-  validateAIModelId,
-  validateAnthropicApiKey,
-} from "@/lib/ai-config";
-import { aiError, aiJson, readAIJson } from "@/lib/ai-http";
+import { ANTHROPIC_KEY_HEADER, validateAnthropicApiKey } from "@/lib/ai-config";
+import { aiError, aiJson } from "@/lib/ai-http";
 import { consumeAIQuota, getStoredAICredential } from "@/lib/ai-settings-server";
-import { AnthropicError, createAnthropicSummary } from "@/lib/anthropic";
+import { AnthropicError, listAnthropicModels } from "@/lib/anthropic";
 import { RequestAuthError, requireSupabaseUser } from "@/lib/server-auth";
 
 export async function POST(request) {
   try {
     const user = await requireSupabaseUser(request);
-    const payload = await readAIJson(request);
-    const title = typeof payload.titre === "string" ? payload.titre : "";
-    const content = typeof payload.contenu === "string" ? payload.contenu : "";
-
-    if (!title && !content) return aiError("AI_CONTENT_REQUIRED", 400);
-    if (
-      title.length > AI_INPUT_LIMITS.title ||
-      content.length > AI_INPUT_LIMITS.content
-    ) {
-      return aiError("AI_CONTENT_TOO_LONG", 413);
-    }
-
     const providedKey = request.headers.get(ANTHROPIC_KEY_HEADER) || "";
     const keyValidation = providedKey
       ? validateAnthropicApiKey(providedKey)
@@ -37,11 +19,6 @@ export async function POST(request) {
     const apiKey = keyValidation?.key || stored?.apiKey;
     if (!apiKey) return aiError("AI_CONFIGURATION_REQUIRED", 428);
 
-    const modelValidation = validateAIModelId(
-      keyValidation ? payload.modelId : stored.modelId,
-    );
-    if (!modelValidation.valid) return aiError(modelValidation.code, 400);
-
     const quota = await consumeAIQuota(user.id);
     if (!quota.allowed) {
       const retryAfter = Math.max(
@@ -51,16 +28,11 @@ export async function POST(request) {
       return aiError("AI_RATE_LIMITED", 429, { "Retry-After": String(retryAfter) });
     }
 
-    const resume = await createAnthropicSummary({
-      apiKey,
-      modelId: modelValidation.modelId,
-      title,
-      content,
-    });
-
+    const models = await listAnthropicModels({ apiKey });
     return aiJson({
-      resume,
-      modelId: modelValidation.modelId,
+      models,
+      source: keyValidation ? "session" : "stored",
+      selectedModelId: keyValidation ? null : stored.modelId,
       quota: { remaining: quota.remaining, resetAt: quota.resetAt },
     });
   } catch (error) {

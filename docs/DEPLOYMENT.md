@@ -39,9 +39,9 @@ npx supabase db push --linked
 npx supabase db query --linked --file supabase/tests/production_schema_audit.sql
 ```
 
-Les versions `20260826000000` (baseline) et `20260826120000` (images) sont déjà
-appliquées en production. Ne pas les éditer ou les rejouer ; créer une nouvelle
-migration forward-only.
+Les versions `20260826000000` (baseline), `20260826120000` (images) et
+`20260827094500` (BYOK Anthropic) sont déjà appliquées en production. Ne pas les
+éditer ou les rejouer ; créer une nouvelle migration forward-only.
 
 Contrôles dashboard :
 
@@ -51,6 +51,8 @@ Contrôles dashboard :
 - MIME autorisés : JPEG, PNG, WebP ;
 - trois policies sur `note_images` ;
 - trois policies SELECT/INSERT/DELETE sur `storage.objects`.
+- tables `user_ai_settings` et `ai_rate_limits` avec RLS forcée ;
+- audit `supabase/tests/ai_security_audit.sql` à 9/9.
 
 Ne pas modifier directement les lignes `storage.objects` pour supprimer un
 fichier et ne jamais exécuter `supabase db reset --linked`.
@@ -61,9 +63,12 @@ Dans Settings → Environment Variables, définir pour Production et Preview :
 
 - `NEXT_PUBLIC_SUPABASE_URL` ;
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ou l'ancienne `ANON_KEY` ;
-- `ANTHROPIC_API_KEY` ;
 - `SUPABASE_SECRET_KEY` (recommandée) ou `SUPABASE_SERVICE_ROLE_KEY`
   pour la clé `service_role` historique.
+
+`ANTHROPIC_API_KEY` n'est plus requise par le flux AI-001 : chaque utilisateur
+configure sa clé. La variable historique peut rester chiffrée pendant la
+fenêtre de rollback, mais le code ne l'utilise pas implicitement.
 
 Déclencher un nouveau déploiement après toute modification de variable.
 
@@ -71,6 +76,11 @@ Déclencher un nouveau déploiement après toute modification de variable.
 
 Suivre la recette de `docs/IMAGES.md`, au minimum : fichier, collage, reload,
 duplication, suppression et lien partagé en navigation privée.
+
+Pour une release IA, ajouter la recette synthétique de `docs/AI_BYOK.md` : modes
+session et Vault, modèle réel, résumé, suppression du secret et nettoyage du
+compte. Les routes `/api/ai/settings`, `/api/ai/models` et `/api/resumer` doivent
+toutes refuser une requête sans session avec 401.
 
 Contrôles PWA complémentaires :
 
@@ -92,4 +102,4 @@ Voir `docs/PWA.md` pour la recette iPhone/iPad complète.
 4. Si l'abandon devient définitif, exporter les objets avant toute suppression.
 
 Un rollback de schéma destructif n'est pas fourni volontairement afin d'éviter
-la perte irréversible des images utilisateurs.
+la perte irréversible des images ou des configurations utilisateurs.

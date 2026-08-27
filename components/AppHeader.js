@@ -14,6 +14,7 @@ export default function AppHeader({
   tagsOpen,
   onToggleTags,
   onOpenStats,
+  onOpenAISettings,
   isDark,
   onToggleTheme,
   onOpenHelp,
@@ -117,6 +118,9 @@ export default function AppHeader({
               </button>
               <button type="button" role="menuitem" onClick={() => { onOpenStats(); setMenuOpen(false); }}>
                 <Icon name="chart" size={16} /> Statistiques
+              </button>
+              <button type="button" role="menuitem" onClick={() => { onOpenAISettings(); setMenuOpen(false); }}>
+                <Icon name="sparkles" size={16} /> Paramètres IA
               </button>
               <button type="button" role="menuitem" onClick={() => { onToggleTheme(); setMenuOpen(false); }}>
                 <Icon name={isDark ? "sun" : "moon"} size={16} />

@@ -110,6 +110,22 @@ journal avec un lien vers celle qui la remplace.
   restituent le focus, les contrôles tactiles visent 44 px et le mouvement réduit
   reste prioritaire.
 
+## ADR-010 — BYOK Anthropic derrière le proxy serveur
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : une clé Vercel partagée finance actuellement les résumés de
+  tous les comptes et le modèle Anthropic est codé en dur.
+- **Décision** : conserver le proxy Next.js et proposer soit une clé éphémère
+  gardée uniquement en mémoire React, soit une clé par utilisateur chiffrée par
+  Supabase Vault. La préférence de modèle est séparée du secret et validée à
+  partir de l'API Models Anthropic. La clé partagée n'est pas un repli implicite.
+- **Raison** : attribuer coût et quota au propriétaire de la clé sans exposer un
+  secret persistant au JavaScript du navigateur ni appeler Anthropic directement.
+- **Conséquences** : les routes IA authentifient d'abord la session, ne
+  renvoient jamais la clé, désactivent le cache, bornent modèle et contenu,
+  appliquent un quota persistant et purgent le secret à la suppression du compte.
+
 ## Modèle ADR
 
 ```markdown

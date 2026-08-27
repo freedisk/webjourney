@@ -8,7 +8,8 @@ Capsule traite des notes et images privées. Les composants sensibles sont :
 - PostgreSQL et les politiques RLS ;
 - le bucket privé `note-images` ;
 - la clé serveur utilisée pour signer les images partagées ;
-- l'API `/api/resumer` et la clé Anthropic ;
+- les API `/api/ai/*`, `/api/resumer` et les clés Anthropic utilisateur ;
+- Supabase Vault, `user_ai_settings` et le quota IA ;
 - GitHub Actions et les variables Vercel.
 
 ## Secrets
@@ -18,6 +19,7 @@ Ne jamais commiter ni journaliser :
 - `.env.local` ;
 - `SUPABASE_SECRET_KEY` ou `SUPABASE_SERVICE_ROLE_KEY` ;
 - `ANTHROPIC_API_KEY` ;
+- toute clé BYOK saisie par un utilisateur ;
 - jetons CLI GitHub, Supabase ou Vercel ;
 - cookies ou mots de passe de base de données.
 
@@ -34,6 +36,16 @@ Les clés serveur ne doivent jamais porter le préfixe `NEXT_PUBLIC_`.
 - Le rôle `authenticated` ne doit obtenir sur `note_images` que `SELECT`,
   `INSERT` et `DELETE`.
 - Aucun `UPDATE`, `UPSERT` ou accès public au bucket n'est autorisé.
+- Les clés Anthropic de session restent uniquement en mémoire React ; aucun
+  stockage persistant navigateur n'est autorisé.
+- Les clés synchronisées restent dans Supabase Vault ; les réponses exposent
+  seulement le statut et le modèle.
+- Les tables IA ont RLS activée et forcée sans grant `anon`/`authenticated` ;
+  les RPC de secret sont réservées au rôle serveur.
+- Toute sortie vers Anthropic exige une session valide, des entrées bornées et
+  un quota atomique consommé avant l'appel.
+- Les corps d'erreur Anthropic et les en-têtes contenant une clé ne sont jamais
+  journalisés ni relayés au client.
 
 ## PWA
 

@@ -21,11 +21,13 @@ ne sont jamais des instructions actives.
 |---|---|
 | [IMAGES.md](IMAGES.md) | Modèle et recette des images privées |
 | [PWA.md](PWA.md) | Installation Safari et périmètre hors ligne |
+| [AI_BYOK.md](AI_BYOK.md) | Configuration Anthropic, modèle Vault et recette sûre |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Préflight et livraison Vercel |
 | [Schéma Supabase](../supabase/schemas/README.md) | Photographie déclarative et règles de rafraîchissement |
 | [Audit Supabase](../supabase/tests/production_schema_audit.sql) | Contrat SQL non destructif de production |
 | [Sprint produit images](sprints/SPRINT_IMAGE_PRODUCT_2026-08-26.md) | Objectifs, critères et preuves du pipeline image amélioré |
 | [Sprint UX-002](sprints/SPRINT_UX_002_2026-08-27.md) | Neo-brutalism fonctionnel, recette et preuves de livraison |
+| [Sprint AI-001](sprints/SPRINT_AI_001_2026-08-27.md) | BYOK Anthropic sécurisé, quota et critères de livraison |
 | [journal/](journal/) | Transcriptions horodatées des tâches |
 | [archive/](archive/) | Documents historiques obsolètes |
 

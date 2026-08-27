@@ -11,7 +11,14 @@
 
 ## En cours
 
-Aucun chantier actif : UX-002 et sa stabilisation d'accessibilité sont clôturés.
+### AI-001 — BYOK Anthropic sécurisé
+
+- **Priorité** : P1.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : clé Anthropic par utilisateur, mode session sans persistance,
+  persistance chiffrée optionnelle, choix dynamique du modèle et quota serveur.
+- **Sortie** : aucun secret dans le navigateur persistant, Git ou les logs ;
+  migration forward-only, tests de sécurité, gate protégé et recette synthétique.
 
 ## Prochaines priorités
 
@@ -23,13 +30,6 @@ Aucun chantier actif : UX-002 et sa stabilisation d'accessibilité sont clôtur�
 - **Périmètre** : auth, note texte, fichier, collage, reload, duplication,
   suppression, partage et révocation.
 - **Sortie** : environnement Supabase de test isolé et tests reproductibles.
-
-### SEC-001 — Rate-limit et quota Anthropic
-
-- **Priorité** : P1.
-- **ROI / effort** : élevé / 0,5–1 jour.
-- **État** : `TODO`.
-- **Sortie** : limite par utilisateur, réponse 429, métriques et tests.
 
 ### OPS-002 — Observabilité
 

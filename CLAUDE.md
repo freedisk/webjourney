@@ -45,7 +45,8 @@ reprise, lire d'abord `docs/MEMORY.md`, puis `docs/ARCHITECTURE.md` et le backlo
 
 ```text
 app/
-├── api/resumer/route.js       API Anthropic protégée par session Supabase
+├── api/ai/                    statut BYOK et catalogue de modèles
+├── api/resumer/route.js       résumé BYOK protégé et limité
 ├── login/page.js              connexion et inscription
 ├── manifest.js                manifeste PWA
 ├── offline/page.js            repli réseau sans données privées
@@ -54,11 +55,15 @@ app/
 ├── layout.js                  layout serveur et thème anti-flash
 └── page.js                    CRUD, vues, modales, tags, images et raccourcis
 components/
+├── AISettingsDialog.js        mode session/Vault et choix du modèle
 ├── MarkdownRenderer.js        rendu Markdown et sources capsule-image/<uuid>
 ├── NoteContentEditor.js       textarea, fichier, collage et aperçus
 ├── PWARegistration.js         enregistrement du service worker en production
 └── StatsDrawer.js             statistiques
 lib/
+├── ai-config.js               validation, limites et quota IA
+├── ai-settings-server.js      RPC Vault et quota, serveur uniquement
+├── anthropic.js               catalogue/résumé et erreurs normalisées
 ├── note-images.js             format, validation, parsing et transformation
 ├── note-image-storage.js      upload, copie, suppression et signature
 ├── supabase-admin.js          client serveur à clé secrète
@@ -146,9 +151,9 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 | `NEXT_PUBLIC_SUPABASE_URL` | publique |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publique, recommandée |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publique, compatibilité historique |
-| `ANTHROPIC_API_KEY` | serveur uniquement |
 | `SUPABASE_SECRET_KEY` | serveur uniquement |
 | `SUPABASE_SERVICE_ROLE_KEY` | serveur uniquement, ancien fallback |
+| `ANTHROPIC_API_KEY` | serveur uniquement, rollback historique non utilisé par AI-001 |
 
 ## Fonctionnalités
 
@@ -159,7 +164,7 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 - Images privées, aperçus, duplication et suppression cohérente.
 - Tags et filtres combinables.
 - Vues cartes, liste/split panel et Kanban.
-- Résumé Anthropic, réservé aux sessions authentifiées.
+- Résumé Anthropic BYOK, modèle dynamique, modes session/Vault et quota 10/min.
 - Statistiques Recharts.
 - Partage public par UUID opaque, y compris les images signées.
 - Thèmes clair/sombre, responsive mobile et réduction des animations.
@@ -171,7 +176,8 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 ```text
 Navigateur authentifié ── Supabase Data API + Storage privé
          │
-         ├── /api/resumer ── validation session ── Anthropic
+         ├── /api/ai ── statut Vault + catalogue Anthropic
+         ├── /api/resumer ── auth + quota ── Anthropic
          │
          └── textarea ── fichier/collage ── sauvegarde compensée
 
@@ -186,14 +192,14 @@ npm run validate
 npm audit
 ```
 
-État de référence après l'ajout de la PWA : 21 tests unitaires, lint sans
-erreur, build Next.js réussi et 0 vulnérabilité npm. Une recette navigateur
-authentifiée avec la migration appliquée reste obligatoire avant production.
+État de référence AI-001 : 59 tests unitaires, lint sans erreur, build Next.js
+réussi et audit élevé sans vulnérabilité. Une recette navigateur authentifiée
+avec la migration appliquée reste obligatoire avant production.
 
 ## Limites connues
 
-- Pas encore de rate-limit persistant sur `/api/resumer` ; l'authentification
-  empêche cependant les appels anonymes.
+- Le quota IA est une fenêtre fixe 10/minute ; aucune métrique ou alerte agrégée
+  n'est encore branchée.
 - Pas de test E2E automatisé contre un projet Supabase réel.
 - Pas de consultation ou d'édition hors ligne des notes : le service worker ne
   conserve volontairement aucune donnée privée.

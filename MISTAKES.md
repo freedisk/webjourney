@@ -204,6 +204,22 @@ présente après correction afin d'éviter la répétition du problème.
   et invariant statique du portail.
 - **Statut** : corrigé et validé en production.
 
+## M-015 — Révocation globale des fonctions Vault trop large
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : la première prévisualisation transactionnelle AI-001 échouait
+  avec un refus sur une primitive cryptographique interne de Vault.
+- **Cause** : une révocation `ALL FUNCTIONS` sur le schéma de l'extension
+  supprimait un droit d'exécution dont `vault.create_secret` dépend.
+- **Impact** : aucune écriture persistante ; la transaction de prévisualisation
+  a été annulée avant application en production.
+- **Correction** : conserver les ACL internes de l'extension et bloquer les
+  rôles Data API au niveau de l'usage du schéma et des relations Vault ; les RPC
+  publiques de Capsule restent révoquées puis accordées au seul `service_role`.
+- **Prévention** : prévisualiser toute migration d'extension avec un vrai cycle
+  fonctionnel chiffrer/lire/purger, pas seulement des assertions de catalogue.
+- **Statut** : corrigé avant production, audit 9/9 et cycle transactionnel vert.
+
 ## Modèle d'entrée
 
 ```markdown
