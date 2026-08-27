@@ -43,6 +43,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- Stabilisation UX-002 : PR #10, fusion `d270646`, Vercel Production
+  `dpl_DdJPSbouBg8eGzKS2N7P333SQsr2`, recette authentifiée synthétique et
+  nettoyage contrôlé.
 - UX-002 : PR #8, fusion `b07dc19`, Vercel Production
   `dpl_GbTa5UHM6fuZU1z1abRnMXYxhXa5` et smoke publics conformes.
 - PR #6 fusionnée au commit `4c77786` ; sprint produit images en production.

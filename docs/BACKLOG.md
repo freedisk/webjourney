@@ -11,14 +11,7 @@
 
 ## En cours
 
-### UX-002-A11Y — Stabilisation de la recette production
-
-- **Priorité** : P1.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : nom accessible des champs, fond réellement inerte pour toutes
-  les modales et action Annuler utilisable au-dessus d'un overlay.
-- **Sortie** : 46 tests, gate protégé, recette privée éphémère et nettoyage
-  complet du compte synthétique.
+Aucun chantier actif : UX-002 et sa stabilisation d'accessibilité sont clôturés.
 
 ## Prochaines priorités
 
@@ -80,6 +73,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-002-A11Y | Stabilisation modale et labels | 2026-08-27 | PR #10, `d270646`, 46 tests, recette privée synthétique et nettoyage vérifié |
 | UX-002 | Neo-brutalism fonctionnel | 2026-08-27 | PR #8, `b07dc19`, 43 tests, recette multi-viewport, Vercel `READY` |
 | UX-001 | Compression, dépôt, progression et galerie | 2026-08-26 | PR #6, `4c77786`, 31 tests, recette Chrome, Vercel `READY` |
 | OPS-001 | Audit read-only des images orphelines | 2026-08-26 | PR #6, six catégories propres après déploiement |

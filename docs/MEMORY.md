@@ -30,11 +30,14 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Le manifeste propose les raccourcis Nouvelle note et Rechercher ; le cache
   statique `v2` reste strictement sans donnée privée.
 - `main` protégé par PR et contrôle `Quality gate`.
-- Référence CI UX-002 : lint, 43 tests, build Next.js et audit élevé.
+- Référence CI UX-002 : lint, 46 tests, build Next.js et audit élevé.
 - Audit read-only des images disponible par `npm run ops:audit-images` ; état de
   production observé propre le 2026-08-27.
 - Référence de livraison UX-002 : PR #8, fusion `b07dc19`, Vercel
   `dpl_GbTa5UHM6fuZU1z1abRnMXYxhXa5` en `READY` sur Node 24.x.
+- Stabilisation d'accessibilité UX-002 : PR #10, fusion `d270646`, Vercel
+  `dpl_DdJPSbouBg8eGzKS2N7P333SQsr2` en `READY` sur Node 24.x ; recette
+  authentifiée synthétique et nettoyage contrôlé.
 - Référence de livraison images : PR #6, fusion `4c77786`, Vercel
   `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` en `READY` sur Node 24.x.
 
