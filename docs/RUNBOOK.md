@@ -111,10 +111,16 @@ Invoke-WebRequest https://webjourney-one.vercel.app/login
 Invoke-WebRequest https://webjourney-one.vercel.app/manifest.webmanifest
 Invoke-WebRequest https://webjourney-one.vercel.app/sw.js
 Invoke-WebRequest https://webjourney-one.vercel.app/offline
+Invoke-WebRequest https://webjourney-one.vercel.app/opengraph-image
 ```
 
 Puis réaliser une vérification authentifiée non destructive et, si le périmètre
 le demande, la recette spécialisée images, PWA, AI-001 ou AI-002.
+
+Pour SHARE-001, ajouter un user-agent `facebookexternalhit/1.1` à la requête de
+la racine, contrôler les balises `og:*`/`twitter:*`, puis la signature PNG et
+les dimensions réelles 1 200 × 630. Une carte Messenger déjà mise en cache doit
+être réanalysée avec le Sharing Debugger avant conclusion.
 
 ## 6. Exploitation AI-001 / AI-002
 

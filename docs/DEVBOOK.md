@@ -485,6 +485,50 @@ migration, donnée Supabase, variable Vercel ou dépendance n'a été modifiée.
 - Sprint : `docs/sprints/SPRINT_PRINT_001_2026-08-27.md`.
 - Guide : `docs/PRINTING.md`.
 
+## 2026-08-27 — SHARE-001 Aperçu social Open Graph
+
+### Objectif
+
+Donner aux liens Capsule une carte Messenger/Open Graph identifiable et
+cohérente avec l'application, sans exposer le contenu privé des notes.
+
+### Changements
+
+- contrat centralisé pour titre, description, URL canonique, Open Graph et
+  carte Twitter/X ;
+- route d'image Next.js statique 1 200 × 630 réutilisant l'icône PWA et le
+  langage neo-brutaliste ;
+- métadonnées dédiées aux notes partagées : titre public seulement, description
+  et image génériques ;
+- guide de recette et explicitation du cache Messenger ;
+- sept tests de contrat et de branchement ajoutés.
+
+### Décisions
+
+La carte n'est pas construite depuis une note : elle ne lit ni corps, ni tag,
+ni image, ni URL signée. La seule donnée variable admise est le titre déjà
+public sur la page de partage. Aucune migration, variable ou dépendance n'est
+nécessaire.
+
+### Validation locale
+
+- défaut live reproduit avant correction : 200 et zéro balise sociale ;
+- lint propre, 98/98 tests et build Next.js 16.3.3 réussi ;
+- accueil et token invalide : quinze balises sociales chacun ;
+- PNG réel 1 200 × 630, 78 628 octets et réponse `image/png` ;
+- rendu visuel complet, lisible et sans erreur ou alerte console ;
+- `npm run validate` complet vert et audit npm élevé à zéro vulnérabilité.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — PR, Quality gate, fusion et smoke Vercel restent à exécuter.
+
+### Références
+
+- Branche : `codex/share-001-open-graph`.
+- Sprint : `docs/sprints/SPRINT_SHARE_001_2026-08-27.md`.
+- Guide : `docs/SOCIAL_SHARING.md`.
+
 ## Modèle d'entrée
 
 ```markdown

@@ -198,6 +198,25 @@ journal avec un lien vers celle qui la remplace.
   copie exportée sort du contrôle de Capsule. Un moteur PDF déterministe ne sera
   envisagé que pour un besoin de gabarit strict ou de valeur probatoire.
 
+## ADR-015 — Carte sociale générique générée par Next.js
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : Messenger ne déduit pas une carte de partage fiable depuis le
+  manifeste ou les icônes PWA. La production répondait en 200 au robot social,
+  mais sans aucune métadonnée Open Graph.
+- **Décision** : centraliser le contrat de métadonnées, publier une image PNG
+  1 200 × 630 générée par `ImageResponse` et réutiliser cette carte générique
+  pour l'application et les notes partagées. Une note partagée peut annoncer
+  son titre déjà public, mais jamais son corps, ses tags, ses images ou une URL
+  signée.
+- **Raison** : garantir une identité cohérente sans service externe, génération
+  dépendante du contenu, nouvelle dépendance ou extension de l'accès Supabase.
+- **Conséquences** : les changements visuels passent par le code et le gate ;
+  la carte peut être mise en cache par Meta ou d'autres lecteurs et nécessiter
+  une nouvelle analyse après déploiement. Les pages privées héritent uniquement
+  de l'identité générique.
+
 ## Modèle ADR
 
 ```markdown

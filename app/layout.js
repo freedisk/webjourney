@@ -1,6 +1,12 @@
 // Layout principal — initialisation du thème sombre/clair
 import { Geist, Geist_Mono } from "next/font/google";
 import PWARegistration from "@/components/PWARegistration";
+import {
+  createSocialMetadata,
+  SITE_DESCRIPTION,
+  SITE_TITLE,
+  SITE_URL,
+} from "@/lib/site-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +20,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Capsule — Mes Notes",
-  description: "Notes personnelles avec Markdown, images, tags et vues Kanban.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   applicationName: "Capsule",
+  alternates: {
+    canonical: "/",
+  },
+  ...createSocialMetadata(),
   manifest: "/manifest.webmanifest",
   formatDetection: {
     telephone: false,

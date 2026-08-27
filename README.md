@@ -21,7 +21,9 @@ le menu, la palette, l'éditeur, les états vides et les paramètres IA.
 Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
 d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
 dédiée. Voir [docs/PWA.md](docs/PWA.md) pour l'installation et le périmètre hors
-ligne.
+ligne. Les liens collés dans Messenger et les lecteurs compatibles Open Graph
+affichent une carte Capsule dédiée ; voir
+[docs/SOCIAL_SHARING.md](docs/SOCIAL_SHARING.md).
 
 ## Stack
 
@@ -109,6 +111,7 @@ npm run ops:audit-images # rapport read-only Markdown / métadonnées / Storage
 ```text
 app/
   page.js                    interface et opérations principales
+  opengraph-image.js         carte sociale publique générée en 1200 x 630
   manifest.js                manifeste d'installation PWA
   offline/page.js            page de repli sans connexion
   api/resumer/route.js       résumé Anthropic BYOK authentifié
@@ -130,6 +133,7 @@ components/
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  site-metadata.js           contrat Open Graph/Twitter et URL canonique
   ai-formatting.js           masquage/restauration stricte des images privées
   help-content.js            contenu, recherche et progression de l'aide
   ai-config.js               validations, limites et quota IA
@@ -166,6 +170,7 @@ public/icons/                icônes PWA et source SVG
 - [guide BYOK Anthropic](docs/AI_BYOK.md) ;
 - [mise en forme intelligente](docs/AI_FORMATTING.md) ;
 - [centre d'aide contextuel](docs/HELP_CENTER.md) ;
+- [aperçus sociaux et cache Messenger](docs/SOCIAL_SHARING.md) ;
 - [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
 
 `CLAUDE.md` conserve le contexte fonctionnel détaillé et `AGENTS.md` définit les

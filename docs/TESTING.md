@@ -42,6 +42,8 @@ npm run security:audit -- --audit-level=high
 - invariants PRINT-001 : titre sûr, références privées disponibles, décodage de
   toutes les images, progression, timeout, annulation, rendu non interactif et
   isolation du document sous `@media print`.
+- invariants SHARE-001 : contrat Open Graph/Twitter, image 1 200 × 630,
+  normalisation des titres et absence de contenu privé dans la carte.
 
 ### Recette navigateur authentifiée
 
@@ -222,7 +224,22 @@ L'automatisation ne doit jamais ouvrir le dialogue natif d'impression, qui peut
 bloquer la session. Elle valide le préflight et les styles ; la destination PDF
 reste une recette manuelle sur l'appareil.
 
-## 9. Critères de release
+## 9. Recette SHARE-001
+
+Suivre `docs/SOCIAL_SHARING.md` avec un build de production et contrôler :
+
+- la racine avec le user-agent `facebookexternalhit/1.1` ;
+- les propriétés Open Graph fondamentales, leurs valeurs absolues et les
+  propriétés structurées de l'image ;
+- la grande carte Twitter/X ;
+- `/opengraph-image` en `200 image/png`, réellement en 1 200 × 630 ;
+- le rendu visuel sans texte coupé et la console sans erreur ;
+- un token partagé valide puis révoqué, sans corps, tag, image privée ou URL
+  signée dans le HTML social ;
+- après production, une nouvelle analyse Meta avant de conclure sur un lien
+  déjà mis en cache par Messenger.
+
+## 10. Critères de release
 
 Une release est refusée si :
 
@@ -232,7 +249,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 10. Lacunes connues
+## 11. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

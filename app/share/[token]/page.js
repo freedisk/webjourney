@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { extractImageIds } from "@/lib/note-images";
 import { createSignedImageMap } from "@/lib/note-image-storage";
+import { createSharedNoteMetadata } from "@/lib/site-metadata";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 // Client Supabase sans session auth (lecture publique via RLS policy)
@@ -23,9 +24,7 @@ export async function generateMetadata({ params }) {
     .eq("share_token", token)
     .single();
 
-  return {
-    title: data ? data.titre + " — Capsule" : "Note introuvable — Capsule",
-  };
+  return createSharedNoteMetadata(data?.titre, token);
 }
 
 export default async function SharedNotePage({ params }) {
