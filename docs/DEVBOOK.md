@@ -215,7 +215,7 @@ productive et tactile, sans changer le modèle Supabase ni la confidentialité.
 
 ### Validation locale
 
-- ESLint propre et **43/43 tests** répartis dans huit fichiers ;
+- ESLint propre et **46/46 tests** répartis dans neuf fichiers ;
 - recette synthétique sans donnée privée : 390 × 844, 1 024 × 1 366 et
   1 416 × 975 sans débordement horizontal ;
 - thèmes clair/sombre, palette, dialogue, focus initial, aperçu Markdown double,
@@ -224,17 +224,21 @@ productive et tactile, sans changer le modèle Supabase ni la confidentialité.
 
 ### État de livraison
 
-`DONE` — PR #8 et les deux gates de branche verts, fusion standard `b07dc19`,
-gate de `main` vert et Vercel Production `READY`. Les sept routes/URL publiques
-de smoke répondent, l'API sans session reste en 401 et l'audit images demeure
-propre.
+`DONE` — PR fonctionnelle #8 puis stabilisation #10, avec deux gates de branche
+verts pour chaque livraison, fusions standard `b07dc19` puis `d270646`, gates de
+`main` verts et Vercel Production `READY`. La recette authentifiée synthétique
+couvre Markdown, accessibilité modale, annulations, Kanban, duplication et
+suppression. Le compte éphémère, ses notes et ses objets ont été supprimés et
+leur absence contrôlée. Les sept routes/URL publiques répondent, l'API sans
+session reste en 401 et l'audit images demeure propre.
 
 ### Références
 
 - Branche : `codex/ux-002-neo-brutalism`.
-- Pull request : GitHub #8.
-- Fusion : `b07dc19aa9764f7fd585366c14d190a7a5e580f2`.
-- Déploiement : `dpl_GbTa5UHM6fuZU1z1abRnMXYxhXa5`.
+- Pull requests : GitHub #8 et #10.
+- Fusions : `b07dc19aa9764f7fd585366c14d190a7a5e580f2` puis
+  `d270646901a3404987427b439c4c2caf1810c5dc`.
+- Déploiement fonctionnel final : `dpl_DdJPSbouBg8eGzKS2N7P333SQsr2`.
 - Sprint : `docs/sprints/SPRINT_UX_002_2026-08-27.md`.
 
 ## Modèle d'entrée

@@ -187,7 +187,7 @@ présente après correction afin d'éviter la répétition du problème.
   sur titres, recherche et création de tags.
 - **Prévention** : test unitaire de la couche d'isolation et assertions statiques
   sur les noms accessibles.
-- **Statut** : corrigé, validation de production en cours.
+- **Statut** : corrigé et validé en production.
 
 ## M-014 — Action de toast couverte par l'overlay
 
@@ -202,7 +202,7 @@ présente après correction afin d'éviter la répétition du problème.
   exemptée de l'isolation et incluse dans la liste de focus modal.
 - **Prévention** : recette réelle du clic Annuler avec dialogue toujours ouvert
   et invariant statique du portail.
-- **Statut** : corrigé, validation de production en cours.
+- **Statut** : corrigé et validé en production.
 
 ## Modèle d'entrée
 
