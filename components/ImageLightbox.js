@@ -2,9 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 
 export default function ImageLightbox({ images, activeIndex, onChange, onClose }) {
   const panelRef = useRef(null);
+  const rootRef = useRef(null);
   const closeButtonRef = useRef(null);
   const pointerStartX = useRef(null);
   const previousFocusRef = useRef(null);
@@ -22,6 +24,7 @@ export default function ImageLightbox({ images, activeIndex, onChange, onClose }
     previousFocusRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const restoreIsolation = isolateBodyContent(rootRef.current);
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event) {
@@ -29,9 +32,8 @@ export default function ImageLightbox({ images, activeIndex, onChange, onClose }
       if (event.key === "ArrowLeft" && images.length > 1) goTo(activeIndex - 1);
       if (event.key === "ArrowRight" && images.length > 1) goTo(activeIndex + 1);
       if (event.key === "Tab") {
-        const focusable = panelRef.current?.querySelectorAll(
-          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
+        if (!isWithinModalFocus(panelRef.current, document.activeElement)) return;
+        const focusable = getModalFocusable(panelRef.current);
         if (!focusable?.length) return;
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
@@ -47,6 +49,7 @@ export default function ImageLightbox({ images, activeIndex, onChange, onClose }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
+      restoreIsolation();
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       if (document.contains(previousFocusRef.current)) {
@@ -61,6 +64,7 @@ export default function ImageLightbox({ images, activeIndex, onChange, onClose }
 
   return createPortal(
     <div
+      ref={rootRef}
       className="image-lightbox"
       role="dialog"
       aria-modal="true"

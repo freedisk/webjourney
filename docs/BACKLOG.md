@@ -11,8 +11,14 @@
 
 ## En cours
 
-Aucun chantier actif après la mise en production de UX-002. Sélectionner
-explicitement le prochain item avant de commencer une nouvelle évolution.
+### UX-002-A11Y — Stabilisation de la recette production
+
+- **Priorité** : P1.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : nom accessible des champs, fond réellement inerte pour toutes
+  les modales et action Annuler utilisable au-dessus d'un overlay.
+- **Sortie** : 46 tests, gate protégé, recette privée éphémère et nettoyage
+  complet du compte synthétique.
 
 ## Prochaines priorités
 

@@ -14,12 +14,14 @@ describe("fondations UX-002", () => {
     expect(dialog).toContain('aria-modal="true"');
     expect(dialog).toContain('event.key === "Escape"');
     expect(dialog).toContain("previousFocusRef.current?.focus");
+    expect(dialog).toContain("isolateBodyContent");
   });
 
   it("expose navigation, palette et action principale avec des noms accessibles", async () => {
-    const [header, page] = await Promise.all([
+    const [header, page, toasts] = await Promise.all([
       source("components/AppHeader.js"),
       source("app/page.js"),
+      source("components/ui/ToastViewport.js"),
     ]);
 
     expect(header).toContain('aria-label="Nouvelle note"');
@@ -29,6 +31,10 @@ describe("fondations UX-002", () => {
     expect(page).toContain('(e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"');
     expect(page).toContain("notesRef.current.find");
     expect(page).toContain('(noteActuelle.kanban_colonne || "todo") !== nouvelleColonne');
+    expect(page).toContain('aria-label="Rechercher dans les notes"');
+    expect(page).toContain('aria-label="Titre de la note"');
+    expect(toasts).toContain("createPortal");
+    expect(toasts).toContain('data-modal-exempt="true"');
   });
 
   it("fournit une écriture Markdown assistée et son aperçu", async () => {

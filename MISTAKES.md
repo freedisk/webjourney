@@ -172,6 +172,38 @@ présente après correction afin d'éviter la répétition du problème.
   capturé ; test d'invariant et revue des callbacks asynchrones.
 - **Statut** : corrigé avant publication.
 
+## M-013 — Fond de modale encore exposé aux technologies d'assistance
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : la recette privée retrouvait deux boutons Épingler portant le
+  même nom, l'un dans la note et l'autre dans la page située derrière l'overlay.
+  Le titre de création et les recherches reposaient aussi sur leur placeholder.
+- **Cause** : confinement du focus sans isolation DOM du fond et labels visuels
+  non associés à tous les champs historiques.
+- **Impact** : navigation ambiguë pour lecteurs d'écran malgré une modale
+  visuellement correcte.
+- **Correction** : `inert` et `aria-hidden` restaurables sur les racines sœurs
+  pour dialogues, drawer, visionneuse et modales historiques ; libellés stables
+  sur titres, recherche et création de tags.
+- **Prévention** : test unitaire de la couche d'isolation et assertions statiques
+  sur les noms accessibles.
+- **Statut** : corrigé, validation de production en cours.
+
+## M-014 — Action de toast couverte par l'overlay
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : cliquer Annuler après un épinglage fermait la modale sans
+  exécuter l'action, car le toast appartenait au contexte d'empilement du fond.
+- **Cause** : viewport de toasts rendu dans `app-shell` tandis que la modale est
+  portée directement sous `body`.
+- **Impact** : annulation d'épinglage indisponible tant que le détail restait
+  ouvert.
+- **Correction** : portail de toasts stable sous `body`, couche explicitement
+  exemptée de l'isolation et incluse dans la liste de focus modal.
+- **Prévention** : recette réelle du clic Annuler avec dialogue toujours ouvert
+  et invariant statique du portail.
+- **Statut** : corrigé, validation de production en cours.
+
 ## Modèle d'entrée
 
 ```markdown

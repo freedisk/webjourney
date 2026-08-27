@@ -52,6 +52,7 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `components/CommandPalette.js` | Recherche de commandes et notes | Aucune indexation ni persistance externe |
 | `components/ui/Dialog.js` | Modale accessible réutilisable | Focus confiné, restitué et fermeture Échap |
 | `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
+| `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
 | `app/api/resumer/route.js` | Résumé IA | Auth avant appel externe |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |

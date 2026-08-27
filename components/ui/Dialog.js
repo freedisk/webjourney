@@ -3,15 +3,11 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import IconButton from "@/components/ui/IconButton";
-
-const FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
+import {
+  getModalFocusable,
+  isolateBodyContent,
+  isWithinModalFocus,
+} from "@/lib/modal-isolation";
 
 export default function Dialog({
   open,
@@ -29,6 +25,7 @@ export default function Dialog({
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef(null);
+  const overlayRef = useRef(null);
   const closeButtonRef = useRef(null);
   const previousFocusRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -43,18 +40,19 @@ export default function Dialog({
     previousFocusRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const restoreIsolation = isolateBodyContent(overlayRef.current);
 
     requestAnimationFrame(() => {
       const target =
         initialFocusRef?.current ||
         closeButtonRef.current ||
-        panelRef.current?.querySelector(FOCUSABLE_SELECTOR) ||
+        getModalFocusable(panelRef.current)[0] ||
         panelRef.current;
       target?.focus({ preventScroll: true });
     });
 
     function handleKeyDown(event) {
-      if (!panelRef.current?.contains(document.activeElement)) return;
+      if (!isWithinModalFocus(panelRef.current, document.activeElement)) return;
 
       if (event.key === "Escape") {
         event.preventDefault();
@@ -63,9 +61,7 @@ export default function Dialog({
       }
 
       if (event.key !== "Tab") return;
-      const focusable = Array.from(
-        panelRef.current.querySelectorAll(FOCUSABLE_SELECTOR),
-      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+      const focusable = getModalFocusable(panelRef.current);
       if (focusable.length === 0) {
         event.preventDefault();
         panelRef.current.focus();
@@ -85,6 +81,7 @@ export default function Dialog({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
+      restoreIsolation();
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       if (document.contains(previousFocusRef.current)) {
@@ -97,6 +94,7 @@ export default function Dialog({
 
   return createPortal(
     <div
+      ref={overlayRef}
       className="modal-overlay"
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();

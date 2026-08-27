@@ -13,6 +13,8 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 - Kanban tactile Pointer Events avec déplacement explicite de repli.
 - Partage système, transitions progressives et mouvement réduit.
 - Raccourcis PWA Nouvelle note/Rechercher et cache statique `v2`.
+- Correctif de stabilisation : champs nommés, fond de modale inerte et toasts
+  réversibles portés au-dessus des overlays.
 
 ### Expérience images
 

@@ -24,6 +24,7 @@ import {
   uploadPendingImages,
 } from "@/lib/note-image-storage";
 import { extractImageIds, stripImagesForText } from "@/lib/note-images";
+import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
@@ -115,6 +116,7 @@ export default function Home() {
   const rechercheRef = useRef(null);
   const titreRef = useRef(null);
   const modalPanelRef = useRef(null);
+  const modalOverlayRef = useRef(null);
   const modalCloseRef = useRef(null);
   const [filtreTagId, setFiltreTagId] = useState(null);
 
@@ -301,6 +303,7 @@ export default function Home() {
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const restoreIsolation = isolateBodyContent(modalOverlayRef.current);
     requestAnimationFrame(() => {
       const panel = modalPanelRef.current;
       const target = panel?.querySelector("input, textarea, button:not([disabled]), select") || panel;
@@ -316,9 +319,8 @@ export default function Home() {
       }
 
       if (event.key !== "Tab" || !modalPanelRef.current) return;
-      const focusable = Array.from(modalPanelRef.current.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ));
+      if (!isWithinModalFocus(modalPanelRef.current, document.activeElement)) return;
+      const focusable = getModalFocusable(modalPanelRef.current);
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -333,6 +335,7 @@ export default function Home() {
 
     document.addEventListener("keydown", handleModalKeyDown);
     return () => {
+      restoreIsolation();
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleModalKeyDown);
       if (document.contains(previousFocus)) previousFocus?.focus({ preventScroll: true });
@@ -1630,6 +1633,7 @@ export default function Home() {
           {enEdition ? (
             <input
               type="text"
+              aria-label="Titre de la note"
               value={editionTitre}
               onChange={(e) => setEditionTitre(e.target.value)}
               className="input-glass"
@@ -1742,6 +1746,7 @@ export default function Home() {
 
     return createPortal(
       <div
+        ref={modalOverlayRef}
         className="modal-overlay"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -1766,6 +1771,7 @@ export default function Home() {
               {enEdition ? (
                 <input
                   type="text"
+                  aria-label="Titre de la note"
                   value={editionTitre}
                   onChange={(e) => setEditionTitre(e.target.value)}
                   className="input-glass"
@@ -2125,6 +2131,7 @@ export default function Home() {
             <div className="flex-1 min-w-[150px]">
               <input
                 type="text"
+                aria-label="Nom du tag"
                 value={nouveauTagNom}
                 onChange={(e) => setNouveauTagNom(e.target.value)}
                 placeholder="Nom du tag"
@@ -2240,6 +2247,7 @@ export default function Home() {
                 <input
                   ref={rechercheRef}
                   type="text"
+                  aria-label="Rechercher dans les notes"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
@@ -2585,6 +2593,7 @@ export default function Home() {
                 <input
                   ref={rechercheRef}
                   type="text"
+                  aria-label="Rechercher dans les notes"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
@@ -2765,6 +2774,7 @@ export default function Home() {
                 <input
                   ref={rechercheRef}
                   type="text"
+                  aria-label="Rechercher dans les notes"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
@@ -2942,6 +2952,7 @@ export default function Home() {
       {/* Modale de création */}
       {modeCreation && createPortal(
         <div
+          ref={modalOverlayRef}
           className="modal-overlay"
           onClick={(e) => {
             if (e.target === e.currentTarget) fermerModaleCreation();
@@ -2976,10 +2987,11 @@ export default function Home() {
             <div className="modal-body">
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
+                  <label htmlFor="new-note-title-input" className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
                     Titre
                   </label>
                   <input
+                    id="new-note-title-input"
                     ref={titreRef}
                     type="text"
                     value={titre}
