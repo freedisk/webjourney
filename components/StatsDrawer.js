@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { stripImagesForText } from "@/lib/note-images";
+import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -14,6 +15,7 @@ const JOURS_COURTS = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
 
 export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, sombre }) {
   const panelRef = useRef(null);
+  const rootRef = useRef(null);
   const closeButtonRef = useRef(null);
   const onCloseRef = useRef(onFermer);
   const [chargement, setChargement] = useState(true);
@@ -37,19 +39,18 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const restoreIsolation = isolateBodyContent(rootRef.current);
     closeButtonRef.current?.focus({ preventScroll: true });
 
     function handleKeyDown(event) {
-      if (!panelRef.current?.contains(document.activeElement)) return;
+      if (!isWithinModalFocus(panelRef.current, document.activeElement)) return;
       if (event.key === "Escape") {
         event.preventDefault();
         onCloseRef.current?.();
         return;
       }
       if (event.key !== "Tab") return;
-      const focusable = Array.from(panelRef.current.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ));
+      const focusable = getModalFocusable(panelRef.current);
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -63,6 +64,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => {
+      restoreIsolation();
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       if (document.contains(previousFocus)) previousFocus?.focus({ preventScroll: true });
@@ -171,6 +173,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
 
   return createPortal(
     <div
+      ref={rootRef}
       style={{
         position: "fixed",
         inset: 0,

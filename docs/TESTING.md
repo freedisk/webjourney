@@ -26,6 +26,9 @@ npm run security:audit -- --audit-level=high
 - partage système avec repli presse-papiers et View Transition progressive ;
 - invariants statiques des dialogues, commandes, cibles tactiles et mouvement
   réduit.
+- isolation du fond de page et restauration exacte de `inert`/`aria-hidden` ;
+- action de toast affichée au-dessus d'une modale et incluse dans son ordre de
+  focus.
 
 ### Recette navigateur authentifiée
 

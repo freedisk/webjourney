@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import IconButton from "@/components/ui/IconButton";
 
 function ToastItem({ toast, onDismiss }) {
@@ -63,13 +64,19 @@ export function useToasts() {
 }
 
 export default function ToastViewport({ toasts, onDismiss }) {
-  if (toasts.length === 0) return null;
+  if (toasts.length === 0 || typeof document === "undefined") return null;
 
-  return (
-    <div className="toast-viewport" aria-live="polite" aria-relevant="additions">
+  return createPortal(
+    <div
+      className="toast-viewport"
+      data-modal-exempt="true"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }
