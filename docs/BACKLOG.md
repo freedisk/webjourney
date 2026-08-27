@@ -11,7 +11,15 @@
 
 ## En cours
 
-Aucun sprint actif.
+### SHARE-001 — Aperçu social Open Graph
+
+- **Priorité** : P2.
+- **ROI / effort** : élevé / quelques heures.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : carte Capsule 1 200 × 630, métadonnées Open Graph/Twitter de
+  l'application et des notes partagées, confidentialité et cache Messenger.
+- **Sortie** : 98 tests, rendu local réel conforme ; PR, gate et smoke robot de
+  production à finaliser.
 
 ## Prochaines priorités
 

@@ -289,6 +289,22 @@ présente après correction afin d'éviter la répétition du problème.
   smoke.
 - **Statut** : corrigé pendant la validation production.
 
+## M-020 — Confondre icônes PWA et carte de partage social
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : un lien de production collé dans Messenger n'affichait ni
+  icône, ni titre enrichi, ni miniature Capsule.
+- **Cause** : le layout déclarait manifeste, favicon et icône Apple, mais
+  aucune propriété Open Graph ou Twitter ; les robots sociaux ne construisent
+  pas nécessairement leur carte depuis les ressources d'installation PWA.
+- **Impact** : aucun défaut fonctionnel ou de confidentialité, mais partage peu
+  identifiable et moins engageant.
+- **Correction** : métadonnées explicites et carte publique 1 200 × 630 générée
+  par Next.js, avec contrat distinct pour les liens de notes partagées.
+- **Prévention** : le smoke public utilise un user-agent de robot, vérifie les
+  propriétés structurées et télécharge l'image pour contrôler type et dimensions.
+- **Statut** : corrigé localement ; validation production en attente.
+
 ## Modèle d'entrée
 
 ```markdown

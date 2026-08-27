@@ -101,6 +101,9 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     toutes les références privées masquées.
 14. Une impression utilise seulement la version enregistrée et les signatures
     éphémères en mémoire ; Capsule ne stocke ni ne transmet le PDF éventuel.
+15. Une carte sociale est publique, générique et sans contenu de note, tag,
+    image privée ou URL signée ; seul le titre d'une note déjà partagée peut
+    apparaître dans les métadonnées de son propre lien public.
 
 ## Environnement
 

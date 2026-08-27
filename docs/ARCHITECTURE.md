@@ -19,6 +19,8 @@ flowchart LR
     V[Visiteur lien partagé] --> P[/share/token]
     P -->|Lecture anonyme RLS| S
     P -->|Clé serveur après validation| B
+    R[Robot social Messenger/X] -->|HTML public| O[Métadonnées Open Graph]
+    O --> G[/opengraph-image 1200 x 630]
     SW[Service worker] -->|Shell statique uniquement| N
 ```
 
@@ -44,6 +46,9 @@ version enregistrée et délègue la destination au dialogue système.
   privées et faits structurés, segmente les notes longues et ne retourne qu'une
   proposition Markdown entièrement validée.
 - `app/share/[token]/page.js` lit une note partageable avec le client public.
+- `app/opengraph-image.js` génère une carte sociale publique et générique à
+  partir de l'icône PWA ; `lib/site-metadata.js` centralise les titres, URL et
+  métadonnées de la racine et des liens partagés.
 - `lib/supabase-admin.js` crée un client serveur secret uniquement pour signer
   les images déjà validées comme appartenant à la note partagée.
 
@@ -67,6 +72,8 @@ cache.
 | `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
 | `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
+| `app/opengraph-image.js` | Carte Open Graph PNG 1 200 × 630 | Visuel statique, aucune donnée de note |
+| `lib/site-metadata.js` | Contrat canonique Open Graph/Twitter | Titre public seulement sur un lien partagé |
 | `components/AISettingsDialog.js` | Modes session/Vault et choix du modèle | Aucun stockage navigateur persistant |
 | `components/AIFormattingDialog.js` | Comparaison rendu/Markdown et validation humaine | Aucune application ni sauvegarde implicite |
 | `components/PrintNoteDialog.js` | Aperçu, préparation, annulation et impression native | Ne produit, ne stocke et n'envoie aucun PDF |
@@ -190,6 +197,18 @@ supprime ensuite les métadonnées. Un échec de nettoyage doit rester visible e
 4. Le chemin doit commencer par `<owner>/<note>/`.
 5. Le serveur signe pour dix minutes ; l'URL n'est jamais persistée.
 
+### Aperçu d'un lien par un robot social
+
+1. Le robot lit le HTML public sans exécuter l'application authentifiée.
+2. Le layout fournit titre, description, URL canonique, type et image Open
+   Graph, ainsi que le repli `summary_large_image`.
+3. `/opengraph-image` retourne un PNG générique 1 200 × 630 construit depuis
+   l'identité Capsule, sans requête Supabase.
+4. Pour `/share/<token>`, seule la requête publique existante du titre alimente
+   la métadonnée ; description et image restent génériques.
+5. Le corps, les tags, les images privées et les URL signées ne traversent
+   jamais ce flux. Le cache du service social reste hors du contrôle de Capsule.
+
 ### Résumé Anthropic
 
 1. Le client transmet le token Supabase et, en mode session seulement, la clé
@@ -283,6 +302,8 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 - Références privées d'images masquées avant mise en forme et restaurées
   uniquement après validation stricte de tous les marqueurs.
 - Aucune donnée privée dans le cache PWA ou les journaux.
+- Aucune donnée de note, image privée ou URL signée dans la carte sociale ; le
+  titre n'est exposé que par une page déjà publiquement partagée.
 - Aucun PDF n'est persisté ou transmis par Capsule ; une copie créée par le
   système sort explicitement de son périmètre de protection.
 - Migrations forward-only et rollback applicatif non destructif.

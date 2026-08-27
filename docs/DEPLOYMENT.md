@@ -93,6 +93,19 @@ Contrôles PWA complémentaires :
 
 Voir `docs/PWA.md` pour la recette iPhone/iPad complète.
 
+Contrôles de partage social :
+
+- interroger `/` avec le user-agent `facebookexternalhit/1.1` ;
+- vérifier les propriétés Open Graph et Twitter, leurs URL absolues, l'alt et
+  les dimensions 1 200 × 630 ;
+- télécharger `/opengraph-image` et confirmer `200 image/png` ;
+- tester un lien `/share/<token>` valide et révoqué sans rechercher de contenu
+  privé dans la carte ;
+- si Messenger conserve l'ancien rendu, demander **Scrape Again** dans le
+  Sharing Debugger Meta avant de diagnostiquer une régression.
+
+Voir `docs/SOCIAL_SHARING.md` pour le contrat complet.
+
 ## Rollback
 
 1. Revenir au déploiement Vercel précédent.

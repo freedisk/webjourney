@@ -5,6 +5,17 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### SHARE-001 — Aperçu social Open Graph
+
+- Carte sociale Capsule 1 200 × 630 générée nativement par Next.js depuis
+  l'icône PWA et l'identité neo-brutaliste existantes.
+- Métadonnées Open Graph et Twitter/X complètes, URL canonique de production et
+  texte alternatif pour la racine et les pages applicatives.
+- Titre explicite des notes déjà publiques, avec description et image
+  génériques sans corps, tag, image privée ou URL signée.
+- Recette dédiée au robot Messenger, au rendu PNG et à la réanalyse du cache
+  tiers, sans migration, variable ou nouvelle dépendance.
+
 ### PRINT-001 — Impression et PDF fidèle
 
 - Aperçu papier clair d'une note enregistrée avec titre, date, tags, Markdown,
