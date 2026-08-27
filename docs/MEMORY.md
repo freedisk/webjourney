@@ -58,13 +58,14 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Référence de livraison HELP-001 : PR #14, fusion `21f5a0c`, Vercel
   `dpl_Aei4LLUvZjAfakpV9gno9Fposk4Z` en `READY`, 64/64 tests, gate 4/4, smoke
   public 8/8, recette UI authentifiée et nettoyage synthétique à zéro.
-- AI-002 est implémenté localement sans migration : proposition Markdown dans
+- AI-002 est déployé sans migration : proposition Markdown dans
   un comparatif rendu/source, application explicite au brouillon et sauvegarde
   manuelle. Les références et légendes des images privées sont masquées avant
   Anthropic puis restaurées seulement si tous les marqueurs sont intacts.
-- Référence de validation locale AI-002 : lint, 72/72 tests, build Next.js,
-  smoke BYOK réel 36/36 et recette visuelle à 390, 1 024 et 1 416 px sans
-  débordement. La livraison production reste à valider.
+- Référence de livraison AI-002 : PR #16, fusion `029183a`, Vercel
+  `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT` en `READY` sur Node 24.x, lint,
+  72/72 tests, smoke BYOK production 36/36, smoke public 9/9 et recette
+  visuelle à 390, 1 024 et 1 416 px sans débordement.
 
 ## Invariants
 

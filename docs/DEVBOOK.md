@@ -372,12 +372,18 @@ automatique, migration ou exposition des références d'images privées.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — validation locale terminée ; PR protégée et production
-encore requises.
+`DONE` — PR #16 fusionnée sans bypass au commit `029183a`, contrôle obligatoire
+vert et Vercel Production `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT` vérifié `READY`
+sur Node 24.x. Le smoke public passe **9/9** et le smoke BYOK authentifié de
+production **36/36**, avec nettoyage automatique des objets synthétiques.
+Aucune migration ou donnée Supabase n'a été modifiée.
 
 ### Références
 
 - Branche : `codex/ai-002-intelligent-formatting`.
+- Pull request : GitHub #16.
+- Fusion : `029183a4fe00a6128c8d29467bd35953901a192c`.
+- Déploiement : `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT`.
 - Sprint : `docs/sprints/SPRINT_AI_002_2026-08-27.md`.
 - Guide : `docs/AI_FORMATTING.md`.
 

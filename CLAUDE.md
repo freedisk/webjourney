@@ -201,9 +201,9 @@ npm run validate
 npm audit
 ```
 
-État de référence AI-002 local : 72 tests unitaires, lint sans erreur, build
-Next.js réussi et smoke BYOK réel 36/36. La livraison production reste soumise
-à PR, `Quality gate`, Vercel `READY` et recette publique.
+État de référence AI-002 : PR #16 fusionnée au commit `029183a`, 72 tests
+unitaires, lint sans erreur, build Next.js réussi, `Quality gate` vert, Vercel
+Production `READY`, smoke public 9/9 et smoke BYOK production 36/36.
 
 ## Limites connues
 

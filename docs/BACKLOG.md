@@ -11,15 +11,7 @@
 
 ## En cours
 
-### AI-002 — Mise en forme intelligente
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé / 1 jour.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : proposition Markdown via le BYOK existant, aperçu comparatif,
-  application explicite dans l'éditeur et préservation stricte des images.
-- **Sortie** : aucune sauvegarde automatique, contenu source intact en cas
-  d'annulation ou d'erreur, tests sécurité et recette production.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -74,6 +66,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| AI-002 | Mise en forme intelligente | 2026-08-27 | PR #16, `029183a`, 72 tests, smoke production 36/36, Vercel `READY` |
 | HELP-001 | Centre d'aide contextuel | 2026-08-27 | PR #14, `21f5a0c`, 64 tests, gate 4/4, smoke public 8/8, recette UI et Vercel `READY` |
 | AI-001 | BYOK Anthropic sécurisé | 2026-08-27 | PR #12, `02816d7`, 59 tests, audit SQL 9/9, smoke production 30/30, Vercel `READY` |
 | UX-002-A11Y | Stabilisation modale et labels | 2026-08-27 | PR #10, `d270646`, 46 tests, recette privée synthétique et nettoyage vérifié |
