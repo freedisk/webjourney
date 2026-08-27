@@ -130,11 +130,11 @@ const markdownComponents = {
   ),
 };
 
-export default function MarkdownRenderer({ content, imageUrls = {}, compact = false }) {
+export default function MarkdownRenderer({ content, imageUrls = {}, compact = false, interactive = true }) {
   const [activeImageId, setActiveImageId] = useState(null);
   if (!content) return null;
 
-  const galleryImages = extractImageReferences(content)
+  const galleryImages = (interactive ? extractImageReferences(content) : [])
     .map((reference) => ({
       id: reference.id,
       src: imageUrls[reference.id],
@@ -154,6 +154,7 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
           return (
             <span
               role="status"
+              data-print-image-missing="true"
               style={{
                 display: "block",
                 margin: "0.6em 0",
@@ -166,6 +167,23 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
               }}
             >
               Image privée indisponible
+            </span>
+          );
+        }
+
+        if (!interactive) {
+          return (
+            <span className="markdown-note-image print-note-image" role="group" aria-label={alt || "Image de la note"}>
+              {/* L'URL signée reste éphémère et n'est jamais stockée dans le Markdown. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={signedUrl}
+                alt={alt || "Image de la note"}
+                loading="eager"
+                decoding="async"
+                data-print-image="true"
+              />
+              {alt && <span className="markdown-note-image-caption">{alt}</span>}
             </span>
           );
         }
@@ -201,6 +219,22 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
       }
 
       // Les images HTTPS déjà saisies manuellement restent compatibles.
+      if (!interactive) {
+        return (
+          <span className="markdown-note-image print-note-image" role="group" aria-label={alt || "Image"}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={alt || "Image"}
+              loading="eager"
+              decoding="async"
+              data-print-image="true"
+            />
+            {alt && <span className="markdown-note-image-caption">{alt}</span>}
+          </span>
+        );
+      }
+
       return (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -217,12 +251,14 @@ export default function MarkdownRenderer({ content, imageUrls = {}, compact = fa
   return (
     <div className="markdown-renderer">
       <ReactMarkdown components={components}>{content}</ReactMarkdown>
-      <ImageLightbox
-        images={galleryImages}
-        activeIndex={activeIndex}
-        onChange={(index) => setActiveImageId(galleryImages[index]?.id || null)}
-        onClose={() => setActiveImageId(null)}
-      />
+      {interactive && (
+        <ImageLightbox
+          images={galleryImages}
+          activeIndex={activeIndex}
+          onChange={(index) => setActiveImageId(galleryImages[index]?.id || null)}
+          onClose={() => setActiveImageId(null)}
+        />
+      )}
     </div>
   );
 }

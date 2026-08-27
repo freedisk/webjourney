@@ -2953,6 +2953,404 @@ kbd {
   }
 }
 
+/* === PRINT-001 — Aperçu papier et impression système === */
+
+.print-note-dialog {
+  width: min(100%, 64rem);
+  max-width: 64rem;
+  max-height: min(94dvh, 68rem);
+}
+
+.print-note-dialog .modal-body {
+  padding: 0;
+  background: #dfe4ec;
+}
+
+.print-note-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.print-note-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.print-note-preflight {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  color: var(--text-primary);
+  background: var(--surface-solid);
+  border-bottom: 1.5px solid var(--modal-separator);
+}
+
+.print-note-guidance,
+.print-note-privacy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.6rem;
+}
+
+.print-note-guidance > svg {
+  color: var(--accent);
+}
+
+.print-note-guidance strong {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.print-note-guidance p,
+.print-note-privacy p {
+  margin: 0.12rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.print-note-privacy {
+  padding: 0.55rem 0.65rem;
+  color: #854d0e;
+  background: #fef9c3;
+  border: 1.5px solid #ca8a04;
+  border-radius: 2px;
+}
+
+.print-note-privacy p {
+  color: #713f12;
+}
+
+.print-note-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 13rem);
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.print-note-progress progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.print-note-error {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1.5px solid #dc2626;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.print-note-preview-label {
+  margin: 0;
+  padding: 0.6rem 1rem 0;
+  color: #475569;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.print-note-preview-frame {
+  padding: 0.75rem 1rem 1.15rem;
+}
+
+.print-note-document {
+  --text-primary: #111827;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent: #6d28d9;
+  --input-bg: #f1f5f9;
+  --input-border: #94a3b8;
+  --panel-border: #cbd5e1;
+  --panel-bg: #ffffff;
+  --bg-secondary: #f8fafc;
+  width: min(100%, 210mm);
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: clamp(1.1rem, 4vw, 15mm);
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.18);
+  font-size: 11pt;
+  line-height: 1.6;
+}
+
+.print-note-document-header {
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #6d28d9;
+}
+
+.print-note-brand {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #6d28d9;
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+}
+
+.print-note-brand strong {
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.print-note-brand span {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.print-note-document h1 {
+  margin: 0.9rem 0 0.55rem;
+  color: #111827;
+  font-size: clamp(1.55rem, 4vw, 2.15rem);
+  font-weight: 950;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.print-note-metadata {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.print-note-metadata ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.print-note-metadata li {
+  padding: 0.12rem 0.35rem;
+  color: #334155;
+  border: 1px solid var(--print-tag-color);
+  border-left-width: 4px;
+  border-radius: 2px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.print-note-content {
+  padding: 1rem 0 1.4rem;
+  overflow-wrap: anywhere;
+}
+
+.print-note-content .markdown-renderer {
+  overflow: visible;
+}
+
+.print-note-image {
+  display: block;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.print-note-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 225mm;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+  border: 1px solid #cbd5e1;
+}
+
+.print-note-image .markdown-note-image-caption {
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.print-note-content pre {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.print-note-empty {
+  color: #64748b;
+  font-style: italic;
+}
+
+.print-note-document-footer {
+  padding-top: 0.55rem;
+  color: #64748b;
+  border-top: 1px solid #cbd5e1;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  .print-note-dialog {
+    max-height: 94dvh;
+  }
+
+  .print-note-dialog .modal-body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .print-note-preflight,
+  .print-note-preview-frame {
+    padding-inline: 0.65rem;
+  }
+
+  .print-note-progress {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .print-note-actions > button {
+    flex: 1 1 auto;
+  }
+
+  .print-note-document {
+    min-height: 0;
+    padding: 1rem;
+    font-size: 10.5pt;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 15mm 16mm;
+}
+
+@media print {
+  html,
+  body {
+    width: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    color: #111827 !important;
+    background: #ffffff !important;
+    color-scheme: light;
+  }
+
+  body.capsule-printing > * {
+    display: none !important;
+  }
+
+  body.capsule-printing > .print-note-overlay {
+    position: static !important;
+    display: block !important;
+    inset: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    animation: none !important;
+  }
+
+  .print-note-overlay .print-note-dialog {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  .print-note-dialog > .modal-header,
+  .print-note-dialog > .modal-footer,
+  .print-note-preflight,
+  .print-note-preview-label {
+    display: none !important;
+  }
+
+  .print-note-dialog > .modal-body,
+  .print-note-preview-frame {
+    display: block !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .print-note-document {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #111827 !important;
+    background: #ffffff !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .print-note-document,
+  .print-note-document * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-note-content h1,
+  .print-note-content h2,
+  .print-note-content h3 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .print-note-content p,
+  .print-note-content li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .print-note-image,
+  .print-note-content blockquote,
+  .print-note-content table {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .print-note-content pre {
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+  }
+
+  .print-note-content a {
+    color: #4c1d95 !important;
+    text-decoration: underline !important;
+  }
+}
+
 /* --- Accessibilité : réduire les animations --- */
 @media (prefers-reduced-motion: reduce) {
   *,

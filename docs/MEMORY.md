@@ -50,7 +50,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   `dpl_Hqd243nNWJc3c8asExazAi4XN4GN` en `READY`, lint, 59/59 tests, build,
   smoke production 30/30 et recette UI authentifiée. Le nettoyage final compte
   zéro réglage IA, quota, secret Vault Capsule et note synthétique résiduels.
-- HELP-001 fournit neuf rubriques d'aide statiques, une recherche locale, cinq
+- HELP-001 fournit dix rubriques d'aide statiques, une recherche locale, cinq
   repères de démarrage et des accès contextuels depuis le menu, la palette,
   l'état vide, l'éditeur et les paramètres IA. Seule une progression minimale
   non sensible peut persister dans le navigateur ; aucune donnée Supabase ni
@@ -72,6 +72,10 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   18 389 caractères termine en 37,95 secondes en production, avec smoke 40/40,
   80/80 tests et nettoyage synthétique. Référence : PR #18, fusion `f9e4880`,
   Vercel `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr` en `READY` sur Node 24.x.
+- PRINT-001 prépare localement une vue papier de la version enregistrée, attend
+  les images privées signées avec timeout et annulation, puis délègue impression
+  ou PDF au dialogue système. Aucun fichier n'est persisté par Capsule et aucune
+  migration ou dépendance PDF n'est introduite.
 
 ## Invariants
 
@@ -93,6 +97,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 13. Une transformation IA ne sauvegarde jamais automatiquement ; elle s'applique
     uniquement à un snapshot de brouillon inchangé, après validation stricte de
     toutes les références privées masquées.
+14. Une impression utilise seulement la version enregistrée et les signatures
+    éphémères en mémoire ; Capsule ne stocke ni ne transmet le PDF éventuel.
 
 ## Environnement
 

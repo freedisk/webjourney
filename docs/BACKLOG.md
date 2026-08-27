@@ -11,7 +11,13 @@
 
 ## En cours
 
-Aucun sprint actif.
+### PRINT-001 — Impression et PDF fidèle
+
+- **Priorité** : P2.
+- **ROI / effort** : élevé / faible.
+- **État** : `REVIEW_REQUIRED`.
+- **Sortie** : aperçu papier d'une note enregistrée, images préparées et
+  annulables, impression/PDF natif, recette responsive et livraison Vercel.
 
 ## Prochaines priorités
 
@@ -56,11 +62,13 @@ Aucun sprint actif.
 - **État** : `TODO`.
 - **Sortie** : hooks/services testés sans réécriture globale.
 
-### EXPORT-001 — Export JSON/PDF
+### EXPORT-001 — Export JSON structuré
 
 - **Priorité** : P3.
 - **ROI / effort** : moyen / à estimer.
 - **État** : `TODO`.
+- **Note** : le besoin PDF est couvert par `PRINT-001` ; ce ticket concerne
+  uniquement un format de données réimportable.
 
 ## Terminé
 

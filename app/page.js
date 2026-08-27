@@ -13,6 +13,7 @@ import HelpCenterDialog from "@/components/HelpCenterDialog";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import MobileNavigation from "@/components/MobileNavigation";
 import NoteContentEditor from "@/components/NoteContentEditor";
+import PrintNoteDialog from "@/components/PrintNoteDialog";
 import StatsDrawer from "@/components/StatsDrawer";
 import EmptyState from "@/components/ui/EmptyState";
 import Icon from "@/components/ui/Icon";
@@ -149,6 +150,9 @@ export default function Home() {
   const [aideOuverte, setAideOuverte] = useState(false);
   const [helpInitialSection, setHelpInitialSection] = useState("quick-start");
 
+  // --- Impression de la version enregistrée ---
+  const [printNoteId, setPrintNoteId] = useState(null);
+
   // --- Palette de commandes ---
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
@@ -245,6 +249,9 @@ export default function Home() {
 
   // Note détaillée dans la modale (card view)
   const noteModale = noteDetailId ? notes.find((n) => n.id === noteDetailId) : null;
+
+  // Note préparée dans le dialogue d'impression.
+  const printNote = printNoteId ? notes.find((n) => n.id === printNoteId) : null;
 
   // Vérifier la session et charger les données au montage
   useEffect(() => {
@@ -369,7 +376,7 @@ export default function Home() {
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || noteDetailId || modeCreation;
+      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || modeCreation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -385,7 +392,7 @@ export default function Home() {
 
       // Échap — fermer aide, annuler édition (modale gérée séparément)
       if (e.key === "Escape") {
-        if (aideOuverte || aiSettingsOpen || aiFormatting) return;
+        if (aideOuverte || aiSettingsOpen || aiFormatting || printNoteId) return;
         if (!noteDetailId && editionId) { annulerEdition(); return; }
         return;
       }
@@ -521,6 +528,16 @@ export default function Home() {
     );
   }
 
+  function ouvrirImpression(note) {
+    if (!note) return;
+    if (editionId === note.id) {
+      setErreur("Sauvegarde ou annule les modifications avant d'imprimer cette note.");
+      return;
+    }
+    setDropdownTagNoteId(null);
+    setPrintNoteId(note.id);
+  }
+
   // === CHARGEMENT DES DONNÉES ===
 
   async function chargerNotes(userId) {
@@ -583,7 +600,7 @@ export default function Home() {
           ? "Les images ne sont pas encore configurées dans Supabase. Applique la migration avant utilisation."
           : "Impossible de charger les images : " + error.message
       );
-      return;
+      return false;
     }
 
     const map = {};
@@ -599,7 +616,9 @@ export default function Home() {
     } catch (signError) {
       setImageUrls({});
       setImageFeatureError(signError.message);
+      return false;
     }
+    return true;
   }
 
   function clearPendingImagePreviews(images, setter) {
@@ -1640,6 +1659,14 @@ export default function Home() {
                     Copier
                   </button>
                   <button
+                    onClick={() => ouvrirImpression(note)}
+                    className="btn-brutal ghost"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    <Icon name="printer" size={15} />
+                    Imprimer / PDF
+                  </button>
+                  <button
                     onClick={() => resumerNote(note)}
                     disabled={!note.contenu || resumes[note.id]?.chargement}
                     className="btn-brutal ghost disabled:opacity-30"
@@ -2239,6 +2266,14 @@ export default function Home() {
                   </button>
                   <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
                     Copier
+                  </button>
+                  <button
+                    onClick={() => ouvrirImpression(note)}
+                    className="btn-brutal ghost"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
+                  >
+                    <Icon name="printer" size={15} />
+                    Imprimer / PDF
                   </button>
                 </div>
             )}
@@ -3382,6 +3417,17 @@ export default function Home() {
         onConfigured={setSucces}
         onOpenHelp={() => openHelp("ai")}
       />
+
+      {printNote && (
+        <PrintNoteDialog
+          open
+          note={printNote}
+          tags={(notesTags[printNote.id] || []).map(getTag).filter(Boolean)}
+          imageUrls={imageUrls}
+          onClose={() => setPrintNoteId(null)}
+          onRefreshImages={chargerNoteImages}
+        />
+      )}
 
       {aideOuverte && (
         <HelpCenterDialog

@@ -5,6 +5,18 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ## Non publié
 
+### PRINT-001 — Impression et PDF fidèle
+
+- Aperçu papier clair d'une note enregistrée avec titre, date, tags, Markdown,
+  liens, légendes et images privées signées.
+- Préparation bornée des images avec progression, annulation, erreur explicite,
+  actualisation des signatures et nouvelle tentative.
+- Impression ou export PDF délégué au dialogue système, sans moteur PDF,
+  stockage, migration ni nouvelle dépendance.
+- Pagination A4 progressive, contenu sélectionnable, thème papier clair et
+  interface applicative exclue de l'impression.
+- Rubrique d'aide et guide de confidentialité dédiés.
+
 ### AI-002 — Mise en forme intelligente
 
 - Bouton IA dans les éditeurs de création et de modification, avec proposition
@@ -21,7 +33,7 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### HELP-001 — Centre d'aide contextuel
 
-- Centre d'aide statique, recherchable et utilisable au clavier avec neuf
+- Centre d'aide statique, recherchable et utilisable au clavier avec dix
   rubriques couvrant notes, images, organisation, partage, PWA, IA et dépannage.
 - Démarrage rapide facultatif dont la progression non sensible reste uniquement
   dans le navigateur et peut être masquée ou réinitialisée.

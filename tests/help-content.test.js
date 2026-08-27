@@ -26,6 +26,7 @@ describe("centre d’aide HELP-001", () => {
       "sharing",
       "pwa",
       "ai",
+      "printing",
       "shortcuts",
       "troubleshooting",
     ]));
@@ -40,6 +41,7 @@ describe("centre d’aide HELP-001", () => {
     expect(filterHelpSections("écran accueil").map((section) => section.id)).toEqual(["pwa"]);
     expect(filterHelpSections("terme introuvable")).toEqual([]);
     expect(filterHelpSections("anthropic forme aperçu").map((section) => section.id)).toEqual(["ai"]);
+    expect(filterHelpSections("enregistrer pdf").map((section) => section.id)).toEqual(["printing"]);
   });
 
   it("nettoie la progression locale et ignore les identifiants inconnus", () => {
