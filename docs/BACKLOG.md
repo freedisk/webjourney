@@ -11,15 +11,7 @@
 
 ## En cours
 
-### AI-002-R1 — Fiabilité des notes longues
-
-- **Priorité** : P1.
-- **ROI / effort** : très élevé / correctif ciblé.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : segmentation, budget Sonnet 5, faits protégés, reprise ciblée,
-  temps écoulé et timeout client.
-- **Sortie** : note de reproduction 18 389 caractères traitée avant 100 secondes,
-  proposition atomique, 80 tests et smoke local authentifié 40/40.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -74,6 +66,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| AI-002-R1 | Fiabilité des notes longues | 2026-08-27 | PR #18, `f9e4880`, 80 tests, smoke production 40/40, cas réel 37,95 s, Vercel `READY` |
 | AI-002 | Mise en forme intelligente | 2026-08-27 | PR #16, `029183a`, 72 tests, smoke production 36/36, Vercel `READY` |
 | HELP-001 | Centre d'aide contextuel | 2026-08-27 | PR #14, `21f5a0c`, 64 tests, gate 4/4, smoke public 8/8, recette UI et Vercel `READY` |
 | AI-001 | BYOK Anthropic sécurisé | 2026-08-27 | PR #12, `02816d7`, 59 tests, audit SQL 9/9, smoke production 30/30, Vercel `READY` |

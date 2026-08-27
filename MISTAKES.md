@@ -254,7 +254,7 @@ présente après correction afin d'éviter la répétition du problème.
 - **Prévention** : inclure une fixture proche de la limite dans le smoke réel,
   relever `stop_reason` et usage sans journaliser le contenu, puis tester le
   modèle réellement retourné par le catalogue.
-- **Statut** : corrigé localement, production à valider.
+- **Statut** : corrigé et validé en production.
 
 ## Modèle d'entrée
 

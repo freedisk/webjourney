@@ -421,11 +421,17 @@ Aucune migration ou donnée Supabase n'a été modifiée.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — PR protégée et validation production encore requises.
+`DONE` — PR #18 fusionnée sans bypass au commit `f9e4880`, `Quality gate` de
+`main` vert et Vercel Production `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr` vérifié
+`READY` sur Node 24.x. Smoke public **9/9** et smoke BYOK **40/40** ; le cas
+réel termine en 37,95 secondes. Aucune migration Supabase.
 
 ### Références
 
 - Branche : `codex/ai-002-long-note-reliability`.
+- Pull request : GitHub #18.
+- Fusion : `f9e4880217e95e99135708cefc8d448fd28bdeea`.
+- Déploiement : `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr`.
 - Sprint : `docs/sprints/SPRINT_AI_002_R1_2026-08-27.md`.
 - Guide : `docs/AI_FORMATTING.md`.
 
