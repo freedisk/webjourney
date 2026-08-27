@@ -18,7 +18,7 @@ reprise, lire d'abord `docs/MEMORY.md`, puis `docs/ARCHITECTURE.md` et le backlo
 - **Supabase 2.112.4** (PostgreSQL, Auth, RLS, Storage)
 - **Vercel** (déploiement depuis GitHub)
 - **Tailwind CSS 4.3.3** + CSS custom
-- **Anthropic API** pour les résumés
+- **Anthropic API** pour les résumés et la mise en forme Markdown
 - **Vitest 4.1.11** pour les tests unitaires
 - **PWA** : manifeste Next.js, service worker minimal et icônes Apple
 
@@ -45,7 +45,7 @@ reprise, lire d'abord `docs/MEMORY.md`, puis `docs/ARCHITECTURE.md` et le backlo
 
 ```text
 app/
-├── api/ai/                    statut BYOK et catalogue de modèles
+├── api/ai/                    statut BYOK, catalogue et mise en forme
 ├── api/resumer/route.js       résumé BYOK protégé et limité
 ├── login/page.js              connexion et inscription
 ├── manifest.js                manifeste PWA
@@ -55,6 +55,7 @@ app/
 ├── layout.js                  layout serveur et thème anti-flash
 └── page.js                    CRUD, vues, modales, tags, images et raccourcis
 components/
+├── AIFormattingDialog.js      comparaison et application explicite au brouillon
 ├── AISettingsDialog.js        mode session/Vault et choix du modèle
 ├── HelpCenterDialog.js        aide statique, recherche et démarrage rapide
 ├── MarkdownRenderer.js        rendu Markdown et sources capsule-image/<uuid>
@@ -62,6 +63,7 @@ components/
 ├── PWARegistration.js         enregistrement du service worker en production
 └── StatsDrawer.js             statistiques
 lib/
+├── ai-formatting.js           masquage/restauration stricte des images privées
 ├── ai-config.js               validation, limites et quota IA
 ├── ai-settings-server.js      RPC Vault et quota, serveur uniquement
 ├── anthropic.js               catalogue/résumé et erreurs normalisées
@@ -166,7 +168,10 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 - Images privées, aperçus, duplication et suppression cohérente.
 - Tags et filtres combinables.
 - Vues cartes, liste/split panel et Kanban.
-- Résumé Anthropic BYOK, modèle dynamique, modes session/Vault et quota 10/min.
+- Résumé et mise en forme Anthropic BYOK, modèle dynamique, modes session/Vault
+  et quota partagé 10/min.
+- Comparatif rendu/Markdown, application au brouillon uniquement et sauvegarde
+  manuelle ; références privées masquées puis restaurées sous contrôle strict.
 - Statistiques Recharts.
 - Partage public par UUID opaque, y compris les images signées.
 - Thèmes clair/sombre, responsive mobile et réduction des animations.
@@ -180,7 +185,7 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 ```text
 Navigateur authentifié ── Supabase Data API + Storage privé
          │
-         ├── /api/ai ── statut Vault + catalogue Anthropic
+         ├── /api/ai ── statut Vault + catalogue + mise en forme
          ├── /api/resumer ── auth + quota ── Anthropic
          │
          └── textarea ── fichier/collage ── sauvegarde compensée
@@ -196,9 +201,9 @@ npm run validate
 npm audit
 ```
 
-État de référence HELP-001 : 64 tests unitaires, lint sans erreur, build Next.js
-réussi, audit élevé sans vulnérabilité, smoke public 8/8 et recette navigateur
-authentifiée validée en production.
+État de référence AI-002 local : 72 tests unitaires, lint sans erreur, build
+Next.js réussi et smoke BYOK réel 36/36. La livraison production reste soumise
+à PR, `Quality gate`, Vercel `READY` et recette publique.
 
 ## Limites connues
 

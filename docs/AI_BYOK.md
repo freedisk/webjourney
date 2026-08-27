@@ -14,6 +14,10 @@ Le bouton **Tester et charger les modèles** interroge le catalogue Anthropic
 avec la clé choisie. Capsule ne propose que les identifiants effectivement
 retournés par ce catalogue.
 
+La même configuration finance les deux fonctions IA : **Résumer** depuis une
+note et **IA** dans la barre Markdown pour préparer une mise en forme. Cette
+dernière affiche toujours un comparatif et ne sauvegarde jamais automatiquement.
+
 ## Frontières de sécurité
 
 - La clé n'est jamais écrite dans `localStorage`, `sessionStorage`, IndexedDB,
@@ -28,8 +32,12 @@ retournés par ce catalogue.
   tout appel Anthropic.
 - Chaque sortie externe IA consomme un quota atomique de 10 requêtes par minute
   et par utilisateur. Une réponse 429 fournit `Retry-After`.
-- Le titre est limité à 500 caractères, le contenu à 20 000 caractères et la
-  réponse Anthropic à 150 tokens.
+- Le titre de résumé est limité à 500 caractères et le contenu à 20 000
+  caractères. Un résumé est borné à 150 tokens ; une mise en forme à 8 192
+  tokens et 30 000 caractères après restauration.
+- Les références et légendes `capsule-image` sont masquées avant une mise en
+  forme. Toute perte, duplication, inversion ou invention de marqueur rejette la
+  réponse entière.
 - Les erreurs fournisseur sont traduites en codes sûrs ; leur corps n'est ni
   relayé ni journalisé.
 
@@ -45,6 +53,7 @@ HTML Markdown brut restent donc des invariants complémentaires.
 | `/api/ai/settings` | `PUT` | valide la clé et le modèle avant stockage Vault |
 | `/api/ai/settings` | `DELETE` | supprime réglage et secret Vault |
 | `/api/ai/models` | `POST` | catalogue Anthropic avec clé session ou stockée |
+| `/api/ai/format` | `POST` | proposition Markdown contrôlée, jamais sauvegardée |
 | `/api/resumer` | `POST` | résumé borné avec modèle session ou stocké |
 
 Les tables `user_ai_settings` et `ai_rate_limits` sont privées au rôle serveur,
@@ -71,12 +80,13 @@ vérifié le projet, sans jamais coller de clé réelle dans la requête.
 
 Utiliser un compte synthétique temporaire :
 
-1. sans configuration, vérifier le code 428 au premier résumé ;
+1. sans configuration, vérifier le code 428 au premier résumé et à la première
+   mise en forme ;
 2. tester une clé invalide et vérifier qu'aucun détail Anthropic n'est exposé ;
-3. activer le mode session, choisir un modèle, résumer une note puis recharger :
-   la configuration doit être oubliée ;
-4. activer le mode synchronisé, résumer puis rouvrir le dialogue : seul le
-   statut et le modèle doivent apparaître ;
+3. activer le mode session, choisir un modèle, résumer et mettre en forme une
+   note puis recharger : la configuration doit être oubliée ;
+4. activer le mode synchronisé, résumer, mettre en forme puis rouvrir le
+   dialogue : seul le statut et le modèle doivent apparaître ;
 5. supprimer la clé synchronisée et vérifier le retour à l'état non configuré ;
 6. supprimer la note et le compte synthétiques ; contrôler l'absence de ligne
    dans `user_ai_settings`, `ai_rate_limits` et de secret Vault associé.
@@ -86,6 +96,9 @@ Ne jamais capturer, afficher ou consigner la clé pendant la recette.
 Le smoke automatisé `npm run test:ai:smoke -- --base-url=<URL>` reproduit ce
 cycle avec un compte temporaire. Il refuse de démarrer sans
 `AI_SMOKE_ALLOW_SYNTHETIC_WRITES=1` et purge le compte même en cas d'échec.
+
+Le contrat spécifique de comparaison, de brouillon et d'images est décrit dans
+`docs/AI_FORMATTING.md`.
 
 ## Rollback
 

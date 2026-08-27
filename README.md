@@ -5,8 +5,8 @@
 Application personnelle de notes construite avec Next.js, Supabase et Vercel.
 
 Capsule gère l'authentification, le Markdown, les tags, trois vues (cartes,
-liste et Kanban), le partage public par token, les statistiques et les résumés
-Anthropic. Les notes peuvent également contenir des images privées ajoutées par
+liste et Kanban), le partage public par token, les statistiques, les résumés et
+la mise en forme Markdown assistée par Anthropic. Les notes peuvent également contenir des images privées ajoutées par
 sélection, copier/coller ou glisser-déposer. Elles sont optimisées localement,
 accompagnées d'une progression et consultables dans une galerie plein écran.
 
@@ -27,7 +27,7 @@ ligne.
 - Supabase : PostgreSQL, Auth, RLS et Storage ;
 - Vercel : déploiement depuis GitHub ;
 - Tailwind CSS 4 et CSS custom ;
-- Anthropic en BYOK pour les résumés de notes.
+- Anthropic en BYOK pour les résumés et la mise en forme des notes ;
 - Web App Manifest et service worker minimal pour l'installation PWA.
 
 ## Démarrage local
@@ -110,10 +110,12 @@ app/
   manifest.js                manifeste d'installation PWA
   offline/page.js            page de repli sans connexion
   api/resumer/route.js       résumé Anthropic BYOK authentifié
+  api/ai/format/route.js     proposition Markdown validée et sans sauvegarde
   api/ai/models/route.js     catalogue des modèles autorisés par la clé
   api/ai/settings/route.js   statut, enregistrement et suppression BYOK
   share/[token]/page.js      lecture publique et signature serveur
 components/
+  AIFormattingDialog.js      comparaison rendu/source et application explicite
   AISettingsDialog.js        modes session/Vault et choix du modèle
   AppHeader.js               en-tête responsive et actions prioritaires
   CommandPalette.js          navigation et commandes Ctrl/Cmd+K
@@ -124,6 +126,7 @@ components/
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  ai-formatting.js           masquage/restauration stricte des images privées
   help-content.js            contenu, recherche et progression de l'aide
   ai-config.js               validations, limites et quota IA
   anthropic.js               appels Anthropic bornés et erreurs normalisées
@@ -156,6 +159,7 @@ public/icons/                icônes PWA et source SVG
 - [stratégie de test](docs/TESTING.md) ;
 - [décisions d'architecture](docs/DECISIONS.md) ;
 - [guide BYOK Anthropic](docs/AI_BYOK.md) ;
+- [mise en forme intelligente](docs/AI_FORMATTING.md) ;
 - [centre d'aide contextuel](docs/HELP_CENTER.md) ;
 - [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
 

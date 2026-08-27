@@ -334,6 +334,53 @@ compte synthétique a été supprimé avec tous les compteurs contrôlés à zé
 - Sprint : `docs/sprints/SPRINT_HELP_001_2026-08-27.md`.
 - Guide : `docs/HELP_CENTER.md`.
 
+## 2026-08-27 — AI-002 Mise en forme intelligente
+
+### Objectif
+
+Proposer une mise en forme Markdown plus lisible sans résumé, sauvegarde
+automatique, migration ou exposition des références d'images privées.
+
+### Changements
+
+- route authentifiée `POST /api/ai/format` réutilisant clé, modèle et quota
+  atomique d'AI-001 ;
+- consigne serveur bornée et sortie acceptée seulement avec `stop_reason`
+  complet ;
+- masquage opaque de chaque référence ou chemin privé, puis restauration après
+  contrôle d'unicité et d'ordre de tous les marqueurs ;
+- dialogue accessible comparant rendu et source Markdown, avec génération,
+  erreur, annulation et application explicite ;
+- application au seul brouillon si le snapshot est inchangé, puis sauvegarde
+  manuelle habituelle ;
+- aide contextuelle, documentation, tests unitaires et smoke BYOK étendus.
+
+### Validation locale
+
+- lint propre, **72/72 tests** dans quatorze fichiers et build Next.js 16.3.3
+  réussi avec la nouvelle route dynamique ;
+- smoke réel **36/36** : 401, 428, catalogue, résumé, mise en forme session et
+  Vault, référence privée restaurée, suppression et quota ;
+- chaque compte synthétique créé par un essai, y compris les deux diagnostics
+  initiaux, a été supprimé par le nettoyage vérifié du script ;
+- recette du composant final : rendu/Markdown, chargement, erreur, annulation,
+  `Échap`, application et restitution du focus conformes ;
+- mesures sans débordement à 390 × 844, 1 024 × 768 et 1 416 × 975 ; harnais
+  temporaire supprimé après la recette ;
+- un rejet réel du paramètre facultatif `temperature: 0` a été isolé sans corps
+  d'erreur ni secret, corrigé puis inscrit dans `MISTAKES.md`.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — validation locale terminée ; PR protégée et production
+encore requises.
+
+### Références
+
+- Branche : `codex/ai-002-intelligent-formatting`.
+- Sprint : `docs/sprints/SPRINT_AI_002_2026-08-27.md`.
+- Guide : `docs/AI_FORMATTING.md`.
+
 ## Modèle d'entrée
 
 ```markdown

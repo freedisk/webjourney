@@ -220,6 +220,24 @@ présente après correction afin d'éviter la répétition du problème.
   fonctionnel chiffrer/lire/purger, pas seulement des assertions de catalogue.
 - **Statut** : corrigé avant production, audit 9/9 et cycle transactionnel vert.
 
+## M-016 — Paramètre Anthropic optionnel incompatible avec le modèle réel
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : le premier smoke AI-002 réussissait le catalogue et le résumé,
+  mais la mise en forme recevait un rejet fournisseur HTTP 400 normalisé en
+  erreur sûre.
+- **Cause** : le modèle disponible `claude-sonnet-5` refusait le paramètre
+  optionnel `temperature: 0`, bien que le reste de la requête soit valide.
+- **Impact** : aucune proposition produite, aucune note modifiée et aucun secret
+  exposé ; les deux comptes synthétiques des essais ont été purgés par le bloc
+  de nettoyage.
+- **Correction** : suppression du paramètre facultatif ; le même modèle accepte
+  ensuite la requête bornée à 8 192 tokens et le smoke complet passe 36/36.
+- **Prévention** : garder la requête fournisseur minimale, ne pas supposer la
+  compatibilité des options entre modèles et exécuter un vrai appel Anthropic
+  avec le modèle issu du catalogue avant chaque release IA.
+- **Statut** : corrigé avant commit et production.
+
 ## Modèle d'entrée
 
 ```markdown

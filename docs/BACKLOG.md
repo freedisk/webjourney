@@ -11,7 +11,15 @@
 
 ## En cours
 
-Aucun sprint actif.
+### AI-002 — Mise en forme intelligente
+
+- **Priorité** : P2.
+- **ROI / effort** : élevé / 1 jour.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : proposition Markdown via le BYOK existant, aperçu comparatif,
+  application explicite dans l'éditeur et préservation stricte des images.
+- **Sortie** : aucune sauvegarde automatique, contenu source intact en cas
+  d'annulation ou d'erreur, tests sécurité et recette production.
 
 ## Prochaines priorités
 

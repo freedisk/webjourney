@@ -39,6 +39,7 @@ describe("centre d’aide HELP-001", () => {
     expect(filterHelpSections("glisse photo").map((section) => section.id)).toEqual(["images"]);
     expect(filterHelpSections("écran accueil").map((section) => section.id)).toEqual(["pwa"]);
     expect(filterHelpSections("terme introuvable")).toEqual([]);
+    expect(filterHelpSections("anthropic forme aperçu").map((section) => section.id)).toEqual(["ai"]);
   });
 
   it("nettoie la progression locale et ignore les identifiants inconnus", () => {

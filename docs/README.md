@@ -22,6 +22,7 @@ ne sont jamais des instructions actives.
 | [IMAGES.md](IMAGES.md) | Modèle et recette des images privées |
 | [PWA.md](PWA.md) | Installation Safari et périmètre hors ligne |
 | [AI_BYOK.md](AI_BYOK.md) | Configuration Anthropic, modèle Vault et recette sûre |
+| [AI_FORMATTING.md](AI_FORMATTING.md) | Mise en forme, validation des images et application explicite |
 | [HELP_CENTER.md](HELP_CENTER.md) | Contenu, confidentialité et recette du centre d'aide |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Préflight et livraison Vercel |
 | [Schéma Supabase](../supabase/schemas/README.md) | Photographie déclarative et règles de rafraîchissement |
@@ -30,6 +31,7 @@ ne sont jamais des instructions actives.
 | [Sprint UX-002](sprints/SPRINT_UX_002_2026-08-27.md) | Neo-brutalism fonctionnel, recette et preuves de livraison |
 | [Sprint AI-001](sprints/SPRINT_AI_001_2026-08-27.md) | BYOK Anthropic sécurisé, quota et critères de livraison |
 | [Sprint HELP-001](sprints/SPRINT_HELP_001_2026-08-27.md) | Centre d'aide contextuel et critères de livraison |
+| [Sprint AI-002](sprints/SPRINT_AI_002_2026-08-27.md) | Mise en forme intelligente, garde-fous et preuves |
 | [journal/](journal/) | Transcriptions horodatées des tâches |
 | [archive/](archive/) | Documents historiques obsolètes |
 

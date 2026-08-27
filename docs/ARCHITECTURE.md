@@ -15,7 +15,7 @@ flowchart LR
     C -->|Bearer + clé session facultative| A[/api/ai + /api/resumer]
     A -->|Validation session + quota| S
     A -->|Clé synchronisée| X[(Supabase Vault)]
-    A -->|Catalogue et résumé| H[Anthropic]
+    A -->|Catalogue, résumé et mise en forme| H[Anthropic]
     V[Visiteur lien partagé] --> P[/share/token]
     P -->|Lecture anonyme RLS| S
     P -->|Clé serveur après validation| B
@@ -38,6 +38,8 @@ PostgreSQL/Storage appliquer RLS.
   clé synchronisée, après authentification et quota.
 - `app/api/resumer/route.js` borne la note, choisit la configuration explicite,
   consomme le quota atomique puis appelle Anthropic.
+- `app/api/ai/format/route.js` applique les mêmes contrôles, masque les
+  références privées et ne retourne qu'une proposition Markdown validée.
 - `app/share/[token]/page.js` lit une note partageable avec le client public.
 - `lib/supabase-admin.js` crée un client serveur secret uniquement pour signer
   les images déjà validées comme appartenant à la note partagée.
@@ -45,7 +47,8 @@ PostgreSQL/Storage appliquer RLS.
 ### Service worker
 
 `public/sw.js` ne traite que le shell statique et `/offline`. Les réponses
-Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
+Supabase, les notes, les images signées et toutes les routes `/api/` sont hors
+cache.
 
 ## 3. Modules
 
@@ -62,11 +65,14 @@ Supabase, les notes, les images signées et `/api/resumer` sont hors cache.
 | `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
 | `components/AISettingsDialog.js` | Modes session/Vault et choix du modèle | Aucun stockage navigateur persistant |
+| `components/AIFormattingDialog.js` | Comparaison rendu/Markdown et validation humaine | Aucune application ni sauvegarde implicite |
 | `app/api/ai/settings/route.js` | Statut et cycle du BYOK | Ne renvoie jamais la clé |
 | `app/api/ai/models/route.js` | Catalogue de modèles Anthropic | Auth, quota et erreurs normalisées |
+| `app/api/ai/format/route.js` | Mise en forme Markdown | Auth, quota, images masquées et sortie validée |
 | `app/api/resumer/route.js` | Résumé IA | Auth, limites et quota avant appel externe |
 | `lib/ai-settings-server.js` | Accès aux réglages, Vault et quota | Client Supabase secret serveur uniquement |
 | `lib/anthropic.js` | Requêtes fournisseur bornées | Aucun corps d'erreur amont relayé |
+| `lib/ai-formatting.js` | Masquage et restauration des références privées | Rejet atomique si un marqueur change |
 | `lib/help-content.js` | Rubriques, raccourcis et recherche pure | Aucun appel réseau ni contenu utilisateur |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |
@@ -194,6 +200,24 @@ supprime ensuite les métadonnées. Un échec de nettoyage doit rester visible e
 La clé Vercel historique n'est jamais utilisée implicitement. Voir
 `docs/AI_BYOK.md` pour le contrat détaillé et la recette.
 
+### Mise en forme Anthropic
+
+1. Le bouton IA capture le contenu exact du brouillon ; aucune écriture en base
+   n'est déclenchée.
+2. La route authentifie, borne l'entrée, résout la clé et le modèle BYOK puis
+   consomme le quota partagé.
+3. Chaque référence privée complète ou chemin `capsule-image/<uuid>` est
+   remplacé côté serveur par un marqueur aléatoire ; ni UUID ni légende ne sont
+   envoyés à Anthropic.
+4. Une sortie non terminée, vide, trop longue ou ayant perdu, dupliqué,
+   réordonné ou inventé un marqueur est rejetée en entier.
+5. Après restauration exacte, le client compare source et proposition en rendu
+   ou en Markdown.
+6. **Appliquer** remplace seulement le brouillon si son snapshot n'a pas changé.
+   **Sauver** ou **Créer** demeure une action distincte.
+
+Voir `docs/AI_FORMATTING.md` pour le contrat et la recette AI-002.
+
 ### Interaction moderne progressive
 
 - le changement cartes/liste/Kanban utilise View Transition si le navigateur le
@@ -232,6 +256,8 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 - Clé Anthropic absente des stockages persistants navigateur, réponses et logs.
 - Tables IA sous RLS forcée, sans grant navigateur ; RPC de secret réservées au
   `service_role` et quota atomique avant chaque sortie fournisseur.
+- Références privées d'images masquées avant mise en forme et restaurées
+  uniquement après validation stricte de tous les marqueurs.
 - Aucune donnée privée dans le cache PWA ou les journaux.
 - Migrations forward-only et rollback applicatif non destructif.
 
