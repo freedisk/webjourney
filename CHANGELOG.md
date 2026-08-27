@@ -80,6 +80,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- AI-002-R1 : PR #18, fusion `f9e4880`, Vercel Production
+  `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr`, smoke public 9/9 et smoke BYOK 40/40,
+  cas réel long terminé en 37,95 secondes.
 - AI-002 : PR #16, fusion `029183a`, Vercel Production
   `dpl_2DC5hXs1uTPp8Sc6oDZ4NE8zDeeT`, smoke public 9/9 et smoke BYOK
   authentifié 36/36.
