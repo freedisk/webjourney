@@ -11,7 +11,15 @@
 
 ## En cours
 
-Aucun sprint actif.
+### HELP-001 — Centre d’aide contextuel
+
+- **Priorité** : P2.
+- **ROI / effort** : très élevé / 1–2 jours.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : aide recherchable, démarrage rapide, usages notes/images,
+  organisation, partage, PWA, configuration IA, raccourcis et dépannage.
+- **Sortie** : accès menu/palette/contexte, mobile et clavier conformes, contenu
+  sans appel réseau après chargement, progression locale non sensible et recette.
 
 ## Prochaines priorités
 

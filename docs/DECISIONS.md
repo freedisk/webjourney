@@ -126,6 +126,22 @@ journal avec un lien vers celle qui la remplace.
   renvoient jamais la clé, désactivent le cache, bornent modèle et contenu,
   appliquent un quota persistant et purgent le secret à la suppression du compte.
 
+## ADR-011 — Aide embarquée et progression locale minimale
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : les fonctions notes, images, PWA et BYOK sont riches, mais leur
+  documentation externe oblige l'utilisateur à quitter son action courante.
+- **Décision** : embarquer un centre d'aide statique, recherchable et accessible
+  depuis les contextes utiles. Seuls les identifiants des étapes de démarrage
+  cochées et l'état masqué de la checklist sont conservés dans `localStorage`.
+- **Raison** : rendre l'aide immédiate et cohérente avec la version livrée, sans
+  nouvelle table, télémétrie, profilage ni dépendance réseau.
+- **Conséquences** : le contenu est versionné avec le code ; il fonctionne sans
+  appel réseau une fois l'application chargée. Une navigation PWA rechargée hors
+  ligne conserve volontairement l'écran de repli, car aucune page privée n'est
+  mise en cache.
+
 ## Modèle ADR
 
 ```markdown

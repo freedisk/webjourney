@@ -291,6 +291,45 @@ validés en production.
 - Sprint : `docs/sprints/SPRINT_AI_001_2026-08-27.md`.
 - Guide : `docs/AI_BYOK.md`.
 
+## 2026-08-27 — HELP-001 Centre d'aide contextuel
+
+### Objectif
+
+Rendre les fonctions de Capsule compréhensibles dans leur contexte, sans visite
+forcée, assistant distant ni nouvelle donnée serveur.
+
+### Changements
+
+- centre d'aide neo-brutaliste avec neuf rubriques et recherche locale
+  insensible aux accents ;
+- démarrage rapide facultatif de cinq repères, masquable et réinitialisable ;
+- accès depuis le menu, la palette, l'état vide, l'éditeur et les paramètres IA ;
+- ouverture directe sur Notes, Images ou IA selon le déclencheur ;
+- progression minimale nettoyée dans `localStorage`, sans identifiant, note,
+  image, clé ni télémétrie ;
+- documentation d'usage, architecture, ADR et recette durable.
+
+### Validation locale
+
+- `npm run validate` : ESLint propre, 13 fichiers et 64/64 tests, build réussi ;
+- audit npm élevé : zéro vulnérabilité ;
+- recette Chrome authentifiée : recherche, navigation, checklist persistante,
+  reset, actions contextuelles, palette, thèmes et restitution du focus validés ;
+- mesure à 1 024 px sans débordement ; contrat mobile 390 px couvert par les
+  règles responsive et leur test statique ;
+- compte synthétique et ses dépendances supprimés, compteurs finaux à zéro.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — implémentation et validation locale terminées ; PR, gate,
+Vercel et recette production restent à exécuter.
+
+### Références
+
+- Branche : `codex/help-001-contextual-help`.
+- Sprint : `docs/sprints/SPRINT_HELP_001_2026-08-27.md`.
+- Guide : `docs/HELP_CENTER.md`.
+
 ## Modèle d'entrée
 
 ```markdown

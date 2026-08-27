@@ -127,7 +127,7 @@ export default function AppHeader({
                 {isDark ? "Thème clair" : "Thème sombre"}
               </button>
               <button type="button" role="menuitem" onClick={() => { onOpenHelp(); setMenuOpen(false); }}>
-                <Icon name="help" size={16} /> Raccourcis
+                <Icon name="help" size={16} /> Centre d’aide
               </button>
               <button type="button" role="menuitem" className="is-danger" onClick={() => { setMenuOpen(false); onLogout(); }}>
                 <Icon name="logout" size={16} /> Déconnexion

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import ImageLightbox from "@/components/ImageLightbox";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import Icon from "@/components/ui/Icon";
 import { formatImageBytes, optimizeImageFile } from "@/lib/image-compression";
 import { applyMarkdownFormat } from "@/lib/markdown-editor";
 import {
@@ -28,6 +29,7 @@ export default function NoteContentEditor({
   imageDisabled = false,
   uploadProgress = null,
   onProcessingChange,
+  onOpenHelp,
 }) {
   const inputId = useId();
   const textareaRef = useRef(null);
@@ -314,6 +316,17 @@ export default function NoteContentEditor({
                   {format.text}
                 </button>
               ))}
+              {onOpenHelp && (
+                <button
+                  type="button"
+                  onClick={() => onOpenHelp("notes")}
+                  disabled={disabled || isPreparing}
+                  title="Aide Markdown"
+                  aria-label="Ouvrir l’aide Markdown"
+                >
+                  <Icon name="help" size={15} />
+                </button>
+              )}
             </div>
           ) : <span />}
           <div className="markdown-view-switcher" role="group" aria-label="Mode de l'éditeur">
@@ -390,6 +403,11 @@ export default function NoteContentEditor({
         <span className="note-image-help">
           Sélectionne, colle ou glisse des JPEG, PNG ou WebP — 20 Mio source max,
           optimisés à 5 Mio avant l&apos;envoi.
+          {onOpenHelp && (
+            <button type="button" className="help-inline-link" onClick={() => onOpenHelp("images")}>
+              Guide images
+            </button>
+          )}
         </span>
       </div>
 

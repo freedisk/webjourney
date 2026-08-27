@@ -56,6 +56,7 @@ app/
 └── page.js                    CRUD, vues, modales, tags, images et raccourcis
 components/
 ├── AISettingsDialog.js        mode session/Vault et choix du modèle
+├── HelpCenterDialog.js        aide statique, recherche et démarrage rapide
 ├── MarkdownRenderer.js        rendu Markdown et sources capsule-image/<uuid>
 ├── NoteContentEditor.js       textarea, fichier, collage et aperçus
 ├── PWARegistration.js         enregistrement du service worker en production
@@ -64,6 +65,7 @@ lib/
 ├── ai-config.js               validation, limites et quota IA
 ├── ai-settings-server.js      RPC Vault et quota, serveur uniquement
 ├── anthropic.js               catalogue/résumé et erreurs normalisées
+├── help-content.js            contenu et recherche pure de l'aide
 ├── note-images.js             format, validation, parsing et transformation
 ├── note-image-storage.js      upload, copie, suppression et signature
 ├── supabase-admin.js          client serveur à clé secrète
@@ -169,7 +171,9 @@ Formats : JPEG, PNG, WebP. Limite : 5 Mio par image. SVG et HEIC sont refusés.
 - Partage public par UUID opaque, y compris les images signées.
 - Thèmes clair/sombre, responsive mobile et réduction des animations.
 - Installation PWA iPhone/iPad avec icône dédiée et mode autonome.
-- Raccourcis clavier et protection contre la perte de modifications.
+- Centre d'aide recherchable avec accès contextuels, checklist locale et
+  raccourcis clavier.
+- Protection contre la perte de modifications.
 
 ## Architecture des appels
 
@@ -192,9 +196,9 @@ npm run validate
 npm audit
 ```
 
-État de référence AI-001 : 59 tests unitaires, lint sans erreur, build Next.js
-réussi et audit élevé sans vulnérabilité. Une recette navigateur authentifiée
-avec la migration appliquée reste obligatoire avant production.
+État de référence local HELP-001 : 64 tests unitaires, lint sans erreur, build
+Next.js réussi et audit élevé sans vulnérabilité. Une recette navigateur
+authentifiée reste obligatoire avant production.
 
 ## Limites connues
 

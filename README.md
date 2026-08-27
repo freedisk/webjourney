@@ -13,7 +13,8 @@ accompagnées d'une progression et consultables dans une galerie plein écran.
 L'interface neo-brutaliste privilégie désormais une hiérarchie compacte, une
 navigation mobile dédiée, des retours non bloquants, une palette de commandes
 `Ctrl/Cmd+K`, un éditeur Markdown assisté avec aperçu et un Kanban utilisable
-au tactile comme au clavier.
+au tactile comme au clavier. Un centre d'aide contextuel et recherchable relie
+le menu, la palette, l'éditeur, les états vides et les paramètres IA.
 
 Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
 d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
@@ -116,12 +117,14 @@ components/
   AISettingsDialog.js        modes session/Vault et choix du modèle
   AppHeader.js               en-tête responsive et actions prioritaires
   CommandPalette.js          navigation et commandes Ctrl/Cmd+K
+  HelpCenterDialog.js        aide recherchable et démarrage rapide local
   MobileNavigation.js        navigation tactile iPhone
   PWARegistration.js         enregistrement du service worker
   NoteContentEditor.js       texte, sélection, collage, dépôt et progression
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  help-content.js            contenu, recherche et progression de l'aide
   ai-config.js               validations, limites et quota IA
   anthropic.js               appels Anthropic bornés et erreurs normalisées
   ai-settings-server.js      accès serveur aux RPC Vault et quota
@@ -153,6 +156,7 @@ public/icons/                icônes PWA et source SVG
 - [stratégie de test](docs/TESTING.md) ;
 - [décisions d'architecture](docs/DECISIONS.md) ;
 - [guide BYOK Anthropic](docs/AI_BYOK.md) ;
+- [centre d'aide contextuel](docs/HELP_CENTER.md) ;
 - [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
 
 `CLAUDE.md` conserve le contexte fonctionnel détaillé et `AGENTS.md` définit les

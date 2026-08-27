@@ -33,6 +33,8 @@ npm run security:audit -- --audit-level=high
   normalisé sans fuite du corps d'erreur fournisseur ;
 - invariants AI-001 : aucune persistance navigateur, aucune clé Vercel implicite,
   authentification et quota présents sur chaque route.
+- contenu HELP-001 complet, recherche insensible aux accents, progression locale
+  nettoyée, points d'entrée contextuels et styles responsive.
 
 ### Recette navigateur authentifiée
 
@@ -137,7 +139,30 @@ de recette depuis `AI_SMOKE_ANTHROPIC_API_KEY` ou, pour compatibilité locale,
 `ANTHROPIC_API_KEY`. Il n'affiche ni clé, ni identifiant, ni résumé et supprime
 le compte synthétique dans son bloc de nettoyage.
 
-## 6. Critères de release
+## 6. Recette HELP-001
+
+Avec une session synthétique sans note, contrôler :
+
+1. **Découvrir Capsule**, le menu et `Ctrl/Cmd+K` ouvrent le dialogue nommé
+   **Centre d'aide** avec le focus dans la recherche ;
+2. `clé Anthropic` ne conserve que la rubrique IA ; une recherche absente rend
+   un état vide explicite et réversible ;
+3. une case du démarrage rapide persiste après fermeture/réouverture, puis
+   **Réinitialiser la progression** revient à 0/5 ;
+4. l'aide de la barre Markdown ouvre **Notes et Markdown**, **Guide images**
+   ouvre **Images et galerie**, et le lien des paramètres IA ouvre la rubrique
+   IA sans perdre le dialogue sous-jacent ;
+5. `Échap` ferme l'aide et restitue le focus au déclencheur ; thèmes clair et
+   sombre restent lisibles ;
+6. à 390 px et 1 024 px, la navigation et l'article ne créent aucun débordement
+   horizontal et les zones sûres iOS restent respectées.
+
+Le contenu ne déclenche aucun `fetch`. `capsule-help-progress-v1` ne doit
+contenir que `completed: string[]` et `checklistHidden: boolean`. Une session PWA
+déjà chargée conserve l'aide grâce aux assets statiques ; un rechargement hors
+ligne affiche volontairement `/offline` et jamais une page privée mise en cache.
+
+## 7. Critères de release
 
 Une release est refusée si :
 
@@ -147,7 +172,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 7. Lacunes connues
+## 8. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;
