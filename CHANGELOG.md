@@ -103,6 +103,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- SHARE-001 : PR #22, fusion `bb0afc4`, Vercel Production
+  `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd`, 98/98 tests, smoke robot 34/34 et carte
+  publique 1 200 × 630 inspectée sans erreur console.
 - PRINT-001 : PR #20, fusion `532dd9a`, Vercel Production
   `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb`, smoke public 9/9 et empreintes live de
   l'action, de l'isolation papier, de l'aide et de l'annulation conformes.

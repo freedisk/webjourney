@@ -78,6 +78,10 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   dépendance PDF n'est introduite. Référence : PR #20, fusion `532dd9a`, Vercel
   `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb` en `READY`, 91/91 tests, smoke public 9/9
   et quatre empreintes fonctionnelles confirmées dans les assets live.
+- SHARE-001 est déployé : la racine et les notes partagées annoncent une carte
+  Open Graph/Twitter générique 1 200 × 630, sans contenu privé. Référence : PR
+  #22, fusion `bb0afc4`, Vercel `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd` en `READY`,
+  98/98 tests et smoke robot 34/34.
 
 ## Invariants
 

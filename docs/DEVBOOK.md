@@ -521,11 +521,18 @@ nécessaire.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — PR, Quality gate, fusion et smoke Vercel restent à exécuter.
+`DONE` — PR #22 fusionnée sans bypass au commit `bb0afc4`, contrôle obligatoire
+de `main` vert et Vercel Production `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd`
+vérifié `READY` au SHA exact. Le smoke robot passe **34/34** et le visuel public
+est conforme sans erreur console. Aucune migration, donnée, variable ou
+dépendance n'a été modifiée.
 
 ### Références
 
 - Branche : `codex/share-001-open-graph`.
+- Pull request : GitHub #22.
+- Fusion : `bb0afc4326b39628d11f52f2637d77df15f52a8b`.
+- Déploiement : `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd`.
 - Sprint : `docs/sprints/SPRINT_SHARE_001_2026-08-27.md`.
 - Guide : `docs/SOCIAL_SHARING.md`.
 
