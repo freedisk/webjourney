@@ -469,12 +469,15 @@ traitement serveur supplémentaire.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — implémentation et recette locale terminées ; PR protégée,
-fusion et contrôle Vercel Production encore à réaliser.
+`READY_FOR_MERGE` — PR #20 fusionnable et `clean` après deux exécutions du
+`Quality gate` et le contrôle Vercel Preview réussis. Fusion standard et
+contrôle Vercel Production encore à réaliser.
 
 ### Références
 
 - Branche : `codex/print-001`.
+- Commit fonctionnel : `a679877ce4e4082595b28b69a4da253d7acb2b81`.
+- Pull request : GitHub #20.
 - Sprint : `docs/sprints/SPRINT_PRINT_001_2026-08-27.md`.
 - Guide : `docs/PRINTING.md`.
 
