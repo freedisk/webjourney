@@ -196,9 +196,9 @@ npm run validate
 npm audit
 ```
 
-État de référence local HELP-001 : 64 tests unitaires, lint sans erreur, build
-Next.js réussi et audit élevé sans vulnérabilité. Une recette navigateur
-authentifiée reste obligatoire avant production.
+État de référence HELP-001 : 64 tests unitaires, lint sans erreur, build Next.js
+réussi, audit élevé sans vulnérabilité, smoke public 8/8 et recette navigateur
+authentifiée validée en production.
 
 ## Limites connues
 
