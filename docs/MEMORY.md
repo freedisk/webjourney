@@ -46,7 +46,10 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Migration AI-001 `20260827094500` appliquée et enregistrée en production après
   prévisualisation annulée ; audit de sécurité 9/9 et cycle Vault transactionnel
   sans résidu.
-- Référence locale AI-001 avant livraison : lint, 59/59 tests et build Next.js.
+- Référence de livraison AI-001 : PR #12, fusion `02816d7`, Vercel
+  `dpl_Hqd243nNWJc3c8asExazAi4XN4GN` en `READY`, lint, 59/59 tests, build,
+  smoke production 30/30 et recette UI authentifiée. Le nettoyage final compte
+  zéro réglage IA, quota, secret Vault Capsule et note synthétique résiduels.
 
 ## Invariants
 

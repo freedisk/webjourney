@@ -55,6 +55,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- AI-001 : PR #12, fusion `02816d7`, Vercel Production
+  `dpl_Hqd243nNWJc3c8asExazAi4XN4GN`, smoke réel 30/30, recette UI et
+  nettoyage synthétique vérifiés.
 - Stabilisation UX-002 : PR #10, fusion `d270646`, Vercel Production
   `dpl_DdJPSbouBg8eGzKS2N7P333SQsr2`, recette authentifiée synthétique et
   nettoyage contrôlé.

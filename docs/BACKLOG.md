@@ -11,14 +11,7 @@
 
 ## En cours
 
-### AI-001 — BYOK Anthropic sécurisé
-
-- **Priorité** : P1.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : clé Anthropic par utilisateur, mode session sans persistance,
-  persistance chiffrée optionnelle, choix dynamique du modèle et quota serveur.
-- **Sortie** : aucun secret dans le navigateur persistant, Git ou les logs ;
-  migration forward-only, tests de sécurité, gate protégé et recette synthétique.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -73,6 +66,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| AI-001 | BYOK Anthropic sécurisé | 2026-08-27 | PR #12, `02816d7`, 59 tests, audit SQL 9/9, smoke production 30/30, Vercel `READY` |
 | UX-002-A11Y | Stabilisation modale et labels | 2026-08-27 | PR #10, `d270646`, 46 tests, recette privée synthétique et nettoyage vérifié |
 | UX-002 | Neo-brutalism fonctionnel | 2026-08-27 | PR #8, `b07dc19`, 43 tests, recette multi-viewport, Vercel `READY` |
 | UX-001 | Compression, dépôt, progression et galerie | 2026-08-26 | PR #6, `4c77786`, 31 tests, recette Chrome, Vercel `READY` |
