@@ -224,12 +224,17 @@ productive et tactile, sans changer le modèle Supabase ni la confidentialité.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — les références GitHub, Vercel et smoke publics sont ajoutées
-après passage des gates et déploiement.
+`DONE` — PR #8 et les deux gates de branche verts, fusion standard `b07dc19`,
+gate de `main` vert et Vercel Production `READY`. Les sept routes/URL publiques
+de smoke répondent, l'API sans session reste en 401 et l'audit images demeure
+propre.
 
 ### Références
 
 - Branche : `codex/ux-002-neo-brutalism`.
+- Pull request : GitHub #8.
+- Fusion : `b07dc19aa9764f7fd585366c14d190a7a5e580f2`.
+- Déploiement : `dpl_GbTa5UHM6fuZU1z1abRnMXYxhXa5`.
 - Sprint : `docs/sprints/SPRINT_UX_002_2026-08-27.md`.
 
 ## Modèle d'entrée
