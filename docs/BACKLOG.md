@@ -11,15 +11,7 @@
 
 ## En cours
 
-### SHARE-001 — Aperçu social Open Graph
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé / quelques heures.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : carte Capsule 1 200 × 630, métadonnées Open Graph/Twitter de
-  l'application et des notes partagées, confidentialité et cache Messenger.
-- **Sortie** : 98 tests, rendu local réel conforme ; PR, gate et smoke robot de
-  production à finaliser.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -76,6 +68,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| SHARE-001 | Aperçu social Open Graph | 2026-08-27 | PR #22, `bb0afc4`, 98 tests, smoke robot 34/34, Vercel `READY` |
 | PRINT-001 | Impression et PDF fidèle | 2026-08-27 | PR #20, `532dd9a`, 91 tests, smoke public 9/9, assets live et Vercel `READY` |
 | AI-002-R1 | Fiabilité des notes longues | 2026-08-27 | PR #18, `f9e4880`, 80 tests, smoke production 40/40, cas réel 37,95 s, Vercel `READY` |
 | AI-002 | Mise en forme intelligente | 2026-08-27 | PR #16, `029183a`, 72 tests, smoke production 36/36, Vercel `READY` |

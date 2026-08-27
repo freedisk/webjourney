@@ -303,7 +303,7 @@ présente après correction afin d'éviter la répétition du problème.
   par Next.js, avec contrat distinct pour les liens de notes partagées.
 - **Prévention** : le smoke public utilise un user-agent de robot, vérifie les
   propriétés structurées et télécharge l'image pour contrôler type et dimensions.
-- **Statut** : corrigé localement ; validation production en attente.
+- **Statut** : corrigé et validé en production, smoke robot 34/34.
 
 ## Modèle d'entrée
 
