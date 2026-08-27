@@ -25,6 +25,12 @@ describe("PWA Capsule", () => {
         expect.objectContaining({ sizes: "512x512", purpose: "maskable" }),
       ]),
     );
+    expect(value.shortcuts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Nouvelle note", url: "/?action=new" }),
+        expect.objectContaining({ name: "Rechercher", url: "/?action=search" }),
+      ]),
+    );
   });
 
   it.each([
@@ -49,6 +55,7 @@ describe("PWA Capsule", () => {
     const precache = source.match(/const PRECACHE_URLS = \[([\s\S]*?)\];/)?.[1];
 
     expect(precache).toBeTruthy();
+    expect(source).toContain('const CACHE_NAME = "capsule-static-v2"');
     expect(source).toContain('const OFFLINE_URL = "/offline"');
     expect(precache).toContain("OFFLINE_URL");
     expect(precache).not.toContain('"/"');

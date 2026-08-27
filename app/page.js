@@ -5,9 +5,17 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AppHeader from "@/components/AppHeader";
+import CommandPalette from "@/components/CommandPalette";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import MobileNavigation from "@/components/MobileNavigation";
 import NoteContentEditor from "@/components/NoteContentEditor";
 import StatsDrawer from "@/components/StatsDrawer";
+import Dialog from "@/components/ui/Dialog";
+import EmptyState from "@/components/ui/EmptyState";
+import Icon from "@/components/ui/Icon";
+import { AppSkeleton } from "@/components/ui/Skeleton";
+import ToastViewport, { useToasts } from "@/components/ui/ToastViewport";
 import {
   createSignedImageMap,
   duplicateStoredImages,
@@ -16,6 +24,7 @@ import {
   uploadPendingImages,
 } from "@/lib/note-image-storage";
 import { extractImageIds, stripImagesForText } from "@/lib/note-images";
+import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -71,13 +80,13 @@ export default function Home() {
   const router = useRouter();
   const [utilisateur, setUtilisateur] = useState(null);
   const [notes, setNotes] = useState([]);
+  const notesRef = useRef([]);
   const [titre, setTitre] = useState("");
   const [contenu, setContenu] = useState("");
   const [couleurNote, setCouleurNote] = useState(null);
   const [chargement, setChargement] = useState(true);
-  const [erreur, setErreur] = useState(null);
-  const [succes, setSucces] = useState(null);
   const [sombre, setSombre] = useState(false);
+  const { toasts, pushToast, dismissToast } = useToasts();
 
   // --- Taille des caractères notes ---
   const [noteFontSize, setNoteFontSize] = useState(14);
@@ -105,6 +114,8 @@ export default function Home() {
   const dropdownRef = useRef(null);
   const rechercheRef = useRef(null);
   const titreRef = useRef(null);
+  const modalPanelRef = useRef(null);
+  const modalCloseRef = useRef(null);
   const [filtreTagId, setFiltreTagId] = useState(null);
 
   // --- Toggle Card / List ---
@@ -122,6 +133,9 @@ export default function Home() {
   // --- Aide raccourcis clavier ---
   const [aideOuverte, setAideOuverte] = useState(false);
 
+  // --- Palette de commandes ---
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
   // --- Drawer statistiques ---
   const [statsOuvert, setStatsOuvert] = useState(false);
 
@@ -134,6 +148,7 @@ export default function Home() {
   // --- Kanban drag & drop ---
   const [dragNoteId, setDragNoteId] = useState(null);
   const [dragOverColonne, setDragOverColonne] = useState(null);
+  const kanbanPointerRef = useRef(null);
 
   // --- Résumé IA ---
   const [resumes, setResumes] = useState({});
@@ -148,6 +163,19 @@ export default function Home() {
   const [imageUploadProgress, setImageUploadProgress] = useState(null);
   const [imageFeatureError, setImageFeatureError] = useState(null);
   const noteBusy = noteSaving || imagePreparing;
+
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+
+  // Les anciens appels métier conservent une API simple et alimentent les toasts.
+  function setSucces(message) {
+    if (message) pushToast(message, { tone: "success" });
+  }
+
+  function setErreur(message) {
+    if (message) pushToast(message, { tone: "error", duration: 8000 });
+  }
 
   // Obtenir la couleur de fond d'une note selon le thème actuel
   function getCouleurFond(couleur) {
@@ -224,6 +252,17 @@ export default function Home() {
       ]);
       if (!active) return;
       setChargement(false);
+
+      // Les raccourcis PWA sont progressifs et ne modifient jamais le cache privé.
+      const launchUrl = new URL(window.location.href);
+      const launchAction = launchUrl.searchParams.get("action");
+      if (launchAction === "new") setModeCreation(true);
+      if (launchAction === "search") setCommandPaletteOpen(true);
+      if (launchAction) {
+        launchUrl.searchParams.delete("action");
+        window.history.replaceState({}, "", launchUrl.pathname + launchUrl.search + launchUrl.hash);
+      }
+
       // Renouveler les URL signées avant leur expiration d'une heure.
       imageRefreshTimer = setInterval(() => chargerNoteImages(), 50 * 60 * 1000);
     }
@@ -233,14 +272,9 @@ export default function Home() {
       active = false;
       if (imageRefreshTimer) clearInterval(imageRefreshTimer);
     };
+  // Le chargement initial reste volontairement lié au cycle du routeur.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
-
-  // Masquer le message de succès après 3 secondes
-  useEffect(() => {
-    if (!succes) return;
-    const timer = setTimeout(() => setSucces(null), 3000);
-    return () => clearTimeout(timer);
-  }, [succes]);
 
   // Fermer le dropdown de tags au clic extérieur
   useEffect(() => {
@@ -253,34 +287,75 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickExterieur);
   }, []);
 
-  // Modale card view / création : bloquer le scroll + touche Escape
+  // Maintenir le callback de fermeture à jour sans réinitialiser le focus à chaque saisie.
   useEffect(() => {
-    if (!noteDetailId && !modeCreation) return;
+    modalCloseRef.current = modeCreation ? fermerModaleCreation : fermerModale;
+  // Les fonctions lisent volontairement les états de formulaire listés ici.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modeCreation, noteDetailId, editionId, editionTitre, editionContenu, editionCouleur, editionPendingImages.length, creationPendingImages.length, noteBusy]);
 
+  // Modales historiques : scroll, focus initial, confinement et restitution.
+  useEffect(() => {
+    if (!noteDetailId && !modeCreation) return undefined;
+
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    requestAnimationFrame(() => {
+      const panel = modalPanelRef.current;
+      const target = panel?.querySelector("input, textarea, button:not([disabled]), select") || panel;
+      target?.focus({ preventScroll: true });
+    });
 
-    function handleEscape(e) {
-      if (e.key === "Escape") {
-        if (modeCreation) {
-          fermerModaleCreation();
-        } else {
-          fermerModale();
-        }
+    function handleModalKeyDown(event) {
+      if (document.querySelector(".image-lightbox")) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        modalCloseRef.current?.();
+        return;
+      }
+
+      if (event.key !== "Tab" || !modalPanelRef.current) return;
+      const focusable = Array.from(modalPanelRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
-    document.addEventListener("keydown", handleEscape);
+
+    document.addEventListener("keydown", handleModalKeyDown);
     return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleModalKeyDown);
+      if (document.contains(previousFocus)) previousFocus?.focus({ preventScroll: true });
     };
-  // Les fonctions de fermeture lisent volontairement les mêmes états listés ici.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteDetailId, modeCreation, editionId, editionTitre, editionContenu, editionCouleur, editionPendingImages.length, creationPendingImages.length, noteBusy]);
+  }, [noteDetailId, modeCreation]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
+      const hasBlockingDialog = aideOuverte || statsOuvert || noteDetailId || modeCreation;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        if (hasBlockingDialog && !commandPaletteOpen) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        setCommandPaletteOpen((open) => !open);
+        return;
+      }
+
+      if (commandPaletteOpen) return;
 
       // Échap — fermer aide, annuler édition (modale gérée séparément)
       if (e.key === "Escape") {
@@ -288,6 +363,9 @@ export default function Home() {
         if (!noteDetailId && editionId) { annulerEdition(); return; }
         return;
       }
+
+      // Les raccourcis de navigation ne doivent jamais agir derrière une modale.
+      if (hasBlockingDialog) return;
 
       // Ne pas intercepter si on tape dans un champ
       if (isTyping) return;
@@ -308,24 +386,19 @@ export default function Home() {
 
       // 1 → Card View
       if (e.key === "1") {
-        setViewMode("card");
-        annulerEdition();
+        changerVue("card");
         return;
       }
 
       // 2 → List View
       if (e.key === "2") {
-        setViewMode("list");
-        annulerEdition();
-        setNoteDetailId(null);
+        changerVue("list");
         return;
       }
 
       // 3 → Kanban View
       if (e.key === "3") {
-        setViewMode("kanban");
-        annulerEdition();
-        setNoteDetailId(null);
+        changerVue("kanban");
         return;
       }
 
@@ -370,6 +443,16 @@ export default function Home() {
   });
 
   // Basculer le thème sombre/clair
+  function changerVue(nextView) {
+    if (nextView === viewMode) return;
+    runViewTransition(() => {
+      setViewMode(nextView);
+      annulerEdition();
+      if (nextView !== "card") setNoteDetailId(null);
+      if (nextView !== "list") setMobileDetail(false);
+    });
+  }
+
   function toggleTheme() {
     const isDark = !sombre;
     setSombre(isDark);
@@ -952,8 +1035,29 @@ export default function Home() {
 
     setPulseNoteId(note.id);
     setTimeout(() => setPulseNoteId(null), 250);
-    setSucces(nouvelleValeur ? "Note épinglée !" : "Note désépinglée.");
     await chargerNotes(utilisateur.id);
+    pushToast(nouvelleValeur ? "Note épinglée." : "Note désépinglée.", {
+      tone: "success",
+      duration: 8000,
+      actionLabel: "Annuler",
+      onAction: async () => {
+        const noteActuelle = notesRef.current.find((item) => item.id === note.id);
+        if (!noteActuelle || noteActuelle.epinglee !== nouvelleValeur) {
+          setSucces("La note a changé depuis cette action.");
+          return;
+        }
+        const { error: undoError } = await supabase
+          .from("notes")
+          .update({ epinglee: note.epinglee })
+          .eq("id", note.id);
+        if (undoError) {
+          setErreur("Impossible d'annuler l'épinglage : " + undoError.message);
+          return;
+        }
+        await chargerNotes(utilisateur.id);
+        setSucces("Épinglage restauré.");
+      },
+    });
   }
 
   // Partager / désactiver le partage d'une note
@@ -988,34 +1092,44 @@ export default function Home() {
         return;
       }
 
-      // Copier le lien dans le presse-papier
       const lien = window.location.origin + "/share/" + token;
       try {
-        await navigator.clipboard.writeText(lien);
-        setSucces("Lien copié !");
-      } catch {
-        setSucces("Partagée ! Lien : " + lien);
+        const result = await shareOrCopy({
+          title: `Capsule — ${note.titre}`,
+          text: "Une note Capsule a été partagée avec toi.",
+          url: lien,
+        });
+        if (result === "shared") setSucces("Note partagée avec le système.");
+        if (result === "copied") setSucces("Partage activé, lien copié.");
+        if (result === "cancelled") setSucces("Partage activé.");
+      } catch (shareError) {
+        setErreur("Partage activé, mais le lien n'a pas pu être transmis : " + shareError.message);
       }
     }
 
     await chargerNotes(utilisateur.id);
   }
 
-  // Copier le lien de partage d'une note déjà partagée
+  // Partager le lien via le système, avec repli presse-papiers.
   async function copierLienPartage(note) {
     if (!note.share_token) return;
     const lien = window.location.origin + "/share/" + note.share_token;
     try {
-      await navigator.clipboard.writeText(lien);
-      setSucces("Lien copié !");
-    } catch {
-      setErreur("Impossible de copier le lien.");
+      const result = await shareOrCopy({
+        title: `Capsule — ${note.titre}`,
+        text: "Une note Capsule a été partagée avec toi.",
+        url: lien,
+      });
+      if (result === "shared") setSucces("Lien partagé.");
+      if (result === "copied") setSucces("Lien copié.");
+    } catch (shareError) {
+      setErreur("Impossible de partager le lien : " + shareError.message);
     }
   }
 
   // Déplacer une note dans le kanban (colonne + ordre)
   async function deplacerNoteKanban(noteId, nouvelleColonne) {
-    const noteAvant = notes.find((n) => n.id === noteId);
+    const noteAvant = notesRef.current.find((n) => n.id === noteId);
     if (!noteAvant) return;
 
     const ancienneColonne = noteAvant.kanban_colonne || "todo";
@@ -1023,9 +1137,13 @@ export default function Home() {
     if (ancienneColonne === nouvelleColonne) return;
 
     // Optimistic update
-    setNotes((prev) => prev.map((n) =>
-      n.id === noteId ? { ...n, kanban_colonne: nouvelleColonne, kanban_ordre: 0 } : n
-    ));
+    setNotes((prev) => {
+      const next = prev.map((n) =>
+        n.id === noteId ? { ...n, kanban_colonne: nouvelleColonne, kanban_ordre: 0 } : n
+      );
+      notesRef.current = next;
+      return next;
+    });
 
     const { error } = await supabase
       .from("notes")
@@ -1034,14 +1152,94 @@ export default function Home() {
 
     if (error) {
       // Rollback
-      setNotes((prev) => prev.map((n) =>
-        n.id === noteId ? { ...n, kanban_colonne: ancienneColonne, kanban_ordre: ancienOrdre } : n
-      ));
+      setNotes((prev) => {
+        const next = prev.map((n) =>
+          n.id === noteId ? { ...n, kanban_colonne: ancienneColonne, kanban_ordre: ancienOrdre } : n
+        );
+        notesRef.current = next;
+        return next;
+      });
       setErreur("Erreur lors du d\u00e9placement : " + error.message);
       return;
     }
 
-    setSucces("Note d\u00e9plac\u00e9e !");
+    pushToast("Note déplacée.", {
+      tone: "success",
+      duration: 8000,
+      actionLabel: "Annuler",
+      onAction: async () => {
+        const noteActuelle = notesRef.current.find((note) => note.id === noteId);
+        if (!noteActuelle || (noteActuelle.kanban_colonne || "todo") !== nouvelleColonne) {
+          setSucces("La note a changé depuis ce déplacement.");
+          return;
+        }
+        const { error: undoError } = await supabase
+          .from("notes")
+          .update({ kanban_colonne: ancienneColonne, kanban_ordre: ancienOrdre })
+          .eq("id", noteId);
+        if (undoError) {
+          setErreur("Impossible d'annuler le déplacement : " + undoError.message);
+          return;
+        }
+        await chargerNotes(utilisateur.id);
+        setSucces("Déplacement annulé.");
+      },
+    });
+  }
+
+  function commencerGlisserKanban(event, noteId) {
+    if (noteBusy) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    kanbanPointerRef.current = {
+      pointerId: event.pointerId,
+      noteId,
+      startX: event.clientX,
+      startY: event.clientY,
+      targetColumn: null,
+      moved: false,
+    };
+    setDragNoteId(noteId);
+  }
+
+  function continuerGlisserKanban(event) {
+    const pointer = kanbanPointerRef.current;
+    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    const distance = Math.hypot(
+      event.clientX - pointer.startX,
+      event.clientY - pointer.startY,
+    );
+    if (distance < 7 && !pointer.moved) return;
+
+    event.preventDefault();
+    pointer.moved = true;
+    const column = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest?.("[data-kanban-column]")
+      ?.getAttribute("data-kanban-column");
+    pointer.targetColumn = column || null;
+    setDragOverColonne(pointer.targetColumn);
+  }
+
+  function terminerGlisserKanban(event) {
+    const pointer = kanbanPointerRef.current;
+    if (!pointer || pointer.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    kanbanPointerRef.current = null;
+    setDragNoteId(null);
+    setDragOverColonne(null);
+    if (pointer.moved && pointer.targetColumn) {
+      void deplacerNoteKanban(pointer.noteId, pointer.targetColumn);
+    }
+  }
+
+  function annulerGlisserKanban() {
+    kanbanPointerRef.current = null;
+    setDragNoteId(null);
+    setDragOverColonne(null);
   }
 
   // Déconnexion
@@ -1174,6 +1372,8 @@ export default function Home() {
                       lineHeight: 1,
                     }}
                     title={note.epinglee ? "Désépingler" : "Épingler"}
+                    aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
+                    aria-pressed={note.epinglee}
                   >
                     {"\uD83D\uDCCC"}
                   </button>
@@ -1266,9 +1466,9 @@ export default function Home() {
                         onClick={() => copierLienPartage(note)}
                         className="btn-brutal ghost"
                         style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }}
-                        title="Copier le lien de partage"
+                        title="Partager ou copier le lien"
                       >
-                        {"\uD83D\uDD17"} Copier le lien
+                        {"\uD83D\uDD17"} Partager le lien
                       </button>
                       <button
                         onClick={() => togglePartage(note)}
@@ -1324,6 +1524,7 @@ export default function Home() {
           {!resumes[note.id].chargement && (
             <button
               onClick={() => masquerResume(note.id)}
+              aria-label="Masquer le résumé"
               style={{ color: "var(--accent)", fontSize: "0.9rem", lineHeight: 1 }}
             >
               &times;
@@ -1365,6 +1566,8 @@ export default function Home() {
               type="button"
               onClick={() => setEditionCouleur(c.hex)}
               title={c.nom}
+              aria-label={`Couleur ${c.nom}`}
+              aria-pressed={editionCouleur === c.hex}
               style={{
                 width: "1.75rem",
                 height: "1.75rem",
@@ -1396,17 +1599,11 @@ export default function Home() {
   function renderNoteDetail() {
     if (!noteSelectionnee) {
       return (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center">
-            <p className="text-4xl mb-4">&#128221;</p>
-            <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-              Sélectionne une note
-            </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              Clique sur une note dans la liste
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon="list"
+          title="Sélectionne une note"
+          description="Choisis une note dans la colonne de gauche pour consulter ou modifier son contenu."
+        />
       );
     }
 
@@ -1498,7 +1695,7 @@ export default function Home() {
                       cursor: "pointer",
                     }}
                   >
-                    Copier le lien
+                    Partager le lien
                   </button>
                 </div>
               )}
@@ -1553,9 +1750,15 @@ export default function Home() {
         }}
       >
         <div
+          ref={modalPanelRef}
           className="modal-content"
           onClick={(e) => e.stopPropagation()}
           style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) || "var(--modal-bg)" }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={enEdition ? undefined : "note-detail-title"}
+          aria-label={enEdition ? "Modifier la note" : undefined}
+          tabIndex={-1}
         >
           {/* Header modale */}
           <div className="modal-header" style={{ flexDirection: "column", gap: "0.5rem" }}>
@@ -1569,12 +1772,13 @@ export default function Home() {
                   style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
                 />
               ) : (
-                <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                <h2 id="note-detail-title" className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
                   {note.titre}
                 </h2>
               )}
               <button
                 onClick={fermerModale}
+                aria-label="Fermer la note"
                 className="btn-brutal ghost"
                 style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
               >
@@ -1700,7 +1904,7 @@ export default function Home() {
                         cursor: "pointer",
                       }}
                     >
-                      Copier le lien
+                      Partager le lien
                     </button>
                   </div>
                 )}
@@ -1749,6 +1953,8 @@ export default function Home() {
                     className="btn-brutal ghost"
                     style={{ fontSize: "0.85rem", padding: "0.35rem 0.5rem", color: note.epinglee ? "var(--accent)" : "var(--text-muted)", lineHeight: 1 }}
                     title={note.epinglee ? "Désépingler" : "Épingler"}
+                    aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
+                    aria-pressed={note.epinglee}
                   >
                     {"\uD83D\uDCCC"}
                   </button>
@@ -1760,7 +1966,7 @@ export default function Home() {
                   </button>
                   {note.share_token ? (
                     <>
-                      <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Copier le lien de partage">
+                      <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Partager ou copier le lien">
                         {"\uD83D\uDD17"} Lien
                       </button>
                       <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }} title="Désactiver le partage">
@@ -1793,25 +1999,93 @@ export default function Home() {
     );
   }
 
+  const commandItems = [
+    {
+      id: "new-note",
+      label: "Nouvelle note",
+      description: "Créer une capsule texte ou image",
+      keywords: "ajouter créer écrire",
+      icon: "plus",
+      shortcut: "N",
+      onSelect: () => setModeCreation(true),
+    },
+    {
+      id: "focus-search",
+      label: "Rechercher dans les notes",
+      description: "Placer le curseur dans le filtre courant",
+      keywords: "filtrer trouver",
+      icon: "search",
+      shortcut: "/",
+      onSelect: () => {
+        if (viewMode === "list") setMobileDetail(false);
+        requestAnimationFrame(() => rechercheRef.current?.focus());
+      },
+    },
+    ...[
+      ["card", "Vue cartes", "cards", "1"],
+      ["list", "Vue liste", "list", "2"],
+      ["kanban", "Vue Kanban", "kanban", "3"],
+    ].map(([id, label, icon, shortcut]) => ({
+      id: `view-${id}`,
+      label,
+      description: id === viewMode ? "Vue active" : "Changer l'organisation des notes",
+      keywords: "affichage organisation",
+      icon,
+      shortcut,
+      onSelect: () => changerVue(id),
+    })),
+    {
+      id: "manage-tags",
+      label: panneauTagsOuvert ? "Fermer les tags" : "Gérer les tags",
+      description: "Créer, filtrer et supprimer des tags",
+      keywords: "étiquette catégorie",
+      icon: "tags",
+      onSelect: () => setPanneauTagsOuvert((open) => !open),
+    },
+    {
+      id: "open-stats",
+      label: "Ouvrir les statistiques",
+      description: "Activité, mots et répartition des tags",
+      keywords: "graphiques activité",
+      icon: "chart",
+      onSelect: () => setStatsOuvert(true),
+    },
+    {
+      id: "toggle-theme",
+      label: sombre ? "Activer le thème clair" : "Activer le thème sombre",
+      description: "Adapter immédiatement le contraste",
+      keywords: "apparence nuit jour",
+      icon: sombre ? "sun" : "moon",
+      onSelect: toggleTheme,
+    },
+    {
+      id: "open-help",
+      label: "Afficher les raccourcis",
+      description: "Toutes les commandes clavier disponibles",
+      keywords: "aide clavier",
+      icon: "help",
+      onSelect: () => setAideOuverte(true),
+    },
+    ...notes.slice(0, 8).map((note) => ({
+      id: `note-${note.id}`,
+      label: note.titre,
+      description: "Ouvrir une note récente",
+      keywords: `${stripImagesForText(note.contenu)} ${(notesTags[note.id] || []).map((tagId) => getTag(tagId)?.nom || "").join(" ")}`,
+      icon: "chevron",
+      onSelect: () => {
+        changerVue("card");
+        setNoteDetailId(note.id);
+      },
+    })),
+  ];
+
   // État de chargement
   if (chargement) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ zIndex: 1, position: "relative" }}>
-        <div className="text-center">
-          <div
-            className="inline-block w-8 h-8 border-4 rounded-full animate-spin mb-4"
-            style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
-          />
-          <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-            Chargement
-          </p>
-        </div>
-      </div>
-    );
+    return <AppSkeleton />;
   }
 
   return (
-    <div className="h-screen flex flex-col relative" style={{ zIndex: 1 }}>
+    <div className="app-shell">
       {/* Formes décoratives en arrière-plan */}
       <div
         className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-20 blur-3xl pointer-events-none"
@@ -1823,118 +2097,26 @@ export default function Home() {
       />
 
       {/* === HEADER === */}
-      <header className="glass-card p-4 flex items-center justify-between flex-wrap gap-3 m-3 mb-0" style={{ flexShrink: 0 }}>
-        {/* ZONE GAUCHE — Identité + navigation */}
-        <div className="flex items-center gap-3">
-          <h1 className="logo-capsule">CAPSULE</h1>
-          <div className="tag" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
-            {notes.length} note{notes.length !== 1 ? "s" : ""}
-          </div>
-          <div className="flex items-center" style={{ border: "2px solid var(--brutal-border)", borderRadius: "2px" }}>
-            <button
-              onClick={() => { setViewMode("card"); annulerEdition(); }}
-              title="Vue en cartes"
-              style={{
-                padding: "0.3rem 0.5rem",
-                fontSize: "0.9rem",
-                lineHeight: 1,
-                background: viewMode === "card" ? "var(--accent)" : "transparent",
-                color: viewMode === "card" ? "#fff" : "var(--text-secondary)",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 700,
-                transition: "all 0.15s",
-              }}
-            >
-              &#8862;
-            </button>
-            <button
-              onClick={() => { setViewMode("list"); annulerEdition(); setNoteDetailId(null); }}
-              title="Vue en liste"
-              style={{
-                padding: "0.3rem 0.5rem",
-                fontSize: "0.9rem",
-                lineHeight: 1,
-                background: viewMode === "list" ? "var(--accent)" : "transparent",
-                color: viewMode === "list" ? "#fff" : "var(--text-secondary)",
-                border: "none",
-                borderLeft: "2px solid var(--brutal-border)",
-                cursor: "pointer",
-                fontWeight: 700,
-                transition: "all 0.15s",
-              }}
-            >
-              &#9776;
-            </button>
-            <button
-              onClick={() => { setViewMode("kanban"); annulerEdition(); setNoteDetailId(null); }}
-              title="Vue Kanban"
-              style={{
-                padding: "0.3rem 0.5rem",
-                fontSize: "0.9rem",
-                lineHeight: 1,
-                background: viewMode === "kanban" ? "var(--accent)" : "transparent",
-                color: viewMode === "kanban" ? "#fff" : "var(--text-secondary)",
-                border: "none",
-                borderLeft: "2px solid var(--brutal-border)",
-                cursor: "pointer",
-                fontWeight: 700,
-                transition: "all 0.15s",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ display: "block" }}>
-                <rect x="0" y="0" width="3.5" height="14" rx="0.5" fill="currentColor"/>
-                <rect x="5.25" y="0" width="3.5" height="10" rx="0.5" fill="currentColor"/>
-                <rect x="10.5" y="0" width="3.5" height="12" rx="0.5" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ZONE CENTRE — Action principale */}
-        <button
-          onClick={() => setModeCreation(true)}
-          className="btn-brutal primary"
-          style={{ fontSize: "0.8rem", padding: "0.5rem 1.2rem", letterSpacing: "0.06em" }}
-        >
-          + NOUVELLE NOTE
-        </button>
-
-        {/* ZONE DROITE — Actions secondaires + session */}
-        <div className="flex items-center gap-3">
-          {/* Groupe 1 — Outils */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPanneauTagsOuvert(!panneauTagsOuvert)}
-              className="btn-brutal ghost"
-              style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-            >
-              {panneauTagsOuvert ? "Fermer tags" : "Gérer tags"}
-            </button>
-            <button onClick={() => setStatsOuvert(true)} className="btn-brutal ghost" style={{ fontSize: "0.9rem", padding: "0.35rem 0.55rem" }} title="Statistiques">
-              {"\uD83D\uDCCA"}
-            </button>
-            <button onClick={toggleTheme} className="btn-brutal ghost" style={{ fontSize: "1rem", padding: "0.35rem 0.55rem" }}>
-              {sombre ? "\u2600" : "\u263E"}
-            </button>
-          </div>
-          {/* Séparateur */}
-          <div style={{ width: "1px", height: "1.5rem", background: "var(--panel-border)", flexShrink: 0 }} />
-          {/* Groupe 2 — Session */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono hidden sm:block" style={{ color: "var(--text-muted)" }}>
-              {utilisateur.email}
-            </span>
-            <button onClick={handleLogout} className="btn-brutal danger" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        noteCount={notes.length}
+        viewMode={viewMode}
+        onViewChange={changerVue}
+        onNewNote={() => setModeCreation(true)}
+        onOpenCommand={() => setCommandPaletteOpen(true)}
+        tagsOpen={panneauTagsOuvert}
+        onToggleTags={() => setPanneauTagsOuvert((open) => !open)}
+        onOpenStats={() => setStatsOuvert(true)}
+        isDark={sombre}
+        onToggleTheme={toggleTheme}
+        onOpenHelp={() => setAideOuverte(true)}
+        email={utilisateur.email}
+        onLogout={handleLogout}
+        busy={noteBusy}
+      />
 
       {/* === PANNEAU DE GESTION DES TAGS === */}
       {panneauTagsOuvert && (
-        <div className="glass-card p-5 space-y-4 mx-3 mt-3" style={{ flexShrink: 0 }}>
+        <div className="glass-card p-5 space-y-4" style={{ flexShrink: 0 }}>
           <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
             Gestion des tags
           </p>
@@ -1957,6 +2139,8 @@ export default function Home() {
                   type="button"
                   onClick={() => setNouveauTagCouleur(c.hex)}
                   title={c.nom}
+                  aria-label={`Couleur ${c.nom}`}
+                  aria-pressed={nouveauTagCouleur === c.hex}
                   style={{
                     width: "1.5rem",
                     height: "1.5rem",
@@ -2017,6 +2201,7 @@ export default function Home() {
                       className="text-xs ml-1"
                       style={{ color: "var(--text-muted)", lineHeight: 1 }}
                       title="Supprimer ce tag"
+                      aria-label={`Supprimer le tag ${tag.nom}`}
                     >
                       &times;
                     </button>
@@ -2028,46 +2213,26 @@ export default function Home() {
         </div>
       )}
 
-      {/* Messages de feedback */}
-      <div className="mx-3 mt-2" style={{ flexShrink: 0 }}>
-        {succes && (
-          <div
-            className="glass-card p-3 text-sm font-bold mb-2"
-            style={{ color: "var(--success)", borderColor: "var(--success)" }}
-          >
-            {succes}
-          </div>
-        )}
-        {erreur && (
-          <div
-            className="glass-card p-3 text-sm font-bold mb-2"
-            style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
-          >
-            {erreur}
-          </div>
-        )}
-        {imageFeatureError && (
-          <div
-            className="glass-card p-3 text-xs font-bold mb-2"
-            style={{ color: "#b45309", borderColor: "#f59e0b" }}
-          >
-            Images désactivées : {imageFeatureError}
-          </div>
-        )}
-        {noteSaving && (
-          <div
-            className="glass-card p-3 text-xs font-bold mb-2"
-            style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
-            role="status"
-          >
-            {imageUploadProgress?.label || "Sauvegarde des données et des images en cours..."}
-          </div>
-        )}
-      </div>
+      {imageFeatureError && (
+        <div className="app-status-strip" role="alert">
+          <strong>Images indisponibles</strong>
+          <span>{imageFeatureError}</span>
+        </div>
+      )}
+      {noteSaving && (
+        <div className="app-status-strip is-progress" role="status" aria-live="polite">
+          <strong>{imageUploadProgress?.label || "Sauvegarde en cours…"}</strong>
+          {imageUploadProgress && (
+            <progress value={imageUploadProgress.percent} max="100">
+              {imageUploadProgress.percent}%
+            </progress>
+          )}
+        </div>
+      )}
 
       {/* === CARD VIEW === */}
       {viewMode === "card" && (
-        <div className="flex-1 overflow-y-auto mx-3 mt-2 mb-3 fade-in">
+        <div className="workspace-view flex-1 overflow-y-auto fade-in">
           {/* Barre recherche + filtres */}
           <div className="glass-card p-3 space-y-2 mb-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -2084,6 +2249,7 @@ export default function Home() {
                 {recherche && (
                   <button
                     onClick={() => setRecherche("")}
+                    aria-label="Effacer la recherche"
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
                   >
@@ -2135,21 +2301,24 @@ export default function Home() {
 
           {/* Grille de cards */}
           {notes.length === 0 ? (
-            <div className="glass-card p-10 text-center">
-              <p className="text-4xl mb-3">&#9997;</p>
-              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                Aucune note
-              </p>
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                Crée ta première note ci-dessus
-              </p>
+            <div className="glass-card">
+              <EmptyState
+                icon="plus"
+                title="Ta première capsule commence ici"
+                description="Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l'auras pas partagée."
+                actionLabel="Créer une note"
+                onAction={() => setModeCreation(true)}
+              />
             </div>
           ) : notesFiltrees.length === 0 ? (
-            <div className="glass-card p-10 text-center">
-              <p className="text-4xl mb-3">&#128269;</p>
-              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                Aucun résultat
-              </p>
+            <div className="glass-card">
+              <EmptyState
+                icon="search"
+                title="Aucune note ne correspond"
+                description="Efface la recherche ou le filtre de tag pour retrouver toutes tes notes."
+                actionLabel="Réinitialiser les filtres"
+                onAction={() => { setRecherche(""); setFiltreTagId(null); }}
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2278,6 +2447,8 @@ export default function Home() {
                           lineHeight: 1,
                         }}
                         title={note.epinglee ? "Désépingler" : "Épingler"}
+                        aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
+                        aria-pressed={note.epinglee}
                       >
                         {"\uD83D\uDCCC"}
                       </button>
@@ -2320,6 +2491,7 @@ export default function Home() {
                           className="btn-brutal ghost"
                           style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--text-muted)" }}
                           title="Partager"
+                          aria-label="Partager la note"
                         >
                           {"\uD83D\uDD17"}
                         </button>
@@ -2405,7 +2577,7 @@ export default function Home() {
 
       {/* === KANBAN VIEW === */}
       {viewMode === "kanban" && (
-        <div className="flex-1 overflow-hidden mx-3 mt-2 mb-3 fade-in flex flex-col">
+        <div className="workspace-view flex-1 overflow-hidden fade-in flex flex-col">
           {/* Barre recherche + filtres */}
           <div className="glass-card p-3 space-y-2 mb-3" style={{ flexShrink: 0 }}>
             <div className="flex flex-wrap items-center gap-3">
@@ -2422,6 +2594,7 @@ export default function Home() {
                 {recherche && (
                   <button
                     onClick={() => setRecherche("")}
+                    aria-label="Effacer la recherche"
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
                   >
@@ -2474,20 +2647,8 @@ export default function Home() {
               return (
                 <div
                   key={col.id}
+                  data-kanban-column={col.id}
                   className={"kanban-colonne" + (dragOverColonne === col.id ? " kanban-colonne-dragover" : "")}
-                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
-                  onDragEnter={(e) => { e.preventDefault(); setDragOverColonne(col.id); }}
-                  onDragLeave={(e) => {
-                    // Ne pas retirer si on entre dans un enfant
-                    if (e.currentTarget.contains(e.relatedTarget)) return;
-                    setDragOverColonne(null);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverColonne(null);
-                    const noteId = e.dataTransfer.getData("text/plain");
-                    if (noteId) deplacerNoteKanban(noteId, col.id);
-                  }}
                   style={{
                     borderColor: dragOverColonne === col.id ? col.couleur : undefined,
                   }}
@@ -2519,26 +2680,31 @@ export default function Home() {
                           <div
                             key={note.id}
                             className={"kanban-card" + (dragNoteId === note.id ? " kanban-card-dragging" : "")}
-                            draggable="true"
-                            onDragStart={(e) => {
-                              setDragNoteId(note.id);
-                              e.dataTransfer.setData("text/plain", note.id);
-                              e.dataTransfer.effectAllowed = "move";
-                            }}
-                            onDragEnd={() => {
-                              setDragNoteId(null);
-                              setDragOverColonne(null);
-                            }}
                             onClick={() => setNoteDetailId(note.id)}
                             style={{
                               backgroundColor: getCouleurFond(note.couleur),
                               borderColor: note.epinglee ? "var(--accent)" : undefined,
                             }}
                           >
-                            <p className="kanban-card-titre">
-                              {note.epinglee && <span style={{ marginRight: "0.25rem" }}>{"\uD83D\uDCCC"}</span>}
-                              {note.titre}
-                            </p>
+                            <div className="kanban-card-topline">
+                              <p className="kanban-card-titre">
+                                {note.epinglee && <span style={{ marginRight: "0.25rem" }}>{"\uD83D\uDCCC"}</span>}
+                                {note.titre}
+                              </p>
+                              <button
+                                type="button"
+                                className="kanban-drag-handle"
+                                aria-label={`Faire glisser ${note.titre}`}
+                                title="Glisser vers une colonne"
+                                onClick={(event) => event.stopPropagation()}
+                                onPointerDown={(event) => commencerGlisserKanban(event, note.id)}
+                                onPointerMove={continuerGlisserKanban}
+                                onPointerUp={terminerGlisserKanban}
+                                onPointerCancel={annulerGlisserKanban}
+                              >
+                                <Icon name="move" size={15} />
+                              </button>
+                            </div>
                             {tagsDeNote.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {tagsDeNote.map((tag) => (
@@ -2561,6 +2727,20 @@ export default function Home() {
                                 ))}
                               </div>
                             )}
+                            <div className="kanban-card-footer" onClick={(event) => event.stopPropagation()}>
+                              <select
+                                className="kanban-move-select"
+                                value={note.kanban_colonne || "todo"}
+                                aria-label={`Déplacer ${note.titre} vers une colonne`}
+                                onChange={(event) => void deplacerNoteKanban(note.id, event.target.value)}
+                              >
+                                {KANBAN_COLONNES.map((targetColumn) => (
+                                  <option key={targetColumn.id} value={targetColumn.id}>
+                                    Déplacer vers — {targetColumn.nom}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         );
                       })
@@ -2575,7 +2755,7 @@ export default function Home() {
 
       {/* === LIST VIEW (Split Panel) === */}
       {viewMode === "list" && (
-        <div className="split-container fade-in mx-3 mt-2 mb-3" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
+        <div className="workspace-view split-container fade-in" style={{ borderRadius: "4px", overflow: "hidden", border: "2px solid var(--glass-border)" }}>
 
           {/* === PANNEAU GAUCHE — Liste === */}
           <div className={"panel-left" + (mobileDetail ? " hidden-mobile" : "")}>
@@ -2594,6 +2774,7 @@ export default function Home() {
                 {recherche && (
                   <button
                     onClick={() => setRecherche("")}
+                    aria-label="Effacer la recherche"
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1, padding: "0.15rem" }}
                   >
@@ -2648,19 +2829,22 @@ export default function Home() {
             {/* Liste des notes */}
             <div className="panel-left-scroll">
               {notes.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-2xl mb-2">&#9997;</p>
-                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                    Aucune note
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon="plus"
+                  title="Aucune note"
+                  description="Crée ta première capsule."
+                  actionLabel="Créer"
+                  onAction={() => setModeCreation(true)}
+                />
               ) : notesFiltrees.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-2xl mb-2">&#128269;</p>
-                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                    Aucun résultat
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon="search"
+                  title="Aucun résultat"
+                  actionLabel="Réinitialiser"
+                  onAction={() => { setRecherche(""); setFiltreTagId(null); }}
+                />
               ) : (
                 notesFiltrees.map((note) => {
                   const tagIds = notesTags[note.id] || [];
@@ -2764,17 +2948,23 @@ export default function Home() {
           }}
         >
           <div
+            ref={modalPanelRef}
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
             style={{ backgroundColor: getCouleurFond(couleurNote) || "var(--modal-bg)" }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-note-title"
+            tabIndex={-1}
           >
             {/* Header */}
             <div className="modal-header">
-              <h2 className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
+              <h2 id="new-note-title" className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
                 Nouvelle note
               </h2>
               <button
                 onClick={fermerModaleCreation}
+                aria-label="Fermer la création"
                 className="btn-brutal ghost"
                 style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
               >
@@ -2831,6 +3021,8 @@ export default function Home() {
                         type="button"
                         onClick={() => setCouleurNote(c.hex)}
                         title={c.nom}
+                        aria-label={`Couleur ${c.nom}`}
+                        aria-pressed={couleurNote === c.hex}
                         style={{
                           width: "1.75rem",
                           height: "1.75rem",
@@ -2896,104 +3088,53 @@ export default function Home() {
         sombre={sombre}
       />
 
-      {/* Bouton aide raccourcis clavier */}
-      <button
-        onClick={() => setAideOuverte(!aideOuverte)}
-        style={{
-          position: "fixed",
-          bottom: "1rem",
-          right: "1rem",
-          width: "2.2rem",
-          height: "2.2rem",
-          borderRadius: "50%",
-          background: "var(--glass-bg)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          border: "2px solid var(--glass-border)",
-          boxShadow: "3px 3px 0 var(--brutal-shadow)",
-          color: "var(--text-muted)",
-          fontSize: "1rem",
-          fontWeight: 700,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9998,
-          transition: "transform 0.15s, box-shadow 0.15s",
-        }}
-        title="Raccourcis clavier"
-      >
-        ?
-      </button>
-
       {/* Modale aide raccourcis */}
-      {aideOuverte && createPortal(
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) setAideOuverte(false); }}
-        >
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "360px", backgroundColor: "var(--modal-bg)" }}
-          >
-            <div className="modal-header">
-              <h2 className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
-                Raccourcis clavier
-              </h2>
-              <button
-                onClick={() => setAideOuverte(false)}
-                className="btn-brutal ghost"
-                style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1 }}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body" style={{ padding: "0.75rem 1.25rem" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <tbody>
-                  {[
-                    ["N", "Nouvelle note"],
-                    ["/", "Rechercher"],
-                    ["1 / 2 / 3", "Card / List / Kanban"],
-                    ["\u00c9chap", "Fermer / Annuler"],
-                    ["\u2191 \u2193", "Naviguer (liste)"],
-                    ["Entr\u00e9e", "S\u00e9lectionner"],
-                    ["E", "\u00c9diter (modale)"],
-                    ["Suppr", "Supprimer (modale)"],
-                  ].map(([touche, action]) => (
-                    <tr key={touche} style={{ borderBottom: "1px solid var(--panel-border)" }}>
-                      <td
-                        style={{
-                          padding: "0.4rem 0.5rem",
-                          fontWeight: 800,
-                          fontSize: "0.75rem",
-                          fontFamily: "var(--font-mono), monospace",
-                          color: "var(--accent)",
-                          whiteSpace: "nowrap",
-                          width: "5rem",
-                        }}
-                      >
-                        {touche}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.4rem 0.5rem",
-                          fontSize: "0.75rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {action}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <Dialog
+        open={aideOuverte}
+        onClose={() => setAideOuverte(false)}
+        title="Raccourcis clavier"
+        description="Les commandes restent désactivées pendant la saisie dans un champ."
+        panelStyle={{ maxWidth: "390px" }}
+      >
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {[
+              ["Ctrl / ⌘ + K", "Palette de commandes"],
+              ["N", "Nouvelle note"],
+              ["/", "Rechercher"],
+              ["1 / 2 / 3", "Cartes / Liste / Kanban"],
+              ["Échap", "Fermer / Annuler"],
+              ["↑ ↓", "Naviguer dans la liste"],
+              ["Entrée", "Sélectionner"],
+              ["E", "Éditer la note ouverte"],
+              ["Suppr", "Supprimer la note ouverte"],
+            ].map(([touche, action]) => (
+              <tr key={touche} style={{ borderBottom: "1px solid var(--panel-border)" }}>
+                <td style={{ padding: "0.48rem 0.5rem", width: "7rem" }}><kbd>{touche}</kbd></td>
+                <td style={{ padding: "0.48rem 0.5rem", fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                  {action}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Dialog>
+
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        commands={commandItems}
+      />
+
+      <MobileNavigation
+        viewMode={viewMode}
+        onViewChange={changerVue}
+        onNewNote={() => setModeCreation(true)}
+        onOpenCommand={() => setCommandPaletteOpen(true)}
+        busy={noteBusy}
+      />
+
+      <ToastViewport toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

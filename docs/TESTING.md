@@ -21,7 +21,11 @@ npm run security:audit -- --audit-level=high
 - upload filtré, progression et compensation ;
 - duplication et correspondance des URL signées ;
 - classification read-only des incohérences Markdown, métadonnées et Storage ;
-- manifeste, icônes et règles du service worker PWA.
+- manifeste, raccourcis, icônes et règles du service worker PWA ;
+- transformations Markdown de sélection ;
+- partage système avec repli presse-papiers et View Transition progressive ;
+- invariants statiques des dialogues, commandes, cibles tactiles et mouvement
+  réduit.
 
 ### Recette navigateur authentifiée
 
@@ -81,7 +85,22 @@ npm run start -- -p 3001
 Vérifier l'enregistrement du service worker, le repli hors ligne, l'absence de
 données privées dans Cache Storage et l'installation finale sur Safari iOS.
 
-## 4. Critères de release
+## 4. Recette responsive UX-002
+
+Utiliser des données synthétiques et contrôler au minimum :
+
+| Cible | Largeur de référence | Contrôles |
+|---|---:|---|
+| iPhone | 390 px | navigation basse, zones sûres, modale en feuille, aucun débordement |
+| iPad | 1 024 px | en-tête compact, noms accessibles conservés, aucune navigation mobile |
+| Desktop | 1 416 px | hiérarchie complète, palette, grille et aperçu Markdown double |
+
+Pour chaque cible : thèmes clair/sombre, clavier, focus visible, fermeture
+`Échap`, palette `Ctrl/Cmd+K`, message avec action Annuler et
+`prefers-reduced-motion`. Le Kanban doit fonctionner par glisser tactile et par
+sélecteur de colonne.
+
+## 5. Critères de release
 
 Une release est refusée si :
 
@@ -91,7 +110,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 5. Lacunes connues
+## 6. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

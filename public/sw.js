@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const CACHE_NAME = "capsule-static-v1";
+const CACHE_NAME = "capsule-static-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   OFFLINE_URL,

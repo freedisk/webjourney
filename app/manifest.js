@@ -32,5 +32,21 @@ export default function manifest() {
         purpose: "maskable",
       },
     ],
+    shortcuts: [
+      {
+        name: "Nouvelle note",
+        short_name: "Nouvelle",
+        description: "Créer immédiatement une note Capsule",
+        url: "/?action=new",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+      },
+      {
+        name: "Rechercher",
+        short_name: "Recherche",
+        description: "Rechercher dans les notes",
+        url: "/?action=search",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+      },
+    ],
   };
 }

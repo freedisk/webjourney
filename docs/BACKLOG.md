@@ -11,8 +11,16 @@
 
 ## En cours
 
-Aucun chantier actif après la clôture du sprint produit images. Sélectionner
-explicitement le prochain item avant de commencer une nouvelle évolution.
+### UX-002 — Neo-brutalism fonctionnel
+
+- **Priorité** : P2.
+- **ROI / effort** : très élevé / sprint complet.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : hiérarchie responsive, navigation mobile, dialogues et focus,
+  toasts/annulation, skeletons/états vides, palette de commandes, Markdown avec
+  aperçu, Kanban tactile, partage système et raccourcis PWA.
+- **Sortie** : gates locaux et GitHub verts, recette multi-viewport, Vercel
+  `READY` et smoke tests publics.
 
 ## Prochaines priorités
 
