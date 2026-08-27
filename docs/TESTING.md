@@ -39,6 +39,9 @@ npm run security:audit -- --audit-level=high
   masquage/restauration exacte des images, nombres, URL et tâches, reprise
   ciblée unique, timeout explicite, sortie tronquée refusée et application sur
   snapshot inchangé.
+- invariants PRINT-001 : titre sûr, références privées disponibles, décodage de
+  toutes les images, progression, timeout, annulation, rendu non interactif et
+  isolation du document sous `@media print`.
 
 ### Recette navigateur authentifiée
 
@@ -201,7 +204,25 @@ contenir que `completed: string[]` et `checklistHidden: boolean`. Une session PW
 déjà chargée conserve l'aide grâce aux assets statiques ; un rechargement hors
 ligne affiche volontairement `/offline` et jamais une page privée mise en cache.
 
-## 8. Critères de release
+## 8. Recette PRINT-001
+
+Depuis une note enregistrée, suivre `docs/PRINTING.md` et contrôler :
+
+- aperçu avec titre, date, tags, Markdown, liens, légendes et plusieurs images ;
+- refus d'une référence privée sans URL signée, actualisation puis nouvelle
+  tentative ;
+- progression visible et **Annuler la préparation** réellement interruptible ;
+- fermeture par bouton et `Échap`, puis restitution du focus au déclencheur ;
+- notes courte, vide et proche de 20 000 caractères sans coupure incohérente ;
+- aucun débordement horizontal à 390, 1 024 et 1 416 px ;
+- sortie papier claire sans overlay, boutons, ombres ou visionneuse ;
+- dialogue natif Chrome desktop puis Safari/PWA iPhone ou iPad.
+
+L'automatisation ne doit jamais ouvrir le dialogue natif d'impression, qui peut
+bloquer la session. Elle valide le préflight et les styles ; la destination PDF
+reste une recette manuelle sur l'appareil.
+
+## 9. Critères de release
 
 Une release est refusée si :
 
@@ -211,7 +232,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 9. Lacunes connues
+## 10. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

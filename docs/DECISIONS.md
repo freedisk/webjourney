@@ -179,6 +179,25 @@ journal avec un lien vers celle qui la remplace.
   borné par les budgets de section, la concurrence de deux, la reprise unique et
   le timeout client ; aucune sortie partielle n'est applicable.
 
+## ADR-014 — Impression native avant moteur PDF dédié
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : les notes longues et illustrées doivent pouvoir devenir un
+  document papier ou PDF lisible, sans exposer les images privées ni ajouter un
+  service de rendu complexe.
+- **Décision** : construire dans le navigateur une vue papier non interactive
+  de la version enregistrée, attendre et décoder toutes ses images, puis appeler
+  `window.print()`. Le navigateur ou le système reste responsable de la
+  destination, du format final et du fichier PDF éventuel.
+- **Raison** : conserver texte et liens sélectionnables, réutiliser le rendu
+  Markdown, fonctionner dans Safari/PWA et éviter une dépendance de capture ou
+  un traitement serveur de contenu privé.
+- **Conséquences** : la pagination exacte varie selon le moteur ; les images
+  manquantes bloquent l'action, la préparation est bornée et annulable, et une
+  copie exportée sort du contrôle de Capsule. Un moteur PDF déterministe ne sera
+  envisagé que pour un besoin de gabarit strict ou de valeur probatoire.
+
 ## Modèle ADR
 
 ```markdown

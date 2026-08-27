@@ -256,6 +256,23 @@ présente après correction afin d'éviter la répétition du problème.
   modèle réellement retourné par le catalogue.
 - **Statut** : corrigé et validé en production.
 
+## M-018 — Élément bloc injecté dans un paragraphe Markdown
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : la première recette PRINT-001 signalait une imbrication HTML
+  invalide et une divergence d'hydratation autour d'une image imprimable.
+- **Cause** : le renderer d'image retournait un couple `figure`/`figcaption`
+  alors que `react-markdown` pouvait l'insérer dans le paragraphe contenant la
+  syntaxe image.
+- **Impact** : aucun contenu ni fichier modifié, mais une console polluée et un
+  rendu potentiellement divergent entre serveur et client.
+- **Correction** : conteneur `span` sémantique avec rôle de groupe et légende
+  `span` rendue en bloc par CSS, valide même à l'intérieur d'un paragraphe.
+- **Prévention** : les renderers de nœuds Markdown inline restent valides dans
+  un contexte `p` ; la recette vérifie la console et l'hydratation aux largeurs
+  desktop et mobile.
+- **Statut** : corrigé avant commit.
+
 ## Modèle d'entrée
 
 ```markdown

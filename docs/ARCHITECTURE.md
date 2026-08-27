@@ -29,6 +29,8 @@ flowchart LR
 `app/page.js` orchestre la session, le CRUD, les vues, les tags et les images.
 Le singleton `lib/supabase.js` utilise uniquement une clé publique et laisse
 PostgreSQL/Storage appliquer RLS.
+L'impression construit localement une représentation non interactive de la
+version enregistrée et délègue la destination au dialogue système.
 
 ### Serveur Next.js
 
@@ -67,6 +69,8 @@ cache.
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
 | `components/AISettingsDialog.js` | Modes session/Vault et choix du modèle | Aucun stockage navigateur persistant |
 | `components/AIFormattingDialog.js` | Comparaison rendu/Markdown et validation humaine | Aucune application ni sauvegarde implicite |
+| `components/PrintNoteDialog.js` | Aperçu, préparation, annulation et impression native | Ne produit, ne stocke et n'envoie aucun PDF |
+| `components/PrintableNote.js` | Document papier sémantique | Version enregistrée et rendu non interactif seulement |
 | `app/api/ai/settings/route.js` | Statut et cycle du BYOK | Ne renvoie jamais la clé |
 | `app/api/ai/models/route.js` | Catalogue de modèles Anthropic | Auth, quota et erreurs normalisées |
 | `app/api/ai/format/route.js` | Mise en forme Markdown | Auth, quota, faits masqués, sections bornées et sortie atomique |
@@ -75,6 +79,7 @@ cache.
 | `lib/anthropic.js` | Requêtes fournisseur bornées | Aucun corps d'erreur amont relayé |
 | `lib/ai-formatting.js` | Segmentation, masquage et restauration des faits | Rejet atomique si un marqueur ou fait change |
 | `lib/help-content.js` | Rubriques, raccourcis et recherche pure | Aucun appel réseau ni contenu utilisateur |
+| `lib/note-printing.js` | Titre, contrôle des signatures et décodage des images | Timeout/annulation avant tout appel à `window.print()` |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |
 | `components/ImageLightbox.js` | Visionneuse clavier, boutons et geste horizontal | Reçoit uniquement blob local ou URL signée |
@@ -219,6 +224,24 @@ La clé Vercel historique n'est jamais utilisée implicitement. Voir
 
 Voir `docs/AI_FORMATTING.md` pour le contrat et la recette AI-002.
 
+### Impression et PDF natifs
+
+1. L'action reçoit la note telle qu'elle existe dans l'état synchronisé, jamais
+   un brouillon d'édition.
+2. Le document réutilise le Markdown en mode non interactif et les URL signées
+   présentes uniquement en mémoire.
+3. Toute référence privée sans signature bloque l'impression et propose leur
+   actualisation.
+4. Chaque image visible doit terminer son chargement et son décodage dans le
+   délai borné ; la préparation peut être annulée et relancée.
+5. Une classe temporaire isole le document sous `@media print`, force le thème
+   clair et masque tout contrôle applicatif.
+6. `window.print()` délègue impression ou PDF au système, puis titre et classes
+   temporaires sont restaurés dans tous les cas.
+
+Voir `docs/PRINTING.md` pour les limites de pagination, la confidentialité et la
+recette multi-appareil.
+
 ### Interaction moderne progressive
 
 - le changement cartes/liste/Kanban utilise View Transition si le navigateur le
@@ -260,6 +283,8 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 - Références privées d'images masquées avant mise en forme et restaurées
   uniquement après validation stricte de tous les marqueurs.
 - Aucune donnée privée dans le cache PWA ou les journaux.
+- Aucun PDF n'est persisté ou transmis par Capsule ; une copie créée par le
+  système sort explicitement de son périmètre de protection.
 - Migrations forward-only et rollback applicatif non destructif.
 
 ## 8. Dette structurante

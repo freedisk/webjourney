@@ -16,6 +16,7 @@ export default function Dialog({
   children,
   footer,
   className = "",
+  overlayClassName = "",
   panelStyle,
   initialFocusRef,
   closeOnBackdrop = true,
@@ -95,7 +96,7 @@ export default function Dialog({
   return createPortal(
     <div
       ref={overlayRef}
-      className="modal-overlay"
+      className={`modal-overlay ${overlayClassName}`.trim()}
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();
       }}

@@ -435,6 +435,49 @@ réel termine en 37,95 secondes. Aucune migration Supabase.
 - Sprint : `docs/sprints/SPRINT_AI_002_R1_2026-08-27.md`.
 - Guide : `docs/AI_FORMATTING.md`.
 
+## 2026-08-27 — PRINT-001 Impression et PDF fidèle
+
+### Objectif
+
+Permettre l'impression ou l'enregistrement PDF d'une note enregistrée, avec un
+rendu lisible du Markdown et des images privées, sans moteur PDF, persistance ou
+traitement serveur supplémentaire.
+
+### Changements
+
+- action **Imprimer / PDF** dans les détails cartes et liste, masquée pendant
+  l'édition ;
+- document papier sémantique avec titre, date, tags, contenu, liens, légendes et
+  images, sans visionneuse ni contrôle interactif ;
+- préflight des signatures privées, chargement et décodage bornés à 15 secondes,
+  progression, annulation active et nouvelle tentative ;
+- styles A4 progressifs, thème clair forcé, règles anti-coupure et isolation de
+  toute l'interface lors de l'impression ;
+- titre temporaire sûr, restauration systématique et avertissement sur la copie
+  extérieure à Capsule ;
+- dixième rubrique d'aide, guide technique, ADR et tests dédiés.
+
+### Validation locale
+
+- lint propre et **91/91 tests** dans seize fichiers ;
+- recette synthétique d'une note longue avec deux images, titres, listes, lien,
+  tableau et code : aucune erreur ou alerte console après correction M-018 ;
+- aperçu desktop 1 416 × 900 et mobile 390 × 844 sans débordement horizontal,
+  images décodées, focus initial correct et restitution au déclencheur ;
+- harnais de recette supprimé avant commit ; `npm run validate` complet vert,
+  build Next.js 16.3.3 réussi et audit npm élevé à zéro vulnérabilité.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — implémentation et recette locale terminées ; PR protégée,
+fusion et contrôle Vercel Production encore à réaliser.
+
+### Références
+
+- Branche : `codex/print-001`.
+- Sprint : `docs/sprints/SPRINT_PRINT_001_2026-08-27.md`.
+- Guide : `docs/PRINTING.md`.
+
 ## Modèle d'entrée
 
 ```markdown

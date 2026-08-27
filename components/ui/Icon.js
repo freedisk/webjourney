@@ -18,6 +18,7 @@ export default function Icon({ name, size = 18, strokeWidth = 2, className = "" 
     command: <><path d="M9 6V5a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v14a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3Z"/></>,
     arrowLeft: <><path d="m15 18-6-6 6-6"/><path d="M9 12h11"/></>,
     move: <><path d="M12 2v20M2 12h20M8 6l4-4 4 4M8 18l4 4 4-4M6 8l-4 4 4 4M18 8l4 4-4 4"/></>,
+    printer: <><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/><path d="M18 12h.01"/></>,
     chevron: <path d="m9 18 6-6-6-6"/>,
   };
 

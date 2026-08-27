@@ -20,10 +20,13 @@ IA. Une action ferme d'abord l'aide afin de conserver une seule couche active.
 
 ## Contenu et recherche
 
-`lib/help-content.js` est la source canonique des neuf rubriques, des cinq étapes
+`lib/help-content.js` est la source canonique des dix rubriques, des cinq étapes
 de démarrage et des raccourcis clavier. `filterHelpSections` normalise la casse
 et les accents puis exige que chaque terme recherché soit présent dans une même
 rubrique. Aucun service distant ni index externe n'intervient.
+
+La rubrique **Impression et PDF** décrit la version enregistrée, la préparation
+des images, le dialogue système et la responsabilité liée à une copie exportée.
 
 `components/HelpCenterDialog.js` utilise la primitive accessible `Dialog` :
 focus initial dans la recherche, confinement, fermeture par `Échap`, restitution

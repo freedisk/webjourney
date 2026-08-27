@@ -9,6 +9,8 @@ liste et Kanban), le partage public par token, les statistiques, les résumés e
 la mise en forme Markdown assistée par Anthropic. Les notes peuvent également contenir des images privées ajoutées par
 sélection, copier/coller ou glisser-déposer. Elles sont optimisées localement,
 accompagnées d'une progression et consultables dans une galerie plein écran.
+Une note enregistrée peut aussi être préparée dans un aperçu papier clair, puis
+imprimée ou enregistrée en PDF avec le dialogue natif de l'appareil.
 
 L'interface neo-brutaliste privilégie désormais une hiérarchie compacte, une
 navigation mobile dédiée, des retours non bloquants, une palette de commandes
@@ -120,6 +122,8 @@ components/
   AppHeader.js               en-tête responsive et actions prioritaires
   CommandPalette.js          navigation et commandes Ctrl/Cmd+K
   HelpCenterDialog.js        aide recherchable et démarrage rapide local
+  PrintNoteDialog.js         aperçu, préparation, annulation et impression
+  PrintableNote.js           document papier Markdown non interactif
   MobileNavigation.js        navigation tactile iPhone
   PWARegistration.js         enregistrement du service worker
   NoteContentEditor.js       texte, sélection, collage, dépôt et progression
@@ -136,6 +140,7 @@ lib/
   note-images.js             format stable et validations
   image-compression.js       optimisation WebP locale et garde-fous
   note-image-storage.js      upload, copie, suppression, signature
+  note-printing.js           titre, signatures et décodage avant impression
   note-image-audit.mjs       classification d'intégrité read-only
   supabase.js                client navigateur
   supabase-admin.js          client serveur à clé secrète
