@@ -41,6 +41,8 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- UX-002 : PR #8, fusion `b07dc19`, Vercel Production
+  `dpl_GbTa5UHM6fuZU1z1abRnMXYxhXa5` et smoke publics conformes.
 - PR #6 fusionnée au commit `4c77786` ; sprint produit images en production.
 - Vercel Production `dpl_J2uYuQ7qoiG8xztaHNMrwcmr73b5` vérifié `READY` sur
   Node 24.x, alias public et smoke tests conformes.

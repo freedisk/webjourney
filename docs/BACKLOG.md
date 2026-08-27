@@ -11,16 +11,8 @@
 
 ## En cours
 
-### UX-002 — Neo-brutalism fonctionnel
-
-- **Priorité** : P2.
-- **ROI / effort** : très élevé / sprint complet.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : hiérarchie responsive, navigation mobile, dialogues et focus,
-  toasts/annulation, skeletons/états vides, palette de commandes, Markdown avec
-  aperçu, Kanban tactile, partage système et raccourcis PWA.
-- **Sortie** : gates locaux et GitHub verts, recette multi-viewport, Vercel
-  `READY` et smoke tests publics.
+Aucun chantier actif après la mise en production de UX-002. Sélectionner
+explicitement le prochain item avant de commencer une nouvelle évolution.
 
 ## Prochaines priorités
 
@@ -82,6 +74,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-002 | Neo-brutalism fonctionnel | 2026-08-27 | PR #8, `b07dc19`, 43 tests, recette multi-viewport, Vercel `READY` |
 | UX-001 | Compression, dépôt, progression et galerie | 2026-08-26 | PR #6, `4c77786`, 31 tests, recette Chrome, Vercel `READY` |
 | OPS-001 | Audit read-only des images orphelines | 2026-08-26 | PR #6, six catégories propres après déploiement |
 | TOOL-001 | Runtime Node/npm verrouillé | 2026-08-26 | PR #6, Node 24.x confirmé par Vercel |
