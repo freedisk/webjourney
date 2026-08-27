@@ -92,6 +92,9 @@ chronologie simple tant qu'aucune version publique sémantique n'est publiée.
 
 ### Déployé
 
+- PRINT-001 : PR #20, fusion `532dd9a`, Vercel Production
+  `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb`, smoke public 9/9 et empreintes live de
+  l'action, de l'isolation papier, de l'aide et de l'annulation conformes.
 - AI-002-R1 : PR #18, fusion `f9e4880`, Vercel Production
   `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr`, smoke public 9/9 et smoke BYOK 40/40,
   cas réel long terminé en 37,95 secondes.

@@ -469,15 +469,19 @@ traitement serveur supplémentaire.
 
 ### État de livraison
 
-`READY_FOR_MERGE` — PR #20 fusionnable et `clean` après deux exécutions du
-`Quality gate` et le contrôle Vercel Preview réussis. Fusion standard et
-contrôle Vercel Production encore à réaliser.
+`DONE` — PR #20 fusionnée sans bypass au commit `532dd9a`, contrôle obligatoire
+de `main` vert et Vercel Production `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb`
+vérifié `READY` sur le SHA exact. Le smoke public passe **9/9** et les onze
+assets live contiennent les quatre empreintes fonctionnelles PRINT-001. Aucune
+migration, donnée Supabase, variable Vercel ou dépendance n'a été modifiée.
 
 ### Références
 
 - Branche : `codex/print-001`.
 - Commit fonctionnel : `a679877ce4e4082595b28b69a4da253d7acb2b81`.
 - Pull request : GitHub #20.
+- Fusion : `532dd9a4365845eeef61b56390c4425cb812cf37`.
+- Déploiement : `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb`.
 - Sprint : `docs/sprints/SPRINT_PRINT_001_2026-08-27.md`.
 - Guide : `docs/PRINTING.md`.
 

@@ -72,10 +72,12 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   18 389 caractères termine en 37,95 secondes en production, avec smoke 40/40,
   80/80 tests et nettoyage synthétique. Référence : PR #18, fusion `f9e4880`,
   Vercel `dpl_Eo4kfkxigsMPTvd7u3zFYNMzxkpr` en `READY` sur Node 24.x.
-- PRINT-001 prépare localement une vue papier de la version enregistrée, attend
-  les images privées signées avec timeout et annulation, puis délègue impression
-  ou PDF au dialogue système. Aucun fichier n'est persisté par Capsule et aucune
-  migration ou dépendance PDF n'est introduite.
+- PRINT-001 est déployé : vue papier locale de la version enregistrée, images
+  privées signées avec timeout et annulation, puis impression/PDF via le dialogue
+  système. Aucun fichier n'est persisté par Capsule et aucune migration ou
+  dépendance PDF n'est introduite. Référence : PR #20, fusion `532dd9a`, Vercel
+  `dpl_B38TAJBf2AWcUDXhV2tHgr33bawb` en `READY`, 91/91 tests, smoke public 9/9
+  et quatre empreintes fonctionnelles confirmées dans les assets live.
 
 ## Invariants
 

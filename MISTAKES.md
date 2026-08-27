@@ -273,6 +273,22 @@ présente après correction afin d'éviter la répétition du problème.
   desktop et mobile.
 - **Statut** : corrigé avant commit.
 
+## M-019 — Variable PowerShell réservée et mauvaise méthode dans le smoke
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : le premier lancement du smoke PRINT-001 ne pouvait pas affecter
+  la réponse d'accueil et obtenait 405 sur le catalogue IA.
+- **Cause** : PowerShell traite `$home` comme la variable système `$HOME`, non
+  réassignable, et `/api/ai/models` accepte `POST`, pas `GET`.
+- **Impact** : aucun effet sur l'application ou la production ; le résultat
+  partiel 8/9 et l'absence d'assets analysés ont été rejetés comme preuve.
+- **Correction** : variable spécifique `$landingResponse`, méthode `POST` et
+  relance complète depuis un état neuf : 9/9 et quatre empreintes conformes.
+- **Prévention** : ne jamais réutiliser une variable système, même avec une
+  casse différente, et définir la méthode HTTP attendue pour chaque route du
+  smoke.
+- **Statut** : corrigé pendant la validation production.
+
 ## Modèle d'entrée
 
 ```markdown

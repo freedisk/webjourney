@@ -11,13 +11,7 @@
 
 ## En cours
 
-### PRINT-001 — Impression et PDF fidèle
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé / faible.
-- **État** : `REVIEW_REQUIRED`.
-- **Sortie** : aperçu papier d'une note enregistrée, images préparées et
-  annulables, impression/PDF natif, recette responsive et livraison Vercel.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -74,6 +68,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| PRINT-001 | Impression et PDF fidèle | 2026-08-27 | PR #20, `532dd9a`, 91 tests, smoke public 9/9, assets live et Vercel `READY` |
 | AI-002-R1 | Fiabilité des notes longues | 2026-08-27 | PR #18, `f9e4880`, 80 tests, smoke production 40/40, cas réel 37,95 s, Vercel `READY` |
 | AI-002 | Mise en forme intelligente | 2026-08-27 | PR #16, `029183a`, 72 tests, smoke production 36/36, Vercel `READY` |
 | HELP-001 | Centre d'aide contextuel | 2026-08-27 | PR #14, `21f5a0c`, 64 tests, gate 4/4, smoke public 8/8, recette UI et Vercel `READY` |
