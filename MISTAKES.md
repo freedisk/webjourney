@@ -238,6 +238,24 @@ présente après correction afin d'éviter la répétition du problème.
   avec le modèle issu du catalogue avant chaque release IA.
 - **Statut** : corrigé avant commit et production.
 
+## M-017 — Budget de sortie absorbé par le thinking sur une note longue
+
+- **Date constatée** : 2026-08-27.
+- **Symptôme** : une note proche de la limite de 20 000 caractères restait en
+  génération puis devait être annulée ; laissée jusqu'au retour, elle finissait
+  en `AI_FORMAT_RESPONSE_TRUNCATED` après 75 secondes.
+- **Cause** : traitement monolithique et thinking adaptatif activé par défaut
+  sur Sonnet 5. Une section a consommé 3 224 tokens pour seulement 903
+  caractères visibles, car `max_tokens` couvre thinking et réponse.
+- **Impact** : aucune note modifiée, mais attente opaque et proposition absente.
+- **Correction** : désactivation ciblée du thinking pour les modèles 5
+  compatibles, segmentation bornée, masquage des faits, reprise unique de la
+  seule section invalide, temps écoulé et timeout client explicites.
+- **Prévention** : inclure une fixture proche de la limite dans le smoke réel,
+  relever `stop_reason` et usage sans journaliser le contenu, puis tester le
+  modèle réellement retourné par le catalogue.
+- **Statut** : corrigé localement, production à valider.
+
 ## Modèle d'entrée
 
 ```markdown

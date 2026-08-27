@@ -160,6 +160,25 @@ journal avec un lien vers celle qui la remplace.
   proposition entière. Le quota, la clé et le modèle d'AI-001 sont réutilisés ;
   aucune migration ni persistance de résultat IA n'est ajoutée.
 
+## ADR-013 — Traitement sectionné et sans thinking des notes longues
+
+- **Statut** : accepté.
+- **Date** : 2026-08-27.
+- **Contexte** : Sonnet 5 active le thinking adaptatif par défaut et son budget
+  partage `max_tokens` avec la réponse visible ; une note de 18 389 caractères
+  atteignait donc la limite après 75 secondes sans proposition exploitable.
+- **Décision** : au-delà de 10 000 caractères, masquer aussi nombres, URL et
+  tâches, découper aux frontières de phrases, traiter deux sections à la fois et
+  désactiver le thinking seulement pour les modèles 5 qui l'acceptent. Une
+  section invalide dispose d'une reprise unique ; l'ensemble reste atomique.
+- **Raison** : cette transformation mécanique bénéficie davantage d'un budget
+  réservé au texte visible que d'un raisonnement profond, tout en exigeant une
+  conservation exacte des faits structurés.
+- **Conséquences** : une action utilisateur peut provoquer plusieurs appels
+  fournisseur mais ne consomme qu'une unité du quota Capsule. Le coût reste
+  borné par les budgets de section, la concurrence de deux, la reprise unique et
+  le timeout client ; aucune sortie partielle n'est applicable.
+
 ## Modèle ADR
 
 ```markdown

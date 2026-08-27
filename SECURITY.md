@@ -45,8 +45,11 @@ Les clés serveur ne doivent jamais porter le préfixe `NEXT_PUBLIC_`.
 - Toute sortie vers Anthropic exige une session valide, des entrées bornées et
   un quota atomique consommé avant l'appel.
 - La mise en forme masque côté serveur toute référence et légende d'image
-  privée ; une sortie ayant perdu, dupliqué, réordonné ou inventé un marqueur
-  est rejetée sans toucher au brouillon.
+  privée, ainsi que les nombres, URL et cases à cocher ; une sortie ayant perdu,
+  dupliqué, réordonné ou inventé un marqueur est rejetée sans toucher au
+  brouillon.
+- Une note longue est validée section par section puis globalement. Une seule
+  reprise ciblée est permise ; aucun fragment incomplet n'est exposé au client.
 - Une proposition IA n'est jamais enregistrée ou appliquée implicitement ; le
   client vérifie que le snapshot source n'a pas changé avant l'application.
 - Les corps d'erreur Anthropic et les en-têtes contenant une clé ne sont jamais

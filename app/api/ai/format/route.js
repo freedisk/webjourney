@@ -60,6 +60,7 @@ export async function POST(request) {
       apiKey,
       modelId: modelValidation.modelId,
       content,
+      signal: request.signal,
     });
 
     return aiJson({

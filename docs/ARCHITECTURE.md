@@ -38,8 +38,9 @@ PostgreSQL/Storage appliquer RLS.
   clé synchronisée, après authentification et quota.
 - `app/api/resumer/route.js` borne la note, choisit la configuration explicite,
   consomme le quota atomique puis appelle Anthropic.
-- `app/api/ai/format/route.js` applique les mêmes contrôles, masque les
-  références privées et ne retourne qu'une proposition Markdown validée.
+- `app/api/ai/format/route.js` applique les mêmes contrôles, masque références
+  privées et faits structurés, segmente les notes longues et ne retourne qu'une
+  proposition Markdown entièrement validée.
 - `app/share/[token]/page.js` lit une note partageable avec le client public.
 - `lib/supabase-admin.js` crée un client serveur secret uniquement pour signer
   les images déjà validées comme appartenant à la note partagée.
@@ -68,11 +69,11 @@ cache.
 | `components/AIFormattingDialog.js` | Comparaison rendu/Markdown et validation humaine | Aucune application ni sauvegarde implicite |
 | `app/api/ai/settings/route.js` | Statut et cycle du BYOK | Ne renvoie jamais la clé |
 | `app/api/ai/models/route.js` | Catalogue de modèles Anthropic | Auth, quota et erreurs normalisées |
-| `app/api/ai/format/route.js` | Mise en forme Markdown | Auth, quota, images masquées et sortie validée |
+| `app/api/ai/format/route.js` | Mise en forme Markdown | Auth, quota, faits masqués, sections bornées et sortie atomique |
 | `app/api/resumer/route.js` | Résumé IA | Auth, limites et quota avant appel externe |
 | `lib/ai-settings-server.js` | Accès aux réglages, Vault et quota | Client Supabase secret serveur uniquement |
 | `lib/anthropic.js` | Requêtes fournisseur bornées | Aucun corps d'erreur amont relayé |
-| `lib/ai-formatting.js` | Masquage et restauration des références privées | Rejet atomique si un marqueur change |
+| `lib/ai-formatting.js` | Segmentation, masquage et restauration des faits | Rejet atomique si un marqueur ou fait change |
 | `lib/help-content.js` | Rubriques, raccourcis et recherche pure | Aucun appel réseau ni contenu utilisateur |
 | `components/NoteContentEditor.js` | Texte, fichiers, collage, aperçus | Aucun upload avant sauvegarde |
 | `components/MarkdownRenderer.js` | Markdown et résolution `capsule-image` | Ne stocke jamais d'URL signée |

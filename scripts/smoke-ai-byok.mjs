@@ -1,12 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
+import { readFile } from "node:fs/promises";
 import {
   ANTHROPIC_KEY_HEADER,
   chooseDefaultAIModel,
 } from "../lib/ai-config.js";
+import {
+  AI_FORMAT_CLIENT_TIMEOUT_MS,
+  containsFormattableText,
+  validateAIFormattingFacts,
+} from "../lib/ai-formatting.js";
 
 const baseUrlArgument = process.argv.find((argument) => argument.startsWith("--base-url="));
 const baseUrl = (baseUrlArgument?.slice("--base-url=".length) || "http://localhost:3101")
   .replace(/\/$/, "");
+const longFormatFileArgument = process.argv.find(
+  (argument) => argument.startsWith("--long-format-file="),
+);
+const longFormatContent = longFormatFileArgument
+  ? await readFile(longFormatFileArgument.slice("--long-format-file=".length), "utf8")
+  : "";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,6 +45,7 @@ let syntheticUserId = null;
 let accessToken = "";
 let failure = null;
 const checks = [];
+let longFormatDurationMs = null;
 
 function assert(condition, label) {
   if (!condition) throw new Error(`Échec smoke IA BYOK : ${label}`);
@@ -149,6 +162,23 @@ try {
   assert(!JSON.stringify(result.payload).includes(anthropicKey),
     "clé session absente de la proposition");
 
+  if (longFormatContent) {
+    assert(containsFormattableText(longFormatContent), "fixture longue contient du texte utile");
+    const longFormatStartedAt = Date.now();
+    result = await api("/api/ai/format", {
+      method: "POST",
+      apiKey: anthropicKey,
+      body: { contenu: longFormatContent, modelId },
+    });
+    longFormatDurationMs = Date.now() - longFormatStartedAt;
+    assert(result.response.status === 200 && typeof result.payload?.formattedContent === "string",
+      `mise en forme longue terminée (HTTP ${result.response.status}, ${result.payload?.code || "sans code"})`);
+    assert(validateAIFormattingFacts(longFormatContent, result.payload.formattedContent).valid,
+      "faits protégés de la note longue restaurés");
+    assert(longFormatDurationMs < AI_FORMAT_CLIENT_TIMEOUT_MS,
+      "mise en forme longue terminée avant le délai client");
+  }
+
   result = await api("/api/ai/settings", {
     method: "PUT",
     body: { apiKey: anthropicKey, modelId },
@@ -220,4 +250,9 @@ try {
 }
 
 if (failure) throw failure;
-console.log(JSON.stringify({ ok: true, baseUrl, checks: checks.length }));
+console.log(JSON.stringify({
+  ok: true,
+  baseUrl,
+  checks: checks.length,
+  longFormat: longFormatContent ? { ok: true, durationMs: longFormatDurationMs } : null,
+}));

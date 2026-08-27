@@ -29,7 +29,10 @@ import { extractImageIds, stripImagesForText } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 import { ANTHROPIC_KEY_HEADER } from "@/lib/ai-config";
-import { containsFormattableText } from "@/lib/ai-formatting";
+import {
+  AI_FORMAT_CLIENT_TIMEOUT_MS,
+  containsFormattableText,
+} from "@/lib/ai-formatting";
 
 // Couleurs de fond prédéfinies pour les notes (pastels clair/sombre)
 const COULEURS_NOTES = [
@@ -1051,8 +1054,19 @@ export default function Home() {
     aiFormattingRequestRef.current.controller?.abort();
     const requestId = aiFormattingRequestRef.current.id + 1;
     const controller = new AbortController();
+    let clientTimedOut = false;
+    const clientTimeout = window.setTimeout(() => {
+      clientTimedOut = true;
+      controller.abort();
+    }, AI_FORMAT_CLIENT_TIMEOUT_MS);
     aiFormattingRequestRef.current = { id: requestId, controller };
-    setAIFormatting({ ...target, proposal: "", loading: true, error: null });
+    setAIFormatting({
+      ...target,
+      proposal: "",
+      loading: true,
+      error: null,
+      startedAt: Date.now(),
+    });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1098,9 +1112,22 @@ export default function Home() {
         error: null,
       } : current);
     } catch (requestError) {
-      if (requestError?.name === "AbortError" || aiFormattingRequestRef.current.id !== requestId) {
+      if (aiFormattingRequestRef.current.id !== requestId) {
         return;
       }
+      if (requestError?.name === "AbortError" && clientTimedOut) {
+        setAIFormatting((current) => current ? {
+          ...current,
+          proposal: "",
+          loading: false,
+          error: {
+            code: "AI_PROVIDER_TIMEOUT",
+            message: "La mise en forme a dépassé 1 min 40. Ton contenu reste intact : réessaie ou choisis un modèle plus rapide.",
+          },
+        } : current);
+        return;
+      }
+      if (requestError?.name === "AbortError") return;
       const error = {
         code: requestError?.code || "AI_PROVIDER_UNREACHABLE",
         message: requestError?.message || "Impossible de contacter le serveur.",
@@ -1112,6 +1139,7 @@ export default function Home() {
         error,
       } : current);
     } finally {
+      window.clearTimeout(clientTimeout);
       if (aiFormattingRequestRef.current.id === requestId) {
         aiFormattingRequestRef.current.controller = null;
       }
@@ -3335,6 +3363,7 @@ export default function Home() {
         source={aiFormatting?.source || ""}
         proposal={aiFormatting?.proposal || ""}
         loading={Boolean(aiFormatting?.loading)}
+        startedAt={aiFormatting?.startedAt || 0}
         error={aiFormatting?.error || null}
         imageUrls={aiFormatting?.imageUrls || {}}
         onClose={fermerMiseEnForme}

@@ -49,9 +49,13 @@ describe("frontières de sécurité AI-001", () => {
     expect(editor).toContain("onSmartFormat");
     expect(editor).toContain('aria-label="Mettre en forme avec l’IA"');
     expect(formatting).toContain("maskPrivateImageReferences");
+    expect(formatting).toContain("splitAIFormattingContent");
     expect(formatting).not.toContain("localStorage");
     expect(styles).toContain(".ai-formatting-comparison");
+    expect(styles).toContain(".ai-formatting-elapsed");
     expect(styles).toContain("grid-template-columns: minmax(0, 1fr)");
+    expect(page).toContain("AI_FORMAT_CLIENT_TIMEOUT_MS");
+    expect(dialog).toContain("Traitement de la note longue");
     expect(page).toContain("!isWithinModalFocus(modalPanelRef.current, document.activeElement)");
   });
 

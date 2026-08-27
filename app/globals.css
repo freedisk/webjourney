@@ -1606,11 +1606,19 @@ kbd {
 }
 
 .ai-formatting-loading small,
+.ai-formatting-elapsed,
 .ai-formatting-error p,
 .ai-formatting-unchanged {
   color: var(--text-muted);
   font-size: 0.65rem;
   line-height: 1.5;
+}
+
+.ai-formatting-elapsed {
+  color: var(--accent);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
 .ai-formatting-error strong,
