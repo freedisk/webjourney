@@ -260,7 +260,7 @@ régression sur les notes, images et la PWA.
 - suppression explicite du secret et purge automatique à la suppression du
   compte ; aucun fallback vers `ANTHROPIC_API_KEY`.
 
-### Validation avant livraison
+### Validation et livraison
 
 - migration `20260827094500` prévisualisée dans `BEGIN`/`ROLLBACK`, puis
   appliquée atomiquement et inscrite dans l'historique distant ;
@@ -269,16 +269,25 @@ régression sur les notes, images et la PWA.
 - audit production AI-001 : 9/9 ; cycle factice chiffrer/lire/purger exécuté
   dans une transaction annulée, sans résidu ;
 - `npm run validate` : ESLint propre, 12 fichiers et 59/59 tests, build Next.js
-  réussi.
+  réussi ;
+- PR #12 fusionnée sans bypass après quatre contrôles verts au SHA
+  `02816d7462a2a8a5c11ad52c13b99b1f397839fe` ;
+- Vercel Production `dpl_Hqd243nNWJc3c8asExazAi4XN4GN` vérifié `READY` sur le
+  SHA exact, alias public actif ;
+- smoke production 30/30 et recette UI authentifiée conformes ; tous les objets
+  synthétiques ont été purgés et leur absence contrôlée.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — migration compatible déjà en production ; PR, gate, Vercel
-et recette synthétique restent à consigner dans cette entrée.
+`DONE` — migration, application, gate, déploiement, recette et nettoyage sont
+validés en production.
 
 ### Références
 
 - Branche : `codex/ai-byok-analysis`.
+- Pull request : GitHub #12.
+- Fusion : `02816d7462a2a8a5c11ad52c13b99b1f397839fe`.
+- Déploiement : `dpl_Hqd243nNWJc3c8asExazAi4XN4GN`.
 - Sprint : `docs/sprints/SPRINT_AI_001_2026-08-27.md`.
 - Guide : `docs/AI_BYOK.md`.
 
