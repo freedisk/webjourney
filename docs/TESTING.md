@@ -61,7 +61,7 @@ Après chaque déploiement :
 1. `/`, `/login`, `/manifest.webmanifest`, `/sw.js` et `/offline` répondent ;
 2. une session existante charge les notes ;
 3. `/api/resumer` sans session répond 401 ;
-4. `/api/ai/settings` et `/api/ai/models` sans session répondent 401 ;
+4. `GET /api/ai/settings` et `POST /api/ai/models` sans session répondent 401 ;
 5. `/api/ai/format` sans session répond 401 ;
 6. une opération non destructive représentative fonctionne ;
 7. la console ne révèle ni secret ni erreur nouvelle.
