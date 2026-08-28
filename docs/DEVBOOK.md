@@ -578,13 +578,23 @@ navigation depuis la page d'erreur. Aucun contournement n'a été tenté.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — PR #24 prête à fusionner après le gate relancé par le relevé
-de revue ; restent la fusion protégée et le smoke production.
+`DONE` — PR #24 fusionnée par squash sur `main` en `3abbf812`. Vercel Production
+`dpl_Cxa6Z7RBcrnRPR9VmQSAx5TwDJwp` est `READY` sur ce SHA. Le smoke public passe
+**21/21** : routes publiques/PWA/sociales, contrat et en-têtes de version,
+protections anonymes IA, et empreintes **À propos**, footer et état « à jour »
+dans les assets effectivement servis.
+
+La recette visuelle interactive n'a pas été automatisable, car la politique du
+navigateur intégré interdit de quitter sa page d'erreur antérieure. Cette limite
+de l'outil est tracée sans contourner la politique ; les tests de composants,
+les règles responsive construites et les empreintes de production sont verts.
 
 ### Références
 
 - Branche : `codex/rel-001-version-about`.
 - PR : [#24](https://github.com/freedisk/webjourney/pull/24).
+- Fusion : `3abbf812a50163be3f2dfe66bb6db5746c6d9204`.
+- Vercel : `dpl_Cxa6Z7RBcrnRPR9VmQSAx5TwDJwp`.
 - Sprint : `docs/sprints/SPRINT_REL_001_2026-08-28.md`.
 - Guide : `docs/VERSIONING.md`.
 

@@ -11,15 +11,7 @@
 
 ## En cours
 
-### REL-001 — Version, À propos et mises à jour
-
-- **Priorité** : P2.
-- **ROI / effort** : élevé / 0,5 jour.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : SemVer `1.0.0`, SHA et date du build, footer responsive,
-  dialogue **À propos**, changelog concis et contrôle manuel `no-store`.
-- **Sortie** : 105 tests, build, smoke local et preview 8/8 verts ; PR #24
-  fusionnable, fusion protégée et smoke production à finaliser.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -76,6 +68,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| REL-001 | Version, À propos et mises à jour | 2026-08-28 | PR #24, `3abbf81`, 105 tests, preview 8/8, smoke public 21/21, Vercel `READY` |
 | SHARE-001 | Aperçu social Open Graph | 2026-08-27 | PR #22, `bb0afc4`, 98 tests, smoke robot 34/34, Vercel `READY` |
 | PRINT-001 | Impression et PDF fidèle | 2026-08-27 | PR #20, `532dd9a`, 91 tests, smoke public 9/9, assets live et Vercel `READY` |
 | AI-002-R1 | Fiabilité des notes longues | 2026-08-27 | PR #18, `f9e4880`, 80 tests, smoke production 40/40, cas réel 37,95 s, Vercel `READY` |
