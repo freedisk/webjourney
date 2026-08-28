@@ -13,7 +13,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - **Données** : Supabase PostgreSQL, Auth et Storage.
 - **Langue du code existant** : UI et messages majoritairement en français.
 
-## État validé au 2026-08-27
+## État validé au 2026-08-28
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
 - Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /
@@ -82,6 +82,12 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   Open Graph/Twitter générique 1 200 × 630, sans contenu privé. Référence : PR
   #22, fusion `bb0afc4`, Vercel `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd` en `READY`,
   98/98 tests et smoke robot 34/34.
+- REL-001 établit `1.0.0` comme première version SemVer publique. Le footer et
+  **À propos** affichent version, SHA Git court et date du build ; un contrôle
+  manuel compare la PWA chargée à `/api/version` sans cache. Le changelog
+  embarqué reste statique et aucune donnée privée ou Supabase n'est consultée.
+  Validation locale : lint, 105/105 tests, build et smoke HTTP 7/7 ; livraison
+  protégée en attente.
 
 ## Invariants
 
@@ -108,6 +114,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 15. Une carte sociale est publique, générique et sans contenu de note, tag,
     image privée ou URL signée ; seul le titre d'une note déjà partagée peut
     apparaître dans les métadonnées de son propre lien public.
+16. L'identité publique d'un build contient seulement SemVer, SHA Git et date ;
+    sa vérification est manuelle, `no-store` et hors cache PWA.
 
 ## Environnement
 
@@ -117,6 +125,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
+- Version produit publique `1.0.0` ; le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.
 - Variable serveur requise : clé secrète/service-role Supabase. La clé Anthropic

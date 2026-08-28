@@ -70,6 +70,11 @@ Dans Settings → Environment Variables, définir pour Production et Preview :
 configure sa clé. La variable historique peut rester chiffrée pendant la
 fenêtre de rollback, mais le code ne l'utilise pas implicitement.
 
+REL-001 ne demande aucune variable supplémentaire. Vercel fournit
+`VERCEL_GIT_COMMIT_SHA` pendant le build ; `next.config.mjs` injecte seulement
+version, SHA et date dans les constantes publiques Capsule. Ne jamais recopier
+une variable secrète dans ce bloc.
+
 Déclencher un nouveau déploiement après toute modification de variable.
 
 ## 3. Smoke test
@@ -105,6 +110,21 @@ Contrôles de partage social :
   Sharing Debugger Meta avant de diagnostiquer une régression.
 
 Voir `docs/SOCIAL_SHARING.md` pour le contrat complet.
+
+Contrôles de version :
+
+```powershell
+$capsuleVersionResponse = Invoke-WebRequest `
+  https://webjourney-one.vercel.app/api/version -UseBasicParsing
+$capsuleVersionResponse.StatusCode
+$capsuleVersionResponse.Headers['Cache-Control']
+$capsuleVersionResponse.Content
+```
+
+La réponse doit annoncer la version de `package.json`, le SHA exact de fusion et
+une date ISO, avec `no-store` et `nosniff`. Depuis **À propos**, le build chargé
+doit être annoncé à jour. Voir `docs/VERSIONING.md` pour la recette responsive
+et le test d'une ancienne PWA.
 
 ## Rollback
 

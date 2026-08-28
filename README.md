@@ -17,6 +17,9 @@ navigation mobile dédiée, des retours non bloquants, une palette de commandes
 `Ctrl/Cmd+K`, un éditeur Markdown assisté avec aperçu et un Kanban utilisable
 au tactile comme au clavier. Un centre d'aide contextuel et recherchable relie
 le menu, la palette, l'éditeur, les états vides et les paramètres IA.
+La version, le build Git et sa date sont consultables dans **À propos** depuis
+le menu, la palette ou le footer ; une vérification manuelle permet de comparer
+la PWA chargée à la livraison actuellement servie.
 
 Capsule est également une PWA installable sur l'écran d'accueil d'un iPhone ou
 d'un iPad depuis Safari. Elle s'ouvre alors en mode autonome avec une icône
@@ -33,6 +36,7 @@ affichent une carte Capsule dédiée ; voir
 - Tailwind CSS 4 et CSS custom ;
 - Anthropic en BYOK pour les résumés et la mise en forme des notes ;
 - Web App Manifest et service worker minimal pour l'installation PWA.
+- version produit SemVer et identité de build Git injectée par Next.js.
 
 ## Démarrage local
 
@@ -111,6 +115,7 @@ npm run ops:audit-images # rapport read-only Markdown / métadonnées / Storage
 ```text
 app/
   page.js                    interface et opérations principales
+  api/version/route.js       identité publique du build courant, sans cache
   opengraph-image.js         carte sociale publique générée en 1200 x 630
   manifest.js                manifeste d'installation PWA
   offline/page.js            page de repli sans connexion
@@ -120,6 +125,8 @@ app/
   api/ai/settings/route.js   statut, enregistrement et suppression BYOK
   share/[token]/page.js      lecture publique et signature serveur
 components/
+  AboutDialog.js             version, changelog et contrôle de mise à jour
+  AppFooter.js               identité compacte et responsive du build
   AIFormattingDialog.js      comparaison rendu/source et application explicite
   AISettingsDialog.js        modes session/Vault et choix du modèle
   AppHeader.js               en-tête responsive et actions prioritaires
@@ -133,6 +140,8 @@ components/
   MarkdownRenderer.js        Markdown et galerie d'images signées
   ImageLightbox.js           visionneuse clavier, tactile et accessible
 lib/
+  app-version.js             validation et comparaison des builds publics
+  release-notes.js           jalons utilisateur compacts et statiques
   site-metadata.js           contrat Open Graph/Twitter et URL canonique
   ai-formatting.js           masquage/restauration stricte des images privées
   help-content.js            contenu, recherche et progression de l'aide
@@ -171,6 +180,7 @@ public/icons/                icônes PWA et source SVG
 - [mise en forme intelligente](docs/AI_FORMATTING.md) ;
 - [centre d'aide contextuel](docs/HELP_CENTER.md) ;
 - [aperçus sociaux et cache Messenger](docs/SOCIAL_SHARING.md) ;
+- [version, build et mise à jour PWA](docs/VERSIONING.md) ;
 - [registre des erreurs](MISTAKES.md) et [politique de sécurité](SECURITY.md).
 
 `CLAUDE.md` conserve le contexte fonctionnel détaillé et `AGENTS.md` définit les

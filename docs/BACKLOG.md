@@ -11,7 +11,15 @@
 
 ## En cours
 
-Aucun sprint actif.
+### REL-001 — Version, À propos et mises à jour
+
+- **Priorité** : P2.
+- **ROI / effort** : élevé / 0,5 jour.
+- **État** : `REVIEW_REQUIRED`.
+- **Périmètre** : SemVer `1.0.0`, SHA et date du build, footer responsive,
+  dialogue **À propos**, changelog concis et contrôle manuel `no-store`.
+- **Sortie** : 105 tests, build et smoke local verts ; PR, recette preview,
+  fusion protégée et smoke production à finaliser.
 
 ## Prochaines priorités
 

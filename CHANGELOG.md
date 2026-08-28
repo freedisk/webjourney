@@ -1,9 +1,23 @@
 # Changelog
 
-Les changements notables de Capsule sont consignés ici. Le projet utilise une
-chronologie simple tant qu'aucune version publique sémantique n'est publiée.
+Les changements notables de Capsule sont consignés ici selon la version
+sémantique déclarée dans `package.json`.
 
 ## Non publié
+
+Aucun changement pour le moment.
+
+## 1.0.0 — 2026-08-28
+
+### REL-001 — Version, À propos et mises à jour
+
+- Première baseline SemVer publique, avec SHA Git court et date réelle du build.
+- Dialogue **À propos** accessible depuis le menu, la palette et un footer
+  responsive, avec trois jalons utilisateur concis.
+- Vérification manuelle de la livraison courante par `/api/version` en
+  `no-store`, puis rechargement explicite de la PWA si nécessaire.
+- Aucun appel au démarrage, contenu privé, migration, variable obligatoire ou
+  dépendance supplémentaire.
 
 ### SHARE-001 — Aperçu social Open Graph
 

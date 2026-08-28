@@ -44,6 +44,9 @@ npm run security:audit -- --audit-level=high
   isolation du document sous `@media print`.
 - invariants SHARE-001 : contrat Open Graph/Twitter, image 1 200 × 630,
   normalisation des titres et absence de contenu privé dans la carte.
+- invariants REL-001 : cohérence SemVer/lockfile/changelog, validation de
+  l'identité, comparaison de builds, requête `no-store`, surface API minimale et
+  branchements menu/palette/footer/dialogue.
 
 ### Recette navigateur authentifiée
 
@@ -65,8 +68,9 @@ Après chaque déploiement :
 3. `/api/resumer` sans session répond 401 ;
 4. `GET /api/ai/settings` et `POST /api/ai/models` sans session répondent 401 ;
 5. `/api/ai/format` sans session répond 401 ;
-6. une opération non destructive représentative fonctionne ;
-7. la console ne révèle ni secret ni erreur nouvelle.
+6. `/api/version` répond 200, `no-store`, avec version, SHA et date attendus ;
+7. une opération non destructive représentative fonctionne ;
+8. la console ne révèle ni secret ni erreur nouvelle.
 
 ## 2. Tests Supabase
 
@@ -239,7 +243,27 @@ Suivre `docs/SOCIAL_SHARING.md` avec un build de production et contrôler :
 - après production, une nouvelle analyse Meta avant de conclure sur un lien
   déjà mis en cache par Messenger.
 
-## 10. Critères de release
+## 10. Recette REL-001
+
+Suivre `docs/VERSIONING.md` et contrôler :
+
+1. footer complet à 1 024 et 1 416 px, footer court à 390 px, sans recouvrement
+   de la navigation mobile ni débordement horizontal ;
+2. menu, palette et footer ouvrent le même dialogue nommé **À propos de
+   Capsule** ; fermeture bouton/`Échap` et restitution du focus ;
+3. version `1.0.0`, SHA court et date lisible correspondent à `/api/version` ;
+4. changelog limité, lisible en thèmes clair/sombre et entièrement défilable sur
+   un iPhone ;
+5. **Vérifier les mises à jour** annonce **Capsule est à jour** sur le build
+   courant, sans requête préalable au clic ;
+6. réseau coupé, le dialogue reste disponible et affiche une erreur actionnable
+   sans fermer l'application ni vider un stockage ;
+7. l'endpoint retourne `Cache-Control: no-store`, `nosniff` et seulement
+   `version`, `buildId`, `builtAt` ;
+8. après une nouvelle production, un ancien build ouvert annonce la nouvelle
+   livraison et **Recharger maintenant** charge le nouveau SHA.
+
+## 11. Critères de release
 
 Une release est refusée si :
 
@@ -249,7 +273,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 11. Lacunes connues
+## 12. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

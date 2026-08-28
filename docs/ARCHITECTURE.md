@@ -21,6 +21,7 @@ flowchart LR
     P -->|Clé serveur après validation| B
     R[Robot social Messenger/X] -->|HTML public| O[Métadonnées Open Graph]
     O --> G[/opengraph-image 1200 x 630]
+    C -->|Contrôle manuel no-store| Z[/api/version]
     SW[Service worker] -->|Shell statique uniquement| N
 ```
 
@@ -49,6 +50,8 @@ version enregistrée et délègue la destination au dialogue système.
 - `app/opengraph-image.js` génère une carte sociale publique et générique à
   partir de l'icône PWA ; `lib/site-metadata.js` centralise les titres, URL et
   métadonnées de la racine et des liens partagés.
+- `app/api/version/route.js` publie uniquement version, SHA et date du build
+  courant avec des en-têtes anti-cache ; aucun accès Supabase n'est effectué.
 - `lib/supabase-admin.js` crée un client serveur secret uniquement pour signer
   les images déjà validées comme appartenant à la note partagée.
 
@@ -68,12 +71,17 @@ cache.
 | `components/MobileNavigation.js` | Navigation tactile persistante | Respecte les zones sûres iOS |
 | `components/CommandPalette.js` | Recherche de commandes et notes | Aucune indexation ni persistance externe |
 | `components/HelpCenterDialog.js` | Aide recherchable et démarrage rapide | Contenu statique ; progression locale non sensible seulement |
+| `components/AboutDialog.js` | Identité, changelog et contrôle de mise à jour | Appel explicite à une route publique `no-store` seulement |
+| `components/AppFooter.js` | Version compacte et accès À propos | Aucun appel réseau ; variante courte sur mobile |
 | `components/ui/Dialog.js` | Modale accessible réutilisable | Focus confiné, restitué et fermeture Échap |
 | `components/ui/ToastViewport.js` | Feedback non bloquant et annulation | Quatre messages maximum, temporisation locale |
 | `lib/modal-isolation.js` | Isolation des couches modales et ordre du focus | Fond inerte, toasts interactifs explicitement exemptés |
 | `app/share/[token]/page.js` | Lecture publique et signature d'images | Server Component |
 | `app/opengraph-image.js` | Carte Open Graph PNG 1 200 × 630 | Visuel statique, aucune donnée de note |
 | `lib/site-metadata.js` | Contrat canonique Open Graph/Twitter | Titre public seulement sur un lien partagé |
+| `app/api/version/route.js` | Identité du build servi par l'alias courant | JSON public minimal, dynamique et hors cache |
+| `lib/app-version.js` | Validation, formatage et comparaison des builds | Constantes publiques figées au build |
+| `lib/release-notes.js` | Trois à cinq jalons lisibles dans l'interface | Statique, sans contenu utilisateur ni requête |
 | `components/AISettingsDialog.js` | Modes session/Vault et choix du modèle | Aucun stockage navigateur persistant |
 | `components/AIFormattingDialog.js` | Comparaison rendu/Markdown et validation humaine | Aucune application ni sauvegarde implicite |
 | `components/PrintNoteDialog.js` | Aperçu, préparation, annulation et impression native | Ne produit, ne stocke et n'envoie aucun PDF |
@@ -274,6 +282,18 @@ recette multi-appareil.
   métier ;
 - `prefers-reduced-motion` neutralise les animations non essentielles.
 
+### Version et mise à jour de la PWA
+
+1. `next.config.mjs` lit la version du package, utilise
+   `VERCEL_GIT_COMMIT_SHA` ou le SHA Git local, puis fige la date du build.
+2. Le client affiche ces constantes dans le footer et **À propos** sans requête.
+3. Au clic seulement, l'ancien client appelle `/api/version` sur l'alias courant
+   avec `no-store` et valide strictement les trois champs.
+4. Une version ou un SHA différent propose un rechargement ; le service worker
+   vérifie ses assets avant `window.location.reload()`.
+5. Hors ligne ou en erreur, l'identité chargée reste visible et aucune donnée
+   n'est modifiée. La route `/api/` n'entre jamais dans le cache PWA.
+
 ## 6. Déploiement
 
 ```mermaid
@@ -288,6 +308,8 @@ flowchart LR
 
 Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
 `Quality gate`, sans bypass. Vercel déploie automatiquement le `main` fusionné.
+Le SHA système Vercel est lu pendant le build ; aucune variable REL-001 n'est à
+configurer manuellement.
 
 ## 7. Propriétés de sécurité à préserver
 
@@ -306,6 +328,8 @@ Le ruleset `main-quality-gate` exige une PR, une branche à jour et le contrôle
   titre n'est exposé que par une page déjà publiquement partagée.
 - Aucun PDF n'est persisté ou transmis par Capsule ; une copie créée par le
   système sort explicitement de son périmètre de protection.
+- L'endpoint de version ne publie que SemVer, SHA Git et date de build ; il ne
+  lit aucune session, note, image, variable secrète ou donnée Supabase.
 - Migrations forward-only et rollback applicatif non destructif.
 
 ## 8. Dette structurante

@@ -536,6 +536,56 @@ dépendance n'a été modifiée.
 - Sprint : `docs/sprints/SPRINT_SHARE_001_2026-08-27.md`.
 - Guide : `docs/SOCIAL_SHARING.md`.
 
+## 2026-08-28 — REL-001 Version, À propos et mises à jour
+
+### Objectif
+
+Permettre d'identifier le build chargé sur chaque PWA, de lire les dernières
+évolutions et de comparer explicitement cette identité à la production.
+
+### Changements
+
+- baseline SemVer passée à `1.0.0` dans le package et son lockfile ;
+- SHA Git et date ISO figés par `next.config.mjs`, avec valeurs système Vercel
+  puis replis Git/local ;
+- footer responsive sans requête, menu et palette reliés à un dialogue
+  **À propos** accessible ;
+- changelog utilisateur de trois jalons, état hors ligne explicite et aide de
+  dépannage PWA ;
+- route publique `/api/version` dynamique, strictement validée et `no-store` ;
+- guide de versioning, ADR-016, sprint et tests de contrat dédiés.
+
+### Décisions
+
+Le SemVer décrit le produit et le SHA le code exact ; aucun compteur externe
+n'est introduit. La vérification ne se lance qu'au clic et ne transporte ni
+session, ni note, ni image, ni secret. Les routes `/api/` restent hors du cache
+du service worker.
+
+### Validation locale
+
+- lint propre, **105/105 tests** dans dix-huit fichiers ;
+- build Next.js 16.3.3 réussi avec `/api/version` dynamique ;
+- smoke HTTP 7/7 sur accueil, JSON, SemVer, SHA, date et en-têtes anti-cache ;
+- audit npm élevé à zéro vulnérabilité ; recette visuelle preview encore à
+  exécuter ;
+- aucune migration, variable Vercel, donnée Supabase ou dépendance.
+
+La recette navigateur locale est reportée à la preview HTTPS : le navigateur
+intégré a d'abord reçu une connexion refusée, puis sa politique a bloqué toute
+navigation depuis la page d'erreur. Aucun contournement n'a été tenté.
+
+### État de livraison
+
+`REVIEW_REQUIRED` — branche locale prête pour le gate complet, la PR protégée,
+la recette preview, la fusion et le smoke production.
+
+### Références
+
+- Branche : `codex/rel-001-version-about`.
+- Sprint : `docs/sprints/SPRINT_REL_001_2026-08-28.md`.
+- Guide : `docs/VERSIONING.md`.
+
 ## Modèle d'entrée
 
 ```markdown

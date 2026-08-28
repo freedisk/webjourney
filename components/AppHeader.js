@@ -18,6 +18,7 @@ export default function AppHeader({
   isDark,
   onToggleTheme,
   onOpenHelp,
+  onOpenAbout,
   email,
   onLogout,
   busy,
@@ -128,6 +129,9 @@ export default function AppHeader({
               </button>
               <button type="button" role="menuitem" onClick={() => { onOpenHelp(); setMenuOpen(false); }}>
                 <Icon name="help" size={16} /> Centre d’aide
+              </button>
+              <button type="button" role="menuitem" onClick={() => { onOpenAbout(); setMenuOpen(false); }}>
+                <Icon name="info" size={16} /> À propos
               </button>
               <button type="button" role="menuitem" className="is-danger" onClick={() => { setMenuOpen(false); onLogout(); }}>
                 <Icon name="logout" size={16} /> Déconnexion

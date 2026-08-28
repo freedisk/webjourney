@@ -56,6 +56,11 @@ appel réseau une fois l'application chargée. Le service worker continue de ne
 jamais mettre en cache une navigation authentifiée : après un rechargement sans
 réseau, `/offline` s'affiche et aucune donnée privée n'est exposée.
 
+Le dépannage couvre aussi une PWA qui semble ancienne : ouvrir **À propos**,
+lancer **Vérifier les mises à jour**, puis utiliser **Recharger maintenant**
+seulement lorsqu'une livraison différente est annoncée. Ce contrôle ne lit
+aucune note et ne se lance jamais automatiquement.
+
 ## Évolution
 
 - garder le texte aligné avec les fonctions réellement déployées ;
