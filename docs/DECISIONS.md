@@ -217,6 +217,24 @@ journal avec un lien vers celle qui la remplace.
   une nouvelle analyse après déploiement. Les pages privées héritent uniquement
   de l'identité générique.
 
+## ADR-016 — SemVer produit et build Git vérifiable à la demande
+
+- **Statut** : accepté.
+- **Date** : 2026-08-28.
+- **Contexte** : une PWA peut rester chargée plusieurs jours et le projet ne
+  publiait ni version sémantique, ni identifiant permettant de la comparer au
+  déploiement courant.
+- **Décision** : utiliser `package.json` comme source SemVer, le SHA Git comme
+  build et l'instant de construction comme date. Ces trois valeurs publiques
+  sont figées dans le build. Un endpoint minimal `no-store` publie l'identité de
+  l'alias courant ; sa consultation et le rechargement restent manuels.
+- **Raison** : rendre tout diagnostic reproductible sans service de release,
+  compteur externe, télémétrie, appel au démarrage ou dépendance supplémentaire.
+- **Conséquences** : l'API JSON version doit rester compatible avec les clients
+  déjà ouverts ; un redéploiement du même commit garde son SHA mais reçoit une
+  nouvelle date. Aucun secret, contenu privé ou état Supabase n'entre dans
+  l'identité de livraison.
+
 ## Modèle ADR
 
 ```markdown

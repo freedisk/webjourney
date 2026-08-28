@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AIFormattingDialog from "@/components/AIFormattingDialog";
 import AISettingsDialog from "@/components/AISettingsDialog";
+import AboutDialog from "@/components/AboutDialog";
+import AppFooter from "@/components/AppFooter";
 import AppHeader from "@/components/AppHeader";
 import CommandPalette from "@/components/CommandPalette";
 import HelpCenterDialog from "@/components/HelpCenterDialog";
@@ -149,6 +151,9 @@ export default function Home() {
   // --- Centre d’aide contextuel ---
   const [aideOuverte, setAideOuverte] = useState(false);
   const [helpInitialSection, setHelpInitialSection] = useState("quick-start");
+
+  // --- Version, à propos et mises à jour ---
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   // --- Impression de la version enregistrée ---
   const [printNoteId, setPrintNoteId] = useState(null);
@@ -376,7 +381,7 @@ export default function Home() {
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || modeCreation;
+      const hasBlockingDialog = aboutOpen || aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || modeCreation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -392,7 +397,7 @@ export default function Home() {
 
       // Échap — fermer aide, annuler édition (modale gérée séparément)
       if (e.key === "Escape") {
-        if (aideOuverte || aiSettingsOpen || aiFormatting || printNoteId) return;
+        if (aboutOpen || aideOuverte || aiSettingsOpen || aiFormatting || printNoteId) return;
         if (!noteDetailId && editionId) { annulerEdition(); return; }
         return;
       }
@@ -2359,6 +2364,14 @@ export default function Home() {
       icon: "help",
       onSelect: () => openHelp("quick-start"),
     },
+    {
+      id: "open-about",
+      label: "À propos de Capsule",
+      description: "Version, build, changelog et mises à jour",
+      keywords: "version build date changelog mise à jour actualiser",
+      icon: "info",
+      onSelect: () => setAboutOpen(true),
+    },
     ...notes.slice(0, 8).map((note) => ({
       id: `note-${note.id}`,
       label: note.titre,
@@ -2403,6 +2416,7 @@ export default function Home() {
         isDark={sombre}
         onToggleTheme={toggleTheme}
         onOpenHelp={() => openHelp("quick-start")}
+        onOpenAbout={() => setAboutOpen(true)}
         email={utilisateur.email}
         onLogout={handleLogout}
         busy={noteBusy}
@@ -3239,6 +3253,8 @@ export default function Home() {
       {/* Modale card/kanban view (portail) */}
       {(viewMode === "card" || viewMode === "kanban") && renderModale()}
 
+      <AppFooter onOpenAbout={() => setAboutOpen(true)} />
+
       {/* Modale de création */}
       {modeCreation && createPortal(
         <div
@@ -3438,6 +3454,8 @@ export default function Home() {
           onOpenAISettings={() => setAISettingsOpen(true)}
         />
       )}
+
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
 
       <CommandPalette
         open={commandPaletteOpen}

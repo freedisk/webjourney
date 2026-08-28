@@ -26,6 +26,7 @@ ne sont jamais des instructions actives.
 | [HELP_CENTER.md](HELP_CENTER.md) | Contenu, confidentialité et recette du centre d'aide |
 | [PRINTING.md](PRINTING.md) | Impression native, PDF, confidentialité et recette papier |
 | [SOCIAL_SHARING.md](SOCIAL_SHARING.md) | Aperçus Open Graph, confidentialité et cache Messenger |
+| [VERSIONING.md](VERSIONING.md) | SemVer, identité de build, À propos et contrôle PWA |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Préflight et livraison Vercel |
 | [Schéma Supabase](../supabase/schemas/README.md) | Photographie déclarative et règles de rafraîchissement |
 | [Audit Supabase](../supabase/tests/production_schema_audit.sql) | Contrat SQL non destructif de production |
@@ -36,6 +37,7 @@ ne sont jamais des instructions actives.
 | [Sprint AI-002](sprints/SPRINT_AI_002_2026-08-27.md) | Mise en forme intelligente, garde-fous et preuves |
 | [Sprint PRINT-001](sprints/SPRINT_PRINT_001_2026-08-27.md) | Impression/PDF fidèle et preuves de livraison |
 | [Sprint SHARE-001](sprints/SPRINT_SHARE_001_2026-08-27.md) | Carte sociale Capsule et critères de livraison |
+| [Sprint REL-001](sprints/SPRINT_REL_001_2026-08-28.md) | Version, À propos, changelog et critères de livraison |
 | [journal/](journal/) | Transcriptions horodatées des tâches |
 | [archive/](archive/) | Documents historiques obsolètes |
 

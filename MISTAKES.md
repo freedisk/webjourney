@@ -287,6 +287,11 @@ présente après correction afin d'éviter la répétition du problème.
 - **Prévention** : ne jamais réutiliser une variable système, même avec une
   casse différente, et définir la méthode HTTP attendue pour chaque route du
   smoke.
+- **Récidive constatée le 2026-08-28** : le premier smoke local REL-001 a de
+  nouveau tenté d'affecter `$home` après avoir validé `/api/version`. La seule
+  étape d'accueil a été interrompue sans effet sur l'application. Les scripts et
+  commandes de recette doivent désormais préfixer toute réponse HTTP par
+  `$capsule...Response` ; le résultat partiel n'est jamais retenu comme preuve.
 - **Statut** : corrigé pendant la validation production.
 
 ## M-020 — Confondre icônes PWA et carte de partage social

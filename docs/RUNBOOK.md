@@ -112,6 +112,8 @@ Invoke-WebRequest https://webjourney-one.vercel.app/manifest.webmanifest
 Invoke-WebRequest https://webjourney-one.vercel.app/sw.js
 Invoke-WebRequest https://webjourney-one.vercel.app/offline
 Invoke-WebRequest https://webjourney-one.vercel.app/opengraph-image
+$capsuleVersionResponse = Invoke-WebRequest `
+  https://webjourney-one.vercel.app/api/version -UseBasicParsing
 ```
 
 Puis réaliser une vérification authentifiée non destructive et, si le périmètre
@@ -121,6 +123,11 @@ Pour SHARE-001, ajouter un user-agent `facebookexternalhit/1.1` à la requête d
 la racine, contrôler les balises `og:*`/`twitter:*`, puis la signature PNG et
 les dimensions réelles 1 200 × 630. Une carte Messenger déjà mise en cache doit
 être réanalysée avec le Sharing Debugger avant conclusion.
+
+Pour REL-001, contrôler `version`, le SHA de fusion, `builtAt`, `no-store` et
+`nosniff`, puis ouvrir **À propos** dans une session authentifiée. Si une PWA
+semble ancienne, lancer la vérification manuelle et recharger ; ne jamais vider
+les notes, le Storage ou les réglages IA pour ce seul diagnostic.
 
 ## 6. Exploitation AI-001 / AI-002
 
