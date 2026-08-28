@@ -18,8 +18,8 @@
 - **État** : `REVIEW_REQUIRED`.
 - **Périmètre** : SemVer `1.0.0`, SHA et date du build, footer responsive,
   dialogue **À propos**, changelog concis et contrôle manuel `no-store`.
-- **Sortie** : 105 tests, build et smoke local verts ; PR, recette preview,
-  fusion protégée et smoke production à finaliser.
+- **Sortie** : 105 tests, build, smoke local et preview 8/8 verts ; PR #24
+  fusionnable, fusion protégée et smoke production à finaliser.
 
 ## Prochaines priorités
 

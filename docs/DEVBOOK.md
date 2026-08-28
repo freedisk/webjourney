@@ -567,8 +567,9 @@ du service worker.
 - lint propre, **105/105 tests** dans dix-huit fichiers ;
 - build Next.js 16.3.3 réussi avec `/api/version` dynamique ;
 - smoke HTTP 7/7 sur accueil, JSON, SemVer, SHA, date et en-têtes anti-cache ;
-- audit npm élevé à zéro vulnérabilité ; recette visuelle preview encore à
-  exécuter ;
+- audit npm élevé à zéro vulnérabilité ;
+- preview Vercel `READY` sur `595987b`, smoke HTTPS authentifié **8/8** et PR
+  #24 fusionnable avec deux `Quality gate` et Vercel en succès ;
 - aucune migration, variable Vercel, donnée Supabase ou dépendance.
 
 La recette navigateur locale est reportée à la preview HTTPS : le navigateur
@@ -577,12 +578,13 @@ navigation depuis la page d'erreur. Aucun contournement n'a été tenté.
 
 ### État de livraison
 
-`REVIEW_REQUIRED` — branche locale prête pour le gate complet, la PR protégée,
-la recette preview, la fusion et le smoke production.
+`REVIEW_REQUIRED` — PR #24 prête à fusionner après le gate relancé par le relevé
+de revue ; restent la fusion protégée et le smoke production.
 
 ### Références
 
 - Branche : `codex/rel-001-version-about`.
+- PR : [#24](https://github.com/freedisk/webjourney/pull/24).
 - Sprint : `docs/sprints/SPRINT_REL_001_2026-08-28.md`.
 - Guide : `docs/VERSIONING.md`.
 
