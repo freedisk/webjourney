@@ -117,6 +117,9 @@ Aucun changement pour le moment.
 
 ### Déployé
 
+- REL-001 : PR #24, fusion `3abbf81`, Vercel Production
+  `dpl_Cxa6Z7RBcrnRPR9VmQSAx5TwDJwp`, 105/105 tests, preview 8/8 et smoke
+  public 21/21 sur la version, la PWA, les protections et les assets UI live.
 - SHARE-001 : PR #22, fusion `bb0afc4`, Vercel Production
   `dpl_1qZRrzbxRhuDCUD3v9umFhL73Qdd`, 98/98 tests, smoke robot 34/34 et carte
   publique 1 200 × 630 inspectée sans erreur console.

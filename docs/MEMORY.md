@@ -86,8 +86,9 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   **À propos** affichent version, SHA Git court et date du build ; un contrôle
   manuel compare la PWA chargée à `/api/version` sans cache. Le changelog
   embarqué reste statique et aucune donnée privée ou Supabase n'est consultée.
-  Validation locale : lint, 105/105 tests, build et smoke HTTP 7/7 ; livraison
-  protégée en attente.
+  Référence : PR #24, fusion `3abbf812`, Vercel
+  `dpl_Cxa6Z7RBcrnRPR9VmQSAx5TwDJwp` en `READY`, 105/105 tests, preview 8/8 et
+  smoke public 21/21.
 
 ## Invariants
 
