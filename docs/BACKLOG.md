@@ -11,11 +11,8 @@
 
 ## En cours
 
-UX-004-R1 — Correctif du zoom de recherche mobile : `REVIEW_REQUIRED`, priorité P1.
-L'utilisateur signale un zoom persistant après recherche puis retour avec
-champ vide, en PWA mobile (modèle et OS non précisés). Corriger les champs de
-recherche au focus, conserver le pincement et le défilement UX-003 ; valider
-les trois vues, PR/Quality gate, production puis essai sur la PWA concernée.
+Aucun sprint actif. UX-004-R1 est déployé en 1.1.1 ; confirmation du zoom
+sur la PWA mobile concernée encore attendue (modèle et OS non précisés).
 La recette physique avec clavier ouvert reste distincte des simulations.
 
 ## Prochaines priorités
@@ -84,6 +81,7 @@ La recette physique avec clavier ouvert reste distincte des simulations.
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-004-R1 | Zoom de recherche mobile | 2026-10-10 | 1.1.1, PR #30, 348fe4d, gates et Vercel READY ; 126 tests, recettes locales 24/24, recherche/éditeur live 12/12, smoke 21/21 ; confirmation physique PWA attendue |
 | UX-004 | Recherche et édition confortables | 2026-10-10 | 1.1.0, PR #28, 3ab6a20, gates verts, 126 tests, défilement local 12/12, recette éditeur local/live 12/12, smoke public 21/21 ; aucun schéma/cache privé nouveau ; physique Safari/PWA non effectué |
 | UX-003 | Défilement mobile de la vue liste | 2026-10-10 | Version 1.0.1, PR #26, `6325b7f`, 113 tests, smoke public 21/21, recette live 12/12, Vercel READY ; défilement confirmé conforme par l'utilisateur ; exception lint suivie dans SEC-001 |
 | REL-001 | Version, À propos et mises à jour | 2026-08-28 | PR #24, `3abbf81`, 105 tests, preview 8/8, smoke public 21/21, Vercel `READY` |
