@@ -27,7 +27,7 @@ describe("version et mises à jour REL-001", () => {
       source("package-lock.json").then(JSON.parse),
     ]);
 
-    expect(packageJson.version).toBe("1.0.0");
+    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(packageLock.version).toBe(packageJson.version);
     expect(packageLock.packages[""].version).toBe(packageJson.version);
     expect(RELEASE_NOTES[0].version).toBe(packageJson.version);

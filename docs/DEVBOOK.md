@@ -598,6 +598,58 @@ les règles responsive construites et les empreintes de production sont verts.
 - Sprint : `docs/sprints/SPRINT_REL_001_2026-08-28.md`.
 - Guide : `docs/VERSIONING.md`.
 
+## 2026-10-10 — UX-003 Défilement mobile de la vue liste
+
+### Objectif et diagnostic
+
+Rétablir le défilement de la liste sur mobile. Avec 60 notes synthétiques dans
+le vrai écran à 390 × 844, le panneau atteignait 3 306 px pour seulement 650 px
+disponibles. La liste avait `clientHeight = scrollHeight = 3 154`, donc aucune
+plage de défilement. Le parent masquait le débordement.
+
+### Changements
+
+- Panneau mobile flexible et chaîne de hauteurs minimales nulle ; viewport
+  dynamique sans minimum `100vh` contradictoire, avec repli `100vh`.
+- Version candidate `1.0.1`, changelog et À propos cohérents.
+- Recette reproductible du vrai écran avec API Supabase entièrement simulée,
+  gestes tactiles Chromium et contrôles WebKit.
+- Dépendances rafraîchies sans `--force`, Next.js/ESLint Next 16.4.0 minimum.
+  Le nouveau linter demande trois ajustements ciblés : restauration des
+  préférences après résolution de la session, déclaration du chargeur de
+  statistiques avant son effet, et exceptions locales justifiées pour la
+  purge immédiate de la saisie IA et le chargement immédiat des statistiques.
+  Aucun réglage de lint global n'est désactivé.
+- Bloc AGENTS ajouté automatiquement par `next dev` 16.4.0, vérifié dans son
+  générateur puis conservé ; guides CSS et React Compiler embarqués consultés.
+
+### Validation et livraison en cours
+
+La recette finale sur le build de production local valide 12 scénarios
+Chromium/WebKit : liste et contenu long défilables, dernière note accessible,
+recherche, retour et thème sombre à six tailles d'écran. `npm run validate`
+passe : lint propre, 105/105 tests et build Next.js 16.4.0 réussi. Le protocole
+natif de défilement WebKit mobile reste une limite explicite de l'outil.
+
+Audit initial : une critique, neuf élevées et une modérée. Après mises à jour,
+l'audit de production est à zéro ; l'audit complet conserve cinq alertes
+élevées pour une seule cause dans la chaîne de lint : `braces` 3.0.3,
+GHSA-vfj7-8cjw-p6xm, sans version corrigée publiée. Aucune exception n'est
+appliquée sans décision utilisateur et aucun bypass de `main` n'est prévu.
+La session GitHub existante permet les écritures du dépôt. La session CLI
+Vercel est expirée ; le pipeline GitHub et l'endpoint public permettent la
+vérification de livraison sans modifier les variables Vercel.
+
+Production consultée avant livraison : version `1.0.0`, build `378f896`.
+Le candidat est `REVIEW_REQUIRED`, prêt pour une PR mais non fusionné tant
+que l'audit complet bloque le gate. Les notes et réglages réels sont intacts.
+
+### Références
+
+- Branche : `codex/mobile-list-scroll`.
+- Incident : M-021 ; suivi de dépendance : M-022.
+- Source amont : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
+
 ## Modèle d'entrée
 
 ```markdown

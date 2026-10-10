@@ -125,6 +125,45 @@ Pour chaque cible : thèmes clair/sombre, clavier, focus visible, fermeture
 `prefers-reduced-motion`. Le Kanban doit fonctionner par glisser tactile et par
 sélecteur de colonne.
 
+### Régression du défilement liste UX-003
+
+`scripts/smoke-list-scroll.mjs` utilise le vrai écran et simule toutes les
+requêtes Supabase avec 60 notes et huit tags. Aucune session réelle ni écriture
+de données n'est utilisée ; toute requête de mutation Supabase est bloquée.
+Playwright est une dépendance de recette externe, disponible dans le runtime
+Codex local ; elle n'est pas ajoutée au bundle ni requise par le gate unitaire.
+
+Premier terminal, serveur isolé des données réelles :
+
+```powershell
+$env:NEXT_PUBLIC_SUPABASE_URL = 'https://scroll-test.supabase.co'
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'scroll-test-public-key'
+$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = 'scroll-test-public-key'
+npm run dev -- --port 3106
+```
+
+Second terminal, désigner le module Playwright du runtime installé :
+
+```powershell
+$env:CAPSULE_PLAYWRIGHT_MODULE = 'C:\Users\Pc\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+npm run test:ui:scroll
+```
+
+Pour un build de production local, construire avec les mêmes variables
+publiques simulées puis démarrer `npm run start -- --port 3106`.
+`CAPSULE_SCROLL_BASE_URL` et `CAPSULE_SCROLL_STORAGE_KEY` permettent aussi de
+viser un autre serveur : le nom de stockage doit correspondre au projet
+Supabase public du build, et toutes les réponses restent simulées.
+
+La recette contrôle 320 × 568, 390 × 844, 430 × 932, 667 × 375, 1 024 × 768 et
+1 416 × 900 dans Chromium et WebKit : hauteur bornée, absence de débordement
+horizontal, défilement, dernière note, détail, retour, recherche et thème sombre.
+Les gestes tactiles Chromium sont natifs via le protocole du navigateur.
+Playwright ne simule pas le geste de défilement WebKit mobile : cette partie
+vérifie donc le scroll programmatique, pas un doigt sur un vrai iPhone/iPad.
+La validation finale Safari/PWA sur appareil reste à réaliser par l'utilisateur.
+`--expect-broken` sert uniquement à reproduire le défaut sur l'ancien code.
+
 ## 5. Recette AI-001
 
 La recette complète est décrite dans `docs/AI_BYOK.md`. Elle couvre au minimum :
@@ -251,7 +290,7 @@ Suivre `docs/VERSIONING.md` et contrôler :
    de la navigation mobile ni débordement horizontal ;
 2. menu, palette et footer ouvrent le même dialogue nommé **À propos de
    Capsule** ; fermeture bouton/`Échap` et restitution du focus ;
-3. version `1.0.0`, SHA court et date lisible correspondent à `/api/version` ;
+3. version du package, SHA court et date lisible correspondent à `/api/version` ;
 4. changelog limité, lisible en thèmes clair/sombre et entièrement défilable sur
    un iPhone ;
 5. **Vérifier les mises à jour** annonce **Capsule est à jour** sur le build

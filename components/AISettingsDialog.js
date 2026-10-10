@@ -64,6 +64,8 @@ export default function AISettingsDialog({
   useEffect(() => {
     if (!open) return undefined;
     let active = true;
+    // Purger immédiatement toute ancienne saisie secrète à chaque ouverture.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setApiKey("");
     setModels([]);
     setError("");

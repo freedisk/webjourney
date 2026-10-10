@@ -262,14 +262,6 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     let imageRefreshTimer = null;
-    setSombre(document.documentElement.classList.contains("dark"));
-
-    // Restaurer la taille des caractères depuis localStorage
-    const savedSize = localStorage.getItem("noteFontSize");
-    if (savedSize) {
-      const parsed = parseInt(savedSize, 10);
-      if (!isNaN(parsed) && parsed >= 11 && parsed <= 22) setNoteFontSize(parsed);
-    }
 
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -280,6 +272,13 @@ export default function Home() {
       }
 
       if (!active) return;
+      // Restaurer les préférences avec la session, avant d'afficher les notes.
+      setSombre(document.documentElement.classList.contains("dark"));
+      const savedSize = localStorage.getItem("noteFontSize");
+      if (savedSize) {
+        const parsed = parseInt(savedSize, 10);
+        if (!isNaN(parsed) && parsed >= 11 && parsed <= 22) setNoteFontSize(parsed);
+      }
       setUtilisateur(user);
       await Promise.all([
         chargerNotes(user.id),
