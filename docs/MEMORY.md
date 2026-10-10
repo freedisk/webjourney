@@ -15,6 +15,11 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
+- Invariant de recherche tactile : la palette et les filtres des trois vues
+  emploient au moins 16 px sur écran étroit ou pointeur tactile, sans bloquer
+  le zoom utilisateur. Les hauteurs et le défilement UX-003 restent inchangés.
+  Correctif 1.1.1 en préparation ; validation physique PWA encore attendue.
+
 - UX-004 est livré le 2026-10-10 en 1.1.0, PR #28 fusionnée en 3ab6a20,
   gates et Vercel verts, 126 tests, smoke public 21/21 et recette éditeur
   synthétique local/live Chromium/WebKit 12/12. Palette sur tout le corpus

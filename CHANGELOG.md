@@ -7,6 +7,15 @@ sémantique déclarée dans `package.json`.
 
 Aucun changement pour le moment.
 
+## 1.1.1 — 2026-10-10
+
+- Recherche globale et filtres Cartes/Liste/Kanban à au moins 16 px sur écran
+  étroit ou appareil tactile, pour éviter le zoom iOS au focus.
+- Retour après effacement de la recherche couvert par la recette navigateur :
+  largeur des notes, défilement et zoom utilisateur conservés.
+- Correction CSS ciblée ; aucun changement Supabase ou cache privé.
+- Validation physique de la PWA mobile encore attendue.
+
 ## 1.1.0 — 2026-10-10
 
 ### UX-004 — Recherche et édition confortables

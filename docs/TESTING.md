@@ -348,6 +348,20 @@ Compléter par Safari/PWA sur appareil réel identifié, clavier ouvert :
 retour, saisie longue, sauvegarde visible, annulation, photo/collage et rotation.
 Ce contrôle physique est distinct des résultats synthétiques.
 
+Pour UX-004-R1, la même recette mesure les recherches globale et locale à au
+moins 16 px sur mobile/tablette tactile, y compris Cartes/Kanban. Après une
+recherche puis effacement et fermeture, elle compare largeur des notes,
+défilement et échelle, vérifie l'absence de débordement et un viewport qui
+permet le zoom. Playwright WebKit ne reproduit pas le zoom au focus du clavier
+iOS natif : ces mesures ne valent pas validation physique de ce comportement.
+
+Sur la PWA concernée : vérifier 1.1.1 dans À propos après rechargement,
+dézoomer une fois si l'ancienne page était déjà agrandie, ouvrir Chercher,
+saisir puis effacer, fermer et revenir aux notes. Répéter en ouvrant une note
+puis retour, et avec le filtre local dans les trois vues, portrait/paysage.
+Les notes doivent garder leur taille, la dernière rester accessible et le
+pincement continuer à fonctionner. Consigner appareil, OS, mode et résultat.
+
 ## 12. Critères de release
 
 Une release est refusée si :

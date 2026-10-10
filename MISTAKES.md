@@ -377,6 +377,21 @@ présente après correction afin d'éviter la répétition du problème.
   dès le succès. Les mesures de viewport attendent séparément le layout effectif.
 - **Statut** : corrigé et livré par PR #28, avec recette éditeur local/live 12/12.
 
+## M-025 — Recherche tactile trop petite et zoom de focus persistant
+
+- **Date constatée** : 2026-10-10, après livraison UX-004.
+- **Symptôme** : notes agrandies et dépassant l'écran après recherche globale,
+  champ vidé et retour ; pincement permet de dézoomer, en PWA mobile.
+- **Cause étayée** : palette à 14,72 px et filtres à 12,8 px ; le mécanisme
+  WebKit iOS de focus utilise un rapport 16/fontSize. L'appareil et l'OS
+  n'ont pas été précisés, le zoom natif n'est pas reproduit sur ce poste.
+- **Correction** : recherche globale et trois filtres à max(16px, 1rem) pour
+  écran étroit ou pointeur tactile ; zoom choisi par l'utilisateur conservé.
+- **Prévention** : mesurer le style calculé de chaque recherche tactile et
+  le retour après effacement, sans confondre WebKit simulé et clavier iOS réel.
+- **Statut** : candidat 1.1.1 validé localement (126 tests, recettes 24/24) ;
+  PR/livraison puis confirmation PWA physique attendues.
+
 ## Modèle d'entrée
 
 ```markdown

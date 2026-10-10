@@ -303,6 +303,11 @@ recette multi-appareil.
 
 ### Version et mise à jour de la PWA
 
+Les champs de recherche globale et locale ont un style ciblé à au moins 16 px
+sur écran étroit ou avec `any-pointer: coarse`, pour prévenir le zoom iOS au
+focus. Le viewport permet toujours le zoom utilisateur ; aucun changement de
+hauteur du shell ou de la liste n'est associé à cette correction.
+
 1. `next.config.mjs` lit la version du package, utilise
    `VERCEL_GIT_COMMIT_SHA` ou le SHA Git local, puis fige la date du build.
 2. Le client affiche ces constantes dans le footer et **À propos** sans requête.

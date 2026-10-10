@@ -788,6 +788,40 @@ Clôture documentaire sur codex/search-editor-close après merge de main dans
 l'état local conservé : aucune bascule vers main, aucun reset/rebase,
 aucun abandon des commits d'origine.
 
+## 2026-10-10 — UX-004-R1, zoom persistant après recherche mobile
+
+### Objectif
+
+Corriger le zoom signalé en PWA mobile après recherche globale, effacement
+et retour aux notes ; modèle et OS non précisés. Conserver identité et scroll.
+
+### Changements et décisions
+
+Version candidate 1.1.1. Recherche globale à 0,92 rem et filtres des trois vues
+à 0,8 rem avant correction ; contrôle live synthétique rouge à 12,8 px.
+Style ciblé max(16px, 1rem) sur écran <= 767 px ou any-pointer:coarse.
+La branche codex/mobile-search-focus conserve l'ascendance documentaire.
+Aucun viewport restrictif, restauration de zoom forcée, changement du shell,
+migration, nouvelle dépendance ou extension de l'exception de lint.
+
+Le code WebKit _zoomToFocusRect utilise 16/fontSize pour son échelle de focus :
+https://github.com/WebKit/WebKit/blob/main/Source/WebKit/UIProcess/API/ios/WKWebViewIOS.mm.
+Cela étaye la cause présumée ; le clavier natif iOS reste hors de Playwright.
+
+### Validation
+
+Recette existante étendue : taille des champs, effacement/fermeture, largeur
+des notes, retour du scroll et viewport permettant le zoom utilisateur.
+Validate vert : lint, 126 tests et build optimisé ; audit production zéro,
+seule exception dev de lint inchangée. Recette étendue 12/12 et recette
+UX-003 de défilement 12/12 en local Chromium/WebKit, données simulées.
+PR/gate et smoke de production restent à exécuter.
+La confirmation physique sur la PWA de l'utilisateur est encore attendue.
+
+### Références
+
+M-025 ; docs/TESTING.md ; scripts/smoke-search-editor.mjs.
+
 ## Modèle d'entrée
 
 ```markdown

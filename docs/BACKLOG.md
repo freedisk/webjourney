@@ -11,8 +11,12 @@
 
 ## En cours
 
-Aucun sprint actif. UX-004 est livré ; la recette physique Safari/PWA avec
-clavier ouvert reste à réaliser par l'utilisateur, distincte des simulations.
+UX-004-R1 — Correctif du zoom de recherche mobile : `REVIEW_REQUIRED`, priorité P1.
+L'utilisateur signale un zoom persistant après recherche puis retour avec
+champ vide, en PWA mobile (modèle et OS non précisés). Corriger les champs de
+recherche au focus, conserver le pincement et le défilement UX-003 ; valider
+les trois vues, PR/Quality gate, production puis essai sur la PWA concernée.
+La recette physique avec clavier ouvert reste distincte des simulations.
 
 ## Prochaines priorités
 
