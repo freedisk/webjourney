@@ -171,6 +171,8 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 
 0. Finaliser UX-003 : défilement mobile corrigé et recette locale verte ; lever
    explicitement le blocage d'audit du lint avant toute fusion de production.
+   PR #26 ouverte, `ba465c2`, 105 tests, 12 scénarios navigateur et preview
+   construite ; seul l'audit complet bloque la CI et la fusion.
 1. `QA-001` — E2E des parcours critiques.
 2. `OPS-002` — observabilité sans données de note ni secret.
 3. `TOOL-002` — validation locale Supabase conteneurisée.

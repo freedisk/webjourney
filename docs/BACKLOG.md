@@ -21,6 +21,9 @@
   Chromium/WebKit validés sur le build de production local : liste, contenu
   long, thèmes clair/sombre et navigation. Lint, 105 tests et build verts.
 - **Sortie** : build et tests verts, gate GitHub vert, production 1.0.1 vérifiée.
+- **PR** : [#26](https://github.com/freedisk/webjourney/pull/26), commit
+  fonctionnel `ba465c2`. GitHub confirme lint, tests et build verts, audit en
+  échec ; Vercel Preview en succès. Production non modifiée.
 - **Blocage de livraison** : GHSA-vfj7-8cjw-p6xm, chaîne de lint `braces`, sans
   version corrigée publiée ; décision utilisateur sollicitée sur une exception
   temporaire strictement limitée au développement. Audit production : zéro.

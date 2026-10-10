@@ -647,6 +647,12 @@ que l'audit complet bloque le gate. Les notes et réglages réels sont intacts.
 ### Références
 
 - Branche : `codex/mobile-list-scroll`.
+- PR : [#26](https://github.com/freedisk/webjourney/pull/26).
+- Commit fonctionnel : `ba465c226db9e2da86bd3f43603fd18f2004d111`.
+- CI GitHub : jobs `114116145554` et `114115998645` ; installation, lint,
+  tests et build réussis, seule étape `Dependency audit` en échec.
+- Vercel Preview : contrôle `Vercel` et `Vercel Preview Comments` en succès.
+  PR sans conflit mais `mergeable_state=blocked`. Aucune fusion effectuée.
 - Incident : M-021 ; suivi de dépendance : M-022.
 - Source amont : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
 
