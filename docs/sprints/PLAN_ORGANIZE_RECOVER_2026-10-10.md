@@ -6,7 +6,7 @@
 - Lot choisi par l'utilisateur : « Organiser et retrouver sans perdre ».
 - Identité Capsule et défilement validé à conserver.
 - Rétention choisie explicitement : conserver jusqu'à suppression manuelle.
-- Phase : **IMPLEMENTATION — IN_PROGRESS**, plan et maquettes validés.
+- Phase : **ACCEPTED — livré en 1.2.0**, PR #32, 400caac.
 - L’utilisateur a validé le plan et les maquettes, puis autorisé le code,
   la PR et le Quality gate. Il autorise explicitement la production Supabase,
   sans projet de test ni stack locale. Préflight : sauvegarde de schéma et
@@ -339,6 +339,9 @@ de layout ou les commandes masquées. Les contrôles sont locaux à la maquette.
 
 La recette de conception valide ces interactions et leur disposition,
 pas l'implémentation de Capsule, une RLS réelle ou une migration Supabase.
-Rétention manuelle confirmée ; autres parcours/maquettes à examiner par
-l'utilisateur avant implémentation. Aucune application de SQL, nouveau
-déploiement ou modification du code produit dans cette phase.
+La phase de conception était sans changement applicatif ni SQL. Le plan et
+les maquettes ont ensuite été validés explicitement, puis implémentés.
+Livraison 1.2.0 par PR #32, 400caac, avec migration et gate : 137 tests, UI
+locale 32/32, préflight SQL annulé 50/50, audits post-migration 41/41, recette
+HTTP réelle 21/21 et zéro résidu synthétique, smoke public 23/23.
+La recette physique avec clavier reste distincte.

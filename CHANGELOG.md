@@ -1,12 +1,13 @@
 # Changelog
 
-## 1.2.0 — 2026-10-10 (candidat)
+## 1.2.0 — 2026-10-10
 
 - Notes, Archives et Corbeille avec compteurs et recherche par périmètre.
 - Corbeille conservée sans purge automatique, restauration et Annuler.
 - Partage révoqué à la mise à la corbeille, jamais réactivé par restauration.
 - Suppression définitive manuelle confirmée et nettoyage d’images réessayable.
 - Anciens clients protégés contre la suppression directe de notes et d’images.
+- Livré par PR #32 (400caac), migration production et Quality gate validés.
 
 Les changements notables de Capsule sont consignés ici selon la version
 sémantique déclarée dans `package.json`.

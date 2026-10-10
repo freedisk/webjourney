@@ -11,10 +11,10 @@
 
 ## En cours
 
-Lot « Organiser et retrouver sans perdre » : plan et maquettes validés le
-2026-10-10 ; implémentation en cours sur codex/organize-recover. Rétention confirmée : conservation jusqu'à suppression manuelle.
-UX-004-R1 est confirmé sur mobile ; modèle et OS non précisés, sans recette
-complète avec clavier extrapolée. SEC-001 conserve sa priorité et son échéance.
+DATA-001 est livré en 1.2.0 par PR #32 ; derniers contrôles live et clôture
+documentaire en cours. Corbeille à conservation manuelle. UX-004-R1 est
+confirmé sur mobile ; modèle/OS non précisés, sans recette clavier extrapolée.
+SEC-001 reste la prochaine priorité avant le 24 octobre 2026 à 23:59:59 UTC.
 
 ## Prochaines priorités
 
@@ -60,8 +60,7 @@ complète avec clavier extrapolée. SEC-001 conserve sa priorité et son échéa
 
 - **Priorité** : P2.
 - **ROI / effort** : moyen/élevé / 1–2 jours.
-- **État** : `REVIEW_REQUIRED` ; implémentation et migration validées,
-  PR #32 et livraison finale en cours.
+- **État** : `DONE` ; PR #32, 400caac, migration/recette et public validés.
 - **Lot choisi** : Organiser et retrouver sans perdre, corbeille/restauration
   puis archivage, périmètres Notes/Archives/Corbeille, recherche et Annuler.
 - **Rétention validée** : conserver jusqu'à suppression définitive manuelle ;
@@ -95,6 +94,7 @@ complète avec clavier extrapolée. SEC-001 conserve sa priorité et son échéa
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| DATA-001 | Organiser et retrouver sans perdre | 2026-10-10 | 1.2.0, PR #32, 400caac ; gate/Vercel verts, 137 tests, UI locale 32/32, SQL préflight 50/50, audits post 41/41, HTTP réel 21/21 et zéro résidu, smoke public 23/23 ; physique Safari/PWA distinct |
 | UX-004-R1 | Zoom de recherche mobile | 2026-10-10 | 1.1.1, PR #30, 348fe4d, gates et Vercel READY ; 126 tests, recettes locales 24/24, recherche/éditeur live 12/12, smoke 21/21 ; correctif confirmé par l'utilisateur sur mobile, modèle/OS non précisés |
 | UX-004 | Recherche et édition confortables | 2026-10-10 | 1.1.0, PR #28, 3ab6a20, gates verts, 126 tests, défilement local 12/12, recette éditeur local/live 12/12, smoke public 21/21 ; aucun schéma/cache privé nouveau ; physique Safari/PWA non effectué |
 | UX-003 | Défilement mobile de la vue liste | 2026-10-10 | Version 1.0.1, PR #26, `6325b7f`, 113 tests, smoke public 21/21, recette live 12/12, Vercel READY ; défilement confirmé conforme par l'utilisateur ; exception lint suivie dans SEC-001 |
