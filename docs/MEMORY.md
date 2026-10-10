@@ -15,12 +15,22 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
+- Prochain lot choisi par l'utilisateur le 2026-10-10 : « Organiser et retrouver
+  sans perdre », plan et maquettes validés, implémentation en cours. Rétention de corbeille
+  explicitement validée : conserver jusqu'à suppression manuelle, sans purge
+  automatique. Plan dans sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md ;
+  production autorisée explicitement sans stack locale/isolée, avec tests
+  transactionnels annulés. Aucune livraison 1.2.0 présumée avant PR/gate,
+  application SQL et recette.
+
 - Invariant de recherche tactile : la palette et les filtres des trois vues
   emploient au moins 16 px sur écran étroit ou pointeur tactile, sans bloquer
   le zoom utilisateur. Les hauteurs et le défilement UX-003 restent inchangés.
   Correctif 1.1.1 livré par PR #30, 348fe4d, gates et Vercel READY, 126 tests,
   recettes locales 24/24, recherche/éditeur live 12/12 et smoke 21/21.
-  Confirmation physique sur la PWA concernée encore attendue.
+  Correctif confirmé par l'utilisateur sur mobile le 2026-10-10 ; appareil
+  et OS non précisés. Cette validation porte sur le zoom signalé et ne vaut
+  pas recette complète Safari/PWA avec clavier ouvert.
 
 - UX-004 est livré le 2026-10-10 en 1.1.0, PR #28 fusionnée en 3ab6a20,
   gates et Vercel verts, 126 tests, smoke public 21/21 et recette éditeur
@@ -152,7 +162,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
-- Version produit publique confirmée `1.1.0`.
+- Version produit publique confirmée `1.1.1`.
   Le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.

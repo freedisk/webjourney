@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-10-10 (candidat)
+
+- Notes, Archives et Corbeille avec compteurs et recherche par périmètre.
+- Corbeille conservée sans purge automatique, restauration et Annuler.
+- Partage révoqué à la mise à la corbeille, jamais réactivé par restauration.
+- Suppression définitive manuelle confirmée et nettoyage d’images réessayable.
+- Anciens clients protégés contre la suppression directe de notes et d’images.
+
 Les changements notables de Capsule sont consignés ici selon la version
 sémantique déclarée dans `package.json`.
 
@@ -14,7 +22,8 @@ Aucun changement pour le moment.
 - Retour après effacement de la recherche couvert par la recette navigateur :
   largeur des notes, défilement et zoom utilisateur conservés.
 - Correction CSS ciblée ; aucun changement Supabase ou cache privé.
-- Validation physique de la PWA mobile encore attendue.
+- Correctif confirmé par l'utilisateur sur mobile le 2026-10-10 ; appareil
+  et OS non précisés. La recette complète avec clavier reste distincte.
 
 ### Déployé
 

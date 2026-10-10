@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { supabase } from "@/lib/supabase";
 import { stripImagesForText } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import {
@@ -65,7 +64,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     };
   }, [ouvert]);
 
-  async function chargerStats() {
+  const chargerStats = useCallback(async () => {
     setChargement(true);
     setErreur(null);
 
@@ -75,12 +74,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
       il7jours.setDate(il7jours.getDate() - 6);
       il7jours.setHours(0, 0, 0, 0);
 
-      const { data: notesRecentes, error: errActivite } = await supabase
-        .from("notes")
-        .select("created_at")
-        .gte("created_at", il7jours.toISOString());
-
-      if (errActivite) throw errActivite;
+      const notesRecentes = notes.filter(note => new Date(note.created_at) >= il7jours);
 
       // Construire les 7 jours avec compteurs
       const jours = [];
@@ -104,21 +98,14 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
       setActivite7j(jours);
 
       // Répartition par tags
-      const { data: tagsData, error: errTags } = await supabase
-        .from("tags")
-        .select("id, nom, couleur");
-
-      if (errTags) throw errTags;
-
-      const { data: ntData, error: errNt } = await supabase
-        .from("notes_tags")
-        .select("tag_id");
-
-      if (errNt) throw errNt;
+      const tagsData = tags;
+      const ntData = Object.entries(notesTags).flatMap(([note_id, tagIds]) => tagIds.map(tag_id => ({ note_id, tag_id })));
 
       // Compter les notes par tag
       const compteurs = {};
+      const visibleIds = new Set(notes.map(note => note.id));
       for (const row of ntData || []) {
+        if (!visibleIds.has(row.note_id)) continue;
         compteurs[row.tag_id] = (compteurs[row.tag_id] || 0) + 1;
       }
 
@@ -134,7 +121,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     } finally {
       setChargement(false);
     }
-  }
+  }, [notes, tags, notesTags]);
 
   // Charger les données à l'ouverture, après déclaration du chargeur.
   useEffect(() => {
@@ -142,7 +129,7 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     // Réafficher immédiatement le chargement quand le panneau est rouvert.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     chargerStats();
-  }, [ouvert]);
+  }, [ouvert, chargerStats]);
 
   if (!ouvert) return null;
 

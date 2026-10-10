@@ -365,3 +365,34 @@ configurer manuellement.
   agrégées et alertes fournisseur restent à traiter dans `OPS-002`.
 - Le noyau Supabase historique est baseliné ; le `db reset` conteneurisé reste
   suivi par `TOOL-002`.
+
+
+## 9. Cycle de vie DATA-001
+
+Le client lit Notes, Archives et Corbeille, avec une pagination de 500 lignes
+pour notes, associations et images. Aucun de ces corpus ou périmètres n’est
+persisté dans le navigateur. Les filtres, sélections et positions de liste
+sont mémorisés seulement en mémoire de page par périmètre. La recherche propose
+Notes par défaut, Notes + archives et Corbeille ; une lecture hors périmètre
+n’efface pas le filtre courant.
+
+`transition_note_lifecycle` verrouille la note possédée et compare
+`lifecycle_version`. Il ne modifie jamais texte, tags, épingle ou colonne.
+L’archive conserve un lien déjà public. Corbeille et restauration révoquent
+le partage ; une restauration conserve l’état d’archive d’origine. Aucun
+DELETE de note ou champ de cycle de vie n’est accordé au navigateur.
+
+Les images sont réservées par `prepare_note_images` avant l’API Storage,
+puis validées par `finish_note_image_uploads`. Un déplacement est bloqué
+pendant l’envoi/nettoyage. Le trigger du contenu refuse toute référence
+privée sans métadonnée disponible et objet Storage enregistré. Les DELETE
+Storage d’objets attachés sont refusés aux anciens clients.
+
+POST `/api/notes/[id]/images/cleanup` et `/api/notes/[id]/purge` vérifient
+le Bearer auprès d’Auth, la propriété et les identifiants, puis utilisent
+exclusivement le client serveur et l’API Storage. Le nettoyage marque les
+métadonnées avant de retirer un fichier devenu inutilisé. La purge marque
+la note comme non restaurable, supprime les chemins enregistrés et les
+objets restant sous son préfixe, vérifie que le dossier est vide et termine
+le DELETE en base. Une erreur conserve les marqueurs pour une reprise
+explicite. Réponses `no-store`, erreurs normalisées sans contenu ni secret.

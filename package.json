@@ -1,6 +1,6 @@
 {
   "name": "webjourney",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.17.0",
@@ -16,7 +16,8 @@
     "ops:audit-images": "node scripts/audit-note-images.mjs",
     "validate": "npm run lint && npm run test && npm run build",
     "security:audit": "node scripts/security-audit.mjs",
-    "test:ui:editor": "node scripts/smoke-search-editor.mjs"
+    "test:ui:editor": "node scripts/smoke-search-editor.mjs",
+    "test:ui:lifecycle": "node scripts/smoke-note-lifecycle.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

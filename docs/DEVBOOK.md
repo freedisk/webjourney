@@ -820,7 +820,10 @@ GitHub mergeable=true/clean. Squash 348fe4dc75c1fb2158406571f4643aa5363d0ffa,
 CI main verte et Vercel Production READY sur ce SHA. Identité publique 1.1.1,
 builtAt 2026-10-10T19:35:34.994Z ; smoke public 21/21 et recette recherche/
 éditeur sur assets live 12/12, Supabase intégralement simulé.
-La confirmation physique sur la PWA de l'utilisateur est encore attendue.
+L'utilisateur confirme le correctif sur mobile le 2026-10-10 :
+« correctif validé sur la version mobile ». Le signalement initial concernait
+la PWA ; modèle et OS ne sont pas précisés. La validation porte sur le zoom
+signalé, sans établir une recette complète Safari/PWA avec clavier ouvert.
 
 Les conflits de fusion sont uniquement documentaires ; bilans précédents et
 commits d'origine préservés. Clôture sur codex/mobile-search-close, sans
@@ -829,6 +832,88 @@ changement de code, de schéma ou de configuration.
 ### Références
 
 M-025 ; docs/TESTING.md ; scripts/smoke-search-editor.mjs.
+
+## 2026-10-10 — Conception Organiser et retrouver sans perdre
+
+### Objectif
+
+L'utilisateur choisit le lot avec identité Capsule et défilement validé
+conservés. Préparer le plan et les maquettes avant implémentation, suivant
+l'étape proposée. Rétention confirmée : conserver jusqu'à suppression manuelle.
+
+### Conception
+
+DATA-001 élargi à l'archivage et aux périmètres Notes/Archives/Corbeille,
+Annuler et recherche explicite. Deux étapes de travail : données/corbeille,
+puis archivage/navigation ; livraison coordonnée à préparer.
+
+Le plan traite les notes, images, liens révoqués, restauration dans l'état
+d'origine, droits des anciens clients et erreurs de purge. La suppression
+actuelle commence par l'API Storage ; une simple colonne filtrée côté client
+ne suffirait pas. ADR-018 proposé, rétention seule déjà validée.
+
+### Validation et limites
+
+Maquettes finales : 16/16 scénarios Chromium/WebKit, desktop/mobile à
+320/390/736/1024 px, clair/sombre ; inspection visuelle. Restauration,
+annulation, périmètres, image conservée, lien restant révoqué, confirmation
+de purge et scroll contrôlés dans les maquettes. Place des icônes réservée
+pour stabiliser le layout ; lecture successive sur le desktop étroit.
+Textes fictifs, aucune API Supabase, session réelle ou donnée utilisateur.
+Les futures preuves SQL/RLS, recettes de l'application et physiques restent
+distinctes de ces maquettes. Parcours/maquettes encore en revue ; aucun
+code applicatif, SQL, migration ou déploiement lancé dans cette phase.
+SEC-001 garde sa priorité et sa date, sans exception étendue.
+
+### Références
+
+Plan : sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md.
+Maquettes : capsule-organize-recover-desktop.html et
+capsule-organize-recover-mobile.html dans le dossier de visualisation de la tâche.
+
+## 2026-10-10 — Candidat DATA-001, Organisation et récupération
+
+### Autorisation et continuité
+
+Plan et maquettes validés, implémentation/PR/gate autorisés. L’utilisateur
+choisit explicitement Supabase production, sans stack locale ni projet isolé.
+Branche codex/organize-recover issue de codex/mobile-search-close ; 4be78dc
+et les trois commits documentaires initiaux sont conservés.
+
+### Changements
+
+Version candidate 1.2.0 : Notes/Archives/Corbeille, recherche explicite,
+restauration, Annuler et suppression définitive unitaire. Aucun timer de purge.
+Lecture hors périmètre et retour au filtre/scroll ; choix compact dans le
+compteur du header, sans barre mobile supplémentaire. Aide et changelog adaptés.
+
+SQL forward-only : cycle de vie verrouillé/versionné, révocation de partage,
+protection des anciens DELETE et références d’images. Réservation avant upload,
+nettoyage et purge via routes serveur authentifiées et API Storage. Aucun
+secret exposé ; aucun contenu ou index privé persisté dans le navigateur.
+
+### Préflight et preuves provisoires
+
+Sauvegarde read-only du schéma avant opération, sans données utilisateur,
+sous supabase/backups ignoré par Git. Connexion CLI renouvelée ; même profil
+confirmé par l’utilisateur et le navigateur, mais login-role reste refusé en
+403, avec CLI 2.116 et essai ponctuel 2.120. Dry-run CLI tenté, non réussi.
+Fallback navigateur connecté : SQL versionné testé dans une transaction
+annulée. Première recette 15/15, recette renforcée 18/18 après contrôle exact
+du texte SQL. Aucun schéma appliqué à ce stade ; contrôles post-migration et
+recette Storage réelle restent à effectuer.
+
+Candidat local : npm validate réussi, 137 tests, build ; audit production 0,
+seule exception lint inchangée avec échéance du 24 octobre 2026 à 23:59:59 UTC.
+Recettes synthétiques de l’application : scroll 12/12, éditeur 12/12,
+cycle de vie 8/8. Les derniers ajustements UX sont recontrôlés avant commit.
+Ces recettes simulent Supabase ; aucune validation physique Safari/PWA avec
+clavier n’est extrapolée. PR et production encore à suivre.
+
+### Références
+
+ADR-018 ; PLAN_ORGANIZE_RECOVER_2026-10-10.md ; fichiers SQL sous
+supabase/tests/note_lifecycle* ; scripts/smoke-note-lifecycle.mjs.
 
 ## Modèle d'entrée
 

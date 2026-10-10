@@ -44,4 +44,7 @@ next-env.d.ts
 # screenshots
 screenshots/
 
+# Sauvegardes de schéma locales, sans données utilisateur.
+/supabase/backups/
+
 .vercel
