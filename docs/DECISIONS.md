@@ -235,6 +235,23 @@ journal avec un lien vers celle qui la remplace.
   nouvelle date. Aucun secret, contenu privé ou état Supabase n'entre dans
   l'identité de livraison.
 
+## ADR-017 — Exception de lint temporaire et contrôlée
+
+- **Statut** : accepté le 2026-10-10 sur autorisation explicite du propriétaire.
+- **Contexte** : UX-003 et les correctifs applicatifs sont validés, mais
+  GHSA-vfj7-8cjw-p6xm dans une chaîne de lint sans version corrigée bloque
+  l'audit complet ; l'audit production est à zéro.
+- **Décision** : audit production distinct sans exception, puis acceptation
+  exclusive de cette cause et de ses quatre parents, aux versions et chemins
+  exacts, sous `dev: true`, jusqu'au 2026-10-24T23:59:59Z. Toute nouvelle
+  version de braces publiée force une revue ; nouvelles causes, erreurs et
+  rapports incomplets restent bloquants. Ne pas modifier le ruleset main.
+- **Raison** : livrer le correctif mobile avec une décision de risque explicite
+  sans rendre le gate permissif pour les autres dépendances ou la production.
+- **Conséquences** : `security:audit` utilise un contrôleur versionné et huit
+  tests de limites ; la CI garde son nom et son seuil élevés. Retirer
+  l'exception après correction amont, puis reprendre l'audit npm brut.
+
 ## Modèle ADR
 
 ```markdown

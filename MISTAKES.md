@@ -310,6 +310,45 @@ présente après correction afin d'éviter la répétition du problème.
   propriétés structurées et télécharge l'image pour contrôler type et dimensions.
 - **Statut** : corrigé et validé en production, smoke robot 34/34.
 
+## M-021 — Panneau liste mobile non borné
+
+- **Date constatée** : 2026-10-10.
+- **Symptôme** : notes coupées et impossibilité de faire défiler la vue liste
+  sur mobile.
+- **Cause** : orientation flex passée en colonne sans rendre le panneau
+  flexible ; `flex-shrink: 0` conservait une hauteur intrinsèque de 3 306 px
+  dans un espace de 650 px, masqué par le parent. Le minimum global `100vh`
+  contredisait également la hauteur dynamique Safari.
+- **Impact** : les dernières notes devenaient inaccessibles à l'écran.
+- **Correction** : `flex: 1` mobile, `min-height: 0` sur la chaîne panneau/liste
+  et hauteur du shell en `100dvh` avec repli.
+- **Prévention** : recette du vrai écran avec 60 notes, dernière note, contenu
+  long, recherche, retour et deux moteurs navigateur. Une capture seule ne
+  prouve pas le défilement : mesurer la plage et faire défiler réellement.
+- **Statut** : corrigé localement ; livraison en cours.
+
+## M-022 — Audit bloqué par une dépendance de lint sans correctif publié
+
+- **Date constatée** : 2026-10-10.
+- **Symptôme** : le gate de sécurité ne passe plus après plusieurs semaines
+  sans release, même après les mises à jour compatibles.
+- **Cause** : GHSA-vfj7-8cjw-p6xm dans `braces` 3.0.3, utilisé uniquement par
+  `eslint-config-next` → plugin Next → `fast-glob` → `micromatch`.
+  La source officielle ne publie aucun correctif au jour du constat.
+- **Correction appliquée** : mises à jour compatibles des autres dépendances,
+  dont Next.js 16.4.0 ; audit de production à zéro.
+- **Prévention** : ne pas utiliser `npm audit fix --force`, qui propose ici
+  un recul majeur d'ESLint Next vers 14.x ; ne pas affaiblir silencieusement
+  le gate. Une éventuelle exception doit être autorisée, documentée, limitée
+  à cette cause de développement et réévaluée à la publication d'un correctif.
+- **Décision du 2026-10-10** : exception explicitement autorisée, limitée à la
+  cause, aux cinq versions dev observées, avec expiration UTC le
+  2026-10-24T23:59:59Z. Contrôle indépendant de production, validation du
+  graphe/lockfile et huit tests empêchent toute extension silencieuse.
+  Une nouvelle version publiée de braces ou une erreur d'audit bloque à nouveau.
+- **Statut** : surveillé, retrait suivi dans SEC-001 ; aucune exception production.
+- **Source** : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
+
 ## Modèle d'entrée
 
 ```markdown

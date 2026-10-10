@@ -27,12 +27,6 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
     onCloseRef.current = onFermer;
   }, [onFermer]);
 
-  // Charger les données à l'ouverture
-  useEffect(() => {
-    if (!ouvert) return;
-    chargerStats();
-  }, [ouvert]);
-
   // Fermer avec Échap
   useEffect(() => {
     if (!ouvert) return undefined;
@@ -141,6 +135,14 @@ export default function StatsDrawer({ ouvert, onFermer, notes, tags, notesTags, 
       setChargement(false);
     }
   }
+
+  // Charger les données à l'ouverture, après déclaration du chargeur.
+  useEffect(() => {
+    if (!ouvert) return;
+    // Réafficher immédiatement le chargement quand le panneau est rouvert.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    chargerStats();
+  }, [ouvert]);
 
   if (!ouvert) return null;
 

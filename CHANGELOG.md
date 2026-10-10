@@ -7,6 +7,18 @@ sémantique déclarée dans `package.json`.
 
 Aucun changement pour le moment.
 
+## 1.0.1 — 2026-10-10
+
+### UX-003 — Défilement mobile de la vue liste
+
+- Panneau liste borné à l'espace disponible sur mobile ; les notes défilent
+  jusqu'à la dernière sans être coupées par le parent.
+- Hauteur de l'application adaptée au viewport dynamique Safari, avec repli
+  pour les navigateurs sans unité `dvh`.
+- Recette navigateur reproductible sur le vrai écran, avec session et données
+  Supabase simulées, gestes tactiles, recherche et retour depuis le détail.
+- Rafraîchissement compatible des dépendances pour les correctifs de sécurité.
+
 ## 1.0.0 — 2026-08-28
 
 ### REL-001 — Version, À propos et mises à jour

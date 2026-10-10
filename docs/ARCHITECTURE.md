@@ -271,6 +271,10 @@ recette multi-appareil.
 
 ### Interaction moderne progressive
 
+- le shell utilise `100dvh` (repli `100vh`) sans minimum hérité de `100vh` ;
+  en vue liste mobile, le panneau visible occupe l'espace restant avec
+  `flex: 1`, et la chaîne panneau/liste conserve `min-height: 0` pour borner
+  le défilement interne sans déplacer la navigation basse ;
 - le changement cartes/liste/Kanban utilise View Transition si le navigateur le
   permet, sinon la mise à jour React reste immédiate ;
 - le partage préfère la feuille système, avec copie du lien en repli ;

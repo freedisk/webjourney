@@ -117,16 +117,22 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     apparaître dans les métadonnées de son propre lien public.
 16. L'identité publique d'un build contient seulement SemVer, SHA Git et date ;
     sa vérification est manuelle, `no-store` et hors cache PWA.
+17. L'audit production n'a aucune exception. L'unique exception de lint
+    GHSA-vfj7-8cjw-p6xm, autorisée le 2026-10-10, est limitée aux cinq versions
+    exactes en développement et expire le 2026-10-24T23:59:59Z ; une nouvelle
+    version de braces ou toute autre cause impose une revue avant livraison.
 
 ## Environnement
 
-- Next.js 16.3.3, React 19.2.8, Supabase JS 2.112.4.
+- Next.js 16.4.0 dans le candidat UX-003 (minimum corrigé), React 19.2.8,
+  Supabase JS 2.112.4 ; dernière référence production documentée : 16.3.3.
 - Node de référence verrouillé : 24.19.0 avec npm 11 ; GitHub Actions utilise
   la même version majeure.
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
-- Version produit publique `1.0.0` ; le SHA système Vercel identifie le build.
+- Version produit publique confirmée `1.0.0` ; candidat UX-003 `1.0.1`.
+  Le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.
 - Variable serveur requise : clé secrète/service-role Supabase. La clé Anthropic
@@ -167,6 +173,9 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 
 ## Prochaines priorités
 
+0. Finaliser UX-003 : exception de lint autorisée et contrôlée, audit local vert ;
+   relancer le gate de la PR #26 puis fusionner et vérifier la version 1.0.1.
+   `SEC-001` suit le retrait obligatoire de l'exception temporaire.
 1. `QA-001` — E2E des parcours critiques.
 2. `OPS-002` — observabilité sans données de note ni secret.
 3. `TOOL-002` — validation locale Supabase conteneurisée.
