@@ -60,7 +60,8 @@ complète avec clavier extrapolée. SEC-001 conserve sa priorité et son échéa
 
 - **Priorité** : P2.
 - **ROI / effort** : moyen/élevé / 1–2 jours.
-- **État** : `IN_PROGRESS` ; plan et maquettes validés.
+- **État** : `REVIEW_REQUIRED` ; implémentation et migration validées,
+  PR #32 et livraison finale en cours.
 - **Lot choisi** : Organiser et retrouver sans perdre, corbeille/restauration
   puis archivage, périmètres Notes/Archives/Corbeille, recherche et Annuler.
 - **Rétention validée** : conserver jusqu'à suppression définitive manuelle ;

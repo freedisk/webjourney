@@ -52,7 +52,9 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   5 Mio, progression et visionneuse clavier/tactile.
 - Duplication et suppression d'images validées par recette utilisateur.
 - Bucket `note-images` privé, limite 5 Mio, JPEG/PNG/WebP.
-- Grants `note_images` pour `authenticated` limités à SELECT/INSERT/DELETE.
+- Grants `note_images` pour `authenticated` : SELECT et INSERT limité aux
+  six colonnes métier ; aucun DELETE ni accès aux marqueurs. Les nouveaux
+  uploads utilisent les RPC de réservation/finalisation.
 - PWA installée et validée fonctionnelle sur iPad via Safari.
 - UX-002 implémente une hiérarchie neo-brutaliste responsive, une navigation
   mobile, des dialogues accessibles, toasts et skeletons, la palette
@@ -154,6 +156,11 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     exactes en développement et expire le 2026-10-24T23:59:59Z ; une nouvelle
     version de braces ou toute autre cause impose une revue avant livraison.
 
+18. Corbeille conserve les notes/images sans purge automatique ; la restauration
+    reprend l’état d’archive d’origine sans réactiver de partage.
+19. Le navigateur ne supprime plus directement une note ou un objet attaché.
+    Une purge engagée est non restaurable et son nettoyage est réessayable.
+
 ## Environnement
 
 - Next.js 16.4.0 (minimum corrigé), React 19.2.8, Supabase JS 2.112.4.
@@ -179,10 +186,16 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   bucket privé, absent des exports de schéma.
 - `20260827094500_add_user_ai_settings.sql` ajoute les réglages BYOK, Vault et le
   quota sans modifier les notes ni les images.
-- Les trois versions sont présentes dans `supabase_migrations.schema_migrations`
-  et alignées avec le dépôt.
-- Le dry-run distant est vide et l'audit `production_schema_audit.sql` passe à
-  12/12.
+- Les quatre versions, dont `20261010214500_add_note_lifecycle.sql`, sont
+  présentes dans `supabase_migrations.schema_migrations`. DATA-001 a été
+  appliquée le 2026-10-10 via SQL Editor autorisé, après sauvegarde de schéma
+  et préflight 50/50 annulé. Historique version/nom/SQL enregistré dans la même
+  transaction, avec contrôle des trois versions préexistantes.
+- Recette HTTP réelle Auth/RLS/Storage DATA-001 : 21/21 ; zéro compte, note
+  ou fichier synthétique résiduel. Audits schéma 12/12 et sécurité 20/20.
+  CLI login-role encore refusé en 403 (M-027), aucun dry-run CLI réussi présumé.
+- Le dernier dry-run CLI vide est celui de la baseline historique. L’audit
+  `production_schema_audit.sql` est adapté aux nouveaux droits et passe à 12/12.
 - L'audit `ai_security_audit.sql` passe à 9/9 en production.
 - La validation SQL a été exécutée dans une transaction puis annulée. Le test
   `supabase db reset` sous Docker reste un confort local suivi par `TOOL-002`.

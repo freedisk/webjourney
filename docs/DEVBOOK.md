@@ -914,6 +914,28 @@ cycle de vie 8/8. Les derniers ajustements UX sont recontrôlés avant commit.
 Ces recettes simulent Supabase ; aucune validation physique Safari/PWA avec
 clavier n’est extrapolée. PR et production encore à suivre.
 
+### Application Supabase et recette HTTP
+
+Migration 20261010214500 appliquée et enregistrée atomiquement avec son SQL,
+après sauvegarde sans données, comparaison de l’historique, préflight combiné
+50/50 annulé et PR #32/gates verts. Aucun reset, aucune version prétendue
+appliquée. Le wrapper d’application a aussi été testé entièrement avec ROLLBACK
+avant le COMMIT ; un premier préambule mal assemblé avait été refusé sans
+modification (M-028).
+
+Recette HTTP réelle Auth/RLS/Storage : 21/21. Deux comptes et deux notes fictifs,
+une image 1×1 et sa copie uniquement ; aucun contenu utilisateur utilisé.
+Propriété, reservation/upload/copy, partage d’archive, révocation à la corbeille,
+conservation, anciens DELETE refusés, restauration, conflit, nettoyage de copie,
+refus d’image référencée et purge vérifiés. Dernier GET de fichier distingué
+d’un téléchargement déjà mis en cache : liste Storage vide et GET sans cache
+indisponible. Nettoyage final : zéro utilisateur, note ou objet fictif restant,
+zéro erreur. Aucun secret dans les sorties ou checkpoint local ignoré.
+
+La boucle de regroupement utilise Map classique plutôt que Map.groupBy pour
+ne pas augmenter le minimum de navigateur Safari. 137 tests repassés ; nouveau
+gate requis sur le commit final avant fusion.
+
 ### Références
 
 ADR-018 ; PLAN_ORGANIZE_RECOVER_2026-10-10.md ; fichiers SQL sous

@@ -422,6 +422,21 @@ présente après correction afin d'éviter la répétition du problème.
   SQL, et tracer une tentative de dry-run refusée sans la dire réussie.
 - **Statut** : accès CLI à diagnostiquer ; accès SQL navigateur fonctionnel.
 
+## M-028 — Délimiteurs SQL altérés par remplacement JavaScript
+
+- **Date constatée** : 2026-10-10, préparation d’application DATA-001.
+- **Symptôme** : préambule de comparaison d’historique refusé en 42601.
+- **Cause** : une chaîne de remplacement de String.replace interprète $$
+  comme un dollar littéral ; le wrapper avait donc altéré le dollar-quoting SQL.
+- **Impact** : requête refusée ; migration source inchangée, aucun schéma appliqué.
+- **Correction** : utiliser un callback de remplacement, comparer le texte
+  entier et tester le wrapper complet (DDL, audits, historique) avec ROLLBACK.
+  Le contrôle confirme trois versions et zéro colonne nouvelle après annulation,
+  puis quatre versions après le COMMIT réel.
+- **Prévention** : tester l’assemblage réellement exécuté, pas seulement ses
+  fragments ; ne jamais annoncer un succès avant contrôle du catalogue.
+- **Statut** : corrigé, application et recette HTTP 21/21 ensuite confirmées.
+
 ## Modèle d'entrée
 
 ```markdown

@@ -404,3 +404,11 @@ sans projet isolé ni stack locale. La sauvegarde de schéma est ignorée par Gi
 La CLI refusant login-role en 403 après connexion renouvelée, la tentative de
 `db push --dry-run --linked` est tracée séparément du préflight SQL annulé
 réalisé dans le navigateur connecté ; ne pas annoncer un dry-run CLI réussi.
+
+
+Recette réelle DATA-001 du 2026-10-10 : 21/21 via Auth/RLS/Storage et routes
+serveur du candidat, avec fixtures synthétiques seulement. Nettoyage vérifié
+à zéro utilisateur, note et objet. Pour contrôler une suppression, utiliser
+la liste Storage puis un téléchargement sans cache ; un GET déjà téléchargé
+peut encore retourner sa copie en cache et ne prouve pas la présence en base.
+Préflight combiné annulé : 18 cycles/droits + 12 schéma + 20 sécurité = 50/50.
