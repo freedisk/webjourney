@@ -19,7 +19,8 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
   borné, défilement interne et viewport dynamique. PR #26 fusionnée en
   `6325b7f`, Vercel Production `dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs` READY
   sur ce SHA, 113 tests, smoke public 21/21 et recette synthétique live
-  Chromium/WebKit 12/12. Safari/PWA physique reste une validation utilisateur.
+  Chromium/WebKit 12/12. Défilement de la vue liste confirmé conforme par
+  l'utilisateur le 2026-10-10 ; appareil et mode Safari/PWA non précisés.
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
 - Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /

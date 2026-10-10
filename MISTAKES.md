@@ -325,7 +325,8 @@ présente après correction afin d'éviter la répétition du problème.
 - **Prévention** : recette du vrai écran avec 60 notes, dernière note, contenu
   long, recherche, retour et deux moteurs navigateur. Une capture seule ne
   prouve pas le défilement : mesurer la plage et faire défiler réellement.
-- **Statut** : corrigé et validé en production, PR #26, smoke 21/21 et recette live 12/12.
+- **Statut** : corrigé et validé en production, PR #26, smoke 21/21 et recette
+  live 12/12 ; utilisateur confirmant le défilement attendu le 2026-10-10.
 
 ## M-022 — Audit bloqué par une dépendance de lint sans correctif publié
 

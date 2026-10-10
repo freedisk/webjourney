@@ -694,6 +694,13 @@ L'assertion invalide est corrigée depuis le source ; seul le smoke complet
 Limite : le geste WebKit mobile est programmatique et n'est pas une recette
 physique iPhone/iPad. L'exception dev reste contrôlée et suivie par SEC-001.
 
+### Recette utilisateur confirmée le 2026-10-10
+
+L'utilisateur valide la partie liste : « le défilment est celui attendu ».
+La conformité fonctionnelle du défilement est donc confirmée après livraison.
+Cette acceptation concerne la vue liste ; l'appareil et le mode Safari/PWA
+ne sont pas précisés dans le retour. Aucun changement applicatif n'est requis.
+
 ## Modèle d'entrée
 
 ```markdown
