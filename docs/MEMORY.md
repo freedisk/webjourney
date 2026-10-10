@@ -15,13 +15,18 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
-- Prochain lot choisi par l'utilisateur le 2026-10-10 : « Organiser et retrouver
-  sans perdre », plan et maquettes validés, implémentation en cours. Rétention de corbeille
-  explicitement validée : conserver jusqu'à suppression manuelle, sans purge
-  automatique. Plan dans sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md ;
-  production autorisée explicitement sans stack locale/isolée, avec tests
-  transactionnels annulés. Aucune livraison 1.2.0 présumée avant PR/gate,
-  application SQL et recette.
+- DATA-001 « Organiser et retrouver sans perdre » livré en 1.2.0 par PR #32,
+  fusion 400caacaa0ec339cffeafa87eada1b3f47de113d, après Quality gate et
+  preview verts. Vercel Production et identité publique confirmés sur ce SHA,
+  smoke public 23/23. Archives, corbeille à conservation manuelle, restauration,
+  Annuler et recherche par périmètre. Le défilement UX-003 est conservé.
+  Plan : sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md. Migration production
+  autorisée sans stack locale/isolée ; préflight SQL annulé 50/50, audits
+  post-migration schéma 12/12, sécurité 20/20 et IA 9/9, recette HTTP réelle
+  21/21 et nettoyage vérifié zéro. 137 tests et UI locale 32/32 ; recette live
+  recherche/éditeur 12/12 et cycle de vie 8/8, Supabase entièrement simulé.
+  Clôture de lisibilité et documentation via PR distincte. Aucune validation
+  physique Safari/PWA avec clavier extrapolée.
 
 - Invariant de recherche tactile : la palette et les filtres des trois vues
   emploient au moins 16 px sur écran étroit ou pointeur tactile, sans bloquer
@@ -169,7 +174,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
-- Version produit publique confirmée `1.1.1`.
+- Version produit publique confirmée `1.2.0`.
   Le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.

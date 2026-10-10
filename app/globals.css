@@ -3806,7 +3806,7 @@ kbd {
 .note-scope-options small { grid-column: 1 / -1; color: var(--text-secondary); }
 .search-scope-controls { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .75rem; }
 .search-scope-controls button { min-height: 44px; padding: .4rem .6rem; font-size: .8rem; border: 1.5px solid var(--brutal-border); background: var(--surface-solid); }
-.search-scope-controls button[aria-pressed="true"] { background: var(--accent); color: white; }
+.search-scope-controls button[aria-pressed="true"] { background: var(--accent); color: var(--bg-primary); }
 .note-reading-actions { flex-wrap: wrap; }
 .note-lifecycle-badge { font-size: .72rem; font-weight: 700; color: var(--text-secondary); overflow-wrap: anywhere; }
 .purge-note-summary { overflow-wrap: anywhere; }

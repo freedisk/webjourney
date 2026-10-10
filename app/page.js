@@ -2383,7 +2383,7 @@ export default function Home() {
             <div className="glass-card">
               <EmptyState
                 icon="plus"
-                title={noteScopeId === "active" ? "Ta première capsule commence ici" : currentScopeLabel + " vides"}
+                title={noteScopeId === "active" ? "Ta première capsule commence ici" : currentScopeLabel + (noteScopeId === "trash" ? " vide" : " vides")}
                 description={noteScopeId === "trash" ? "Les notes mises à la corbeille restent récupérables jusqu’à suppression manuelle." : noteScopeId === "archived" ? "Archive une note depuis Plus pour la ranger ici." : "Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l’auras pas partagée."}
                 actionLabel={noteScopeId === "active" ? "Créer une note" : "Afficher Notes"}
                 onAction={noteScopeId === "active" ? openNewNote : () => changeScope("active")}
@@ -2778,7 +2778,7 @@ export default function Home() {
                 <EmptyState
                   compact
                   icon="plus"
-                  title={noteScopeId === "active" ? "Aucune note" : currentScopeLabel + " vides"}
+                  title={noteScopeId === "active" ? "Aucune note" : currentScopeLabel + (noteScopeId === "trash" ? " vide" : " vides")}
                   description={noteScopeId === "trash" ? "Conservation jusqu’à suppression manuelle." : noteScopeId === "archived" ? "Range une note avec Archiver." : "Crée ta première capsule."}
                   actionLabel={noteScopeId === "active" ? "Créer" : "Afficher Notes"}
                   onAction={noteScopeId === "active" ? openNewNote : () => changeScope("active")}

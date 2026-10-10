@@ -936,6 +936,25 @@ La boucle de regroupement utilise Map classique plutôt que Map.groupBy pour
 ne pas augmenter le minimum de navigateur Safari. 137 tests repassés ; nouveau
 gate requis sur le commit final avant fusion.
 
+### Livraison applicative et clôture
+
+PR #32 fusionnée en 400caacaa0ec339cffeafa87eada1b3f47de113d après recontrôle
+des deux gates, preview READY et GitHub mergeable=true/clean. CI main verte ;
+Vercel Production READY sur le SHA, identité publique 1.2.0, builtAt
+2026-10-10T23:08:13.953Z. Smoke public 23/23, y compris refus anonyme des
+routes de purge et nettoyage. Recette des assets live avec Supabase simulé :
+recherche/éditeur 12/12 et cycle de vie 8/8. Audit agrégé d’images après fixtures
+identique au préflight (23 notes, deux métadonnées/deux objets, six catégories
+propres). Le journal historique conserve son hash initial.
+
+Clôture sur codex/organize-close, sans reset ni perte de commits. Ajustement
+ciblé du texte sélectionné des nouveaux boutons : couleurs de thème conservées,
+contraste mesuré à 5,51:1 en clair et 5,33:1 en sombre (au lieu de 3,61:1 blanc
+sur violet sombre), 8/8 Chromium/WebKit, desktop/mobile. Accord de « Corbeille
+vide » corrigé dans les états vides. Aucun changement de schéma, de hauteur,
+de scroll ou de comportement de cycle de vie dans cette clôture. Validation
+locale finale et audit verts ; PR de clôture/gate/READY avant livraison finale.
+
 ### Références
 
 ADR-018 ; PLAN_ORGANIZE_RECOVER_2026-10-10.md ; fichiers SQL sous

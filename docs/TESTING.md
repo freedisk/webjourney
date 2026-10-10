@@ -412,3 +412,10 @@ serveur du candidat, avec fixtures synthétiques seulement. Nettoyage vérifié
 la liste Storage puis un téléchargement sans cache ; un GET déjà téléchargé
 peut encore retourner sa copie en cache et ne prouve pas la présence en base.
 Préflight combiné annulé : 18 cycles/droits + 12 schéma + 20 sécurité = 50/50.
+
+
+Assets live 1.2.0 / 400caac : recherche/éditeur 12/12 et cycle de vie 8/8,
+avec API entièrement simulées. Contraste des boutons sélectionnés recontrôlé
+pour la clôture : 8/8 Chromium/WebKit, mobile/desktop, clair 5,51:1 et sombre
+5,33:1. Le zoom, le défilement et le clavier physique restent distingués des
+mesures et gestes synthétiques.

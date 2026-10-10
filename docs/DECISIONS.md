@@ -270,8 +270,9 @@ journal avec un lien vers celle qui la remplace.
   sauvegarde de schéma et démonstration transactionnelle annulée ; déploiement
   coordonné et rollback applicatif compatible ; aucune purge automatique.
 - **Référence** : sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md.
-- **Phase actuelle** : implémentation ; SQL préparé et première recette
-  transactionnelle 15/15 avec ROLLBACK, sans migration appliquée.
+- **Phase actuelle** : livré en 1.2.0, PR #32, 400caac ; migration
+  20261010214500 appliquée après préflight annulé 50/50 ; audits 41/41 et
+  recette HTTP 21/21 avec nettoyage à zéro.
 
 ## Modèle ADR
 
