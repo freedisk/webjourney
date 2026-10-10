@@ -25,3 +25,9 @@ Ne pas éditer cette photographie à la main. Pour la rafraîchir :
 4. relire le diff, notamment les grants et les policies ;
 5. ne jamais utiliser cette commande comme substitut à une migration
    forward-only.
+
+Cette photographie reste celle de la baseline du 26 août. Les évolutions
+ultérieures (réglages IA et cycle de vie DATA-001) sont décrites exclusivement
+par les migrations versionnées. Les audits sous `supabase/tests/` vérifient
+le contrat courant après application ; ne pas appliquer cette photographie
+pour annuler une évolution.

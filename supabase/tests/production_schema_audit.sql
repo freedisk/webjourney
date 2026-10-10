@@ -15,7 +15,8 @@ with checks(check_name, ok) as (
         where table_schema = 'public' and table_name = 'notes'
       ) = array[
         'id', 'created_at', 'user_id', 'titre', 'contenu', 'fait', 'resume',
-        'couleur', 'epinglee', 'share_token', 'kanban_colonne', 'kanban_ordre'
+        'couleur', 'epinglee', 'share_token', 'kanban_colonne', 'kanban_ordre',
+        'archived_at', 'deleted_at', 'purge_started_at', 'lifecycle_version'
       ]::text[]
     ),
     (
@@ -42,7 +43,7 @@ with checks(check_name, ok) as (
         where table_schema = 'public' and table_name = 'note_images'
       ) = array[
         'id', 'note_id', 'storage_path', 'original_name', 'mime_type',
-        'size_bytes', 'created_at'
+        'size_bytes', 'created_at', 'cleanup_started_at', 'upload_started_at'
       ]::text[]
     ),
     (
@@ -56,25 +57,27 @@ with checks(check_name, ok) as (
       )
     ),
     (
-      '15 policies sur les tables applicatives',
+      '17 policies sur les tables applicatives',
       (
-        select count(*) = 15
+        select count(*) = 17
         from pg_policies
         where schemaname = 'public'
           and tablename in ('notes', 'tags', 'notes_tags', 'note_images')
       )
     ),
     (
-      '3 policies Storage images',
+      '5 policies Storage images',
       (
-        select count(*) = 3
+        select count(*) = 5
         from pg_policies
         where schemaname = 'storage'
           and tablename = 'objects'
           and policyname in (
             'note_images_storage_select_owner',
             'note_images_storage_insert_owner',
-            'note_images_storage_delete_owner'
+            'note_images_storage_delete_owner',
+            'note_images_storage_delete_unattached',
+            'note_images_storage_insert_live_note'
           )
       )
     ),
@@ -107,7 +110,10 @@ with checks(check_name, ok) as (
         where table_schema = 'public'
           and table_name = 'note_images'
           and grantee = 'authenticated'
-      ) = array['DELETE', 'INSERT', 'SELECT']::text[]
+      ) = array['SELECT']::text[]
+      and (select count(distinct column_name)=6 from information_schema.role_column_grants
+        where table_schema='public' and table_name='note_images'
+          and grantee='authenticated' and privilege_type='INSERT')
     ),
     (
       'bucket note-images privé et borné',
