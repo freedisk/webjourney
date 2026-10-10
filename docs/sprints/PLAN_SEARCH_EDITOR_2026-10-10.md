@@ -8,8 +8,8 @@ une note ancienne depuis la palette, lire avec moins de commandes permanentes
 et écrire sur mobile avec un état de sauvegarde clair. La version publique
 reste 1.0.1, build 4397f81 ; ce document décrit une évolution proposée.
 
-État du lot : **REVIEW_REQUIRED**. Le candidat 1.1.0 est implémenté sur
-codex/search-editor-comfort ; aucune migration n'est prévue. Les choix ci-dessous
+État du lot : **DONE**, version 1.1.0 livrée par PR #28, fusion 3ab6a20.
+Aucune migration. Les choix ci-dessous
 définissent la conception acceptée, pas des invariants déjà livrés.
 
 ## Périmètre et frontières
@@ -263,6 +263,11 @@ sont locales et fictives ; elles ne constituent pas une nouvelle version
 de Capsule.
 
 ## Résultats du candidat
+
+Livraison confirmée le 10 octobre 2026 : PR #28, deux Quality gate verts
+au SHA d5b621c, GitHub clean, fusion 3ab6a20. Production Vercel en succès,
+identité publique 1.1.0 / 3ab6a20 et smoke 21/21. La recette éditeur sur
+les assets live passe 12/12 avec session et mutations Supabase simulées.
 
 - Lint, 126 tests et build de production verts.
 - Audit production à zéro ; seule chaîne de développement SEC-001 annoncée

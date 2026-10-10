@@ -775,6 +775,19 @@ Les tests physiques Safari/PWA ne sont pas encore effectués.
 - Recettes : scripts/smoke-list-scroll.mjs et scripts/smoke-search-editor.mjs.
 - Incident de candidat : M-024, corrigé avant production.
 
+### Livraison confirmée
+
+PR #28 : deux Quality gate verts sur d5b621c, Vercel success, GitHub
+mergeable/clean puis squash en 3ab6a20. CI main et Vercel en succès ;
+production 1.1.0 / 3ab6a20, build du 2026-10-10T18:48:23.669Z.
+Smoke public 21/21, recette éditeur sur assets live 12/12 avec données et
+mutations Supabase intégralement simulées. Aucune mutation réelle ni donnée
+utilisateur employée. La recette physique Safari/PWA reste non effectuée.
+
+Clôture documentaire sur codex/search-editor-close après merge de main dans
+l'état local conservé : aucune bascule vers main, aucun reset/rebase,
+aucun abandon des commits d'origine.
+
 ## Modèle d'entrée
 
 ```markdown
