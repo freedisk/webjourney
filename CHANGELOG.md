@@ -18,6 +18,14 @@ Aucun changement pour le moment.
 - Recette navigateur reproductible sur le vrai écran, avec session et données
   Supabase simulées, gestes tactiles, recherche et retour depuis le détail.
 - Rafraîchissement compatible des dépendances pour les correctifs de sécurité.
+- Exception temporaire de lint explicitement approuvée, limitée et testée ;
+  audit production toujours indépendant et sans exception.
+
+### Déployé
+
+- PR #26, fusion `6325b7f`, Vercel Production
+  `dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs` READY, 113/113 tests,
+  smoke public 21/21 et recette synthétique sur les assets live 12/12.
 
 ## 1.0.0 — 2026-08-28
 

@@ -669,6 +669,31 @@ production à zéro, audit complet sans autre alerte. Le workflow et les
 protections main sont conservés.
 ADR-017 et ticket de retrait SEC-001 versionnent la décision.
 
+### Livraison validée le 2026-10-10
+
+`DONE` — Les deux Quality gate sont verts au SHA `c2376b3`. La première
+preview échoue avant tout build avec `git_info_fail`. Après reconnexion CLI
+validée par le propriétaire, relance du même commit : preview
+`dpl_2EtVREsvJMjJNJMAGZwxWp8SYqof` READY, Node 24.x et contrôle Vercel vert.
+GitHub confirme la PR clean ; fusion squash #26 en
+`6325b7f90758f6a3335333bfaf12cae4192619ae`, sans bypass.
+
+GitHub déclenche automatiquement la Production
+`dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs`, READY avec l'alias
+`webjourney-one.vercel.app`, version 1.0.1 et SHA exact. Le smoke public passe
+21/21 : routes, PWA, Open Graph, identité sans cache et protections anonymes IA.
+La recette sur les assets live passe 12/12 : listes et notes longues défilables,
+dernière note, recherche, retour et thèmes à six tailles dans Chromium/WebKit.
+Aucune écriture Supabase, aucun contenu réel utilisé, aucune erreur JS.
+
+Le premier smoke avait supposé à tort le nom complet du manifeste égal à
+Capsule. Le vrai contrat est « Capsule — Mes Notes », nom court Capsule.
+L'assertion invalide est corrigée depuis le source ; seul le smoke complet
+21/21 est retenu. Aucun défaut produit ni modification du manifeste.
+
+Limite : le geste WebKit mobile est programmatique et n'est pas une recette
+physique iPhone/iPad. L'exception dev reste contrôlée et suivie par SEC-001.
+
 ## Modèle d'entrée
 
 ```markdown

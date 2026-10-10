@@ -11,23 +11,7 @@
 
 ## En cours
 
-### UX-003 — Défilement mobile de la vue liste
-
-- **Priorité** : P1.
-- **État** : `REVIEW_REQUIRED`.
-- **Périmètre** : hauteur du panneau liste, viewport dynamique et recette
-  navigateur du défilement, dernière note, recherche et retour du détail.
-- **Recette locale** : défaut reproduit à 390 px puis corrigé ; 12 scénarios
-  Chromium/WebKit validés sur le build de production local : liste, contenu
-  long, thèmes clair/sombre et navigation. Lint, 105 tests et build verts.
-- **Sortie** : build et tests verts, gate GitHub vert, production 1.0.1 vérifiée.
-- **PR** : [#26](https://github.com/freedisk/webjourney/pull/26), commit
-  fonctionnel `ba465c2`. GitHub confirme lint, tests et build verts, audit en
-  échec ; Vercel Preview en succès. Production non modifiée.
-- **Décision de livraison** : exception GHSA-vfj7-8cjw-p6xm explicitement
-  autorisée le 2026-10-10, bornée au lint et au 2026-10-24T23:59:59Z ;
-  audit production à zéro, contrôle ciblé et huit tests supplémentaires verts.
-  Relance du gate avant fusion, puis vérification de production.
+Aucun sprint actif.
 
 ## Prochaines priorités
 
@@ -95,6 +79,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-003 | Défilement mobile de la vue liste | 2026-10-10 | Version 1.0.1, PR #26, `6325b7f`, 113 tests, smoke public 21/21, recette live 12/12, Vercel READY ; exception lint suivie dans SEC-001 |
 | REL-001 | Version, À propos et mises à jour | 2026-08-28 | PR #24, `3abbf81`, 105 tests, preview 8/8, smoke public 21/21, Vercel `READY` |
 | SHARE-001 | Aperçu social Open Graph | 2026-08-27 | PR #22, `bb0afc4`, 98 tests, smoke robot 34/34, Vercel `READY` |
 | PRINT-001 | Impression et PDF fidèle | 2026-08-27 | PR #20, `532dd9a`, 91 tests, smoke public 9/9, assets live et Vercel `READY` |

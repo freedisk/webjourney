@@ -13,7 +13,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - **Données** : Supabase PostgreSQL, Auth et Storage.
 - **Langue du code existant** : UI et messages majoritairement en français.
 
-## État validé au 2026-08-28
+## État livré et validé
+
+- UX-003 est livré le 2026-10-10 en version `1.0.1` : panneau liste mobile
+  borné, défilement interne et viewport dynamique. PR #26 fusionnée en
+  `6325b7f`, Vercel Production `dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs` READY
+  sur ce SHA, 113 tests, smoke public 21/21 et recette synthétique live
+  Chromium/WebKit 12/12. Safari/PWA physique reste une validation utilisateur.
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
 - Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /
@@ -124,14 +130,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## Environnement
 
-- Next.js 16.4.0 dans le candidat UX-003 (minimum corrigé), React 19.2.8,
-  Supabase JS 2.112.4 ; dernière référence production documentée : 16.3.3.
+- Next.js 16.4.0 (minimum corrigé), React 19.2.8, Supabase JS 2.112.4.
 - Node de référence verrouillé : 24.19.0 avec npm 11 ; GitHub Actions utilise
   la même version majeure.
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
-- Version produit publique confirmée `1.0.0` ; candidat UX-003 `1.0.1`.
+- Version produit publique confirmée `1.0.1`.
   Le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.
@@ -173,9 +178,8 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 
 ## Prochaines priorités
 
-0. Finaliser UX-003 : exception de lint autorisée et contrôlée, audit local vert ;
-   relancer le gate de la PR #26 puis fusionner et vérifier la version 1.0.1.
-   `SEC-001` suit le retrait obligatoire de l'exception temporaire.
+0. `SEC-001` — retirer l'exception temporaire du lint dès correctif braces,
+   impérativement avant son échéance UTC du 2026-10-24T23:59:59Z.
 1. `QA-001` — E2E des parcours critiques.
 2. `OPS-002` — observabilité sans données de note ni secret.
 3. `TOOL-002` — validation locale Supabase conteneurisée.
