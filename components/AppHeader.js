@@ -7,6 +7,8 @@ import ViewSwitcher from "@/components/ViewSwitcher";
 
 export default function AppHeader({
   noteCount,
+  scopeLabel = "Notes",
+  onOpenScopes,
   viewMode,
   onViewChange,
   onNewNote,
@@ -54,9 +56,9 @@ export default function AppHeader({
           <h1 className="logo-capsule">CAPSULE</h1>
           <span className="app-brand-subtitle">Notes personnelles</span>
         </div>
-        <span className="note-count" aria-label={`${noteCount} note${noteCount !== 1 ? "s" : ""}`}>
-          {noteCount}
-        </span>
+        <button type="button" className="note-count scope-trigger" onClick={onOpenScopes} aria-label={`Choisir le périmètre : ${scopeLabel}, ${noteCount} note${noteCount !== 1 ? "s" : ""}`}>
+          <span>{scopeLabel}</span> <strong>{noteCount}</strong><Icon name="chevron" size={12} />
+        </button>
       </div>
 
       <div className="app-header-navigation">

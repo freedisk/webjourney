@@ -22,6 +22,7 @@ export async function generateMetadata({ params }) {
     .from("notes")
     .select("titre")
     .eq("share_token", token)
+    .is("deleted_at", null).is("purge_started_at", null)
     .single();
 
   return createSharedNoteMetadata(data?.titre, token);
@@ -36,6 +37,7 @@ export default async function SharedNotePage({ params }) {
     .from("notes")
     .select("id, user_id, titre, contenu, created_at, couleur, notes_tags(tag_id, tags(nom, couleur))")
     .eq("share_token", token)
+    .is("deleted_at", null).is("purge_started_at", null)
     .single();
 
   // Note introuvable ou partage désactivé

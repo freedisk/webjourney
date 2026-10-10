@@ -26,14 +26,16 @@ import ToastViewport, { useToasts } from "@/components/ui/ToastViewport";
 import {
   createSignedImageMap,
   duplicateStoredImages,
-  removeStoredImageFiles,
   removeStoredImages,
   uploadPendingImages,
 } from "@/lib/note-image-storage";
-import { extractImageIds, stripImagesForText } from "@/lib/note-images";
+import { extractImageIds, stripImagesForText, removeImageReference } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 import { ANTHROPIC_KEY_HEADER } from "@/lib/ai-config";
+import { NOTE_SCOPES, noteScope, noteIsWritable, noteCanRestore, noteScopeCounts, lifecycleUndo, transitionNote } from "@/lib/note-lifecycle";
+import { noteOperationRequest } from "@/lib/note-operations-client";
+import { readAllRows } from "@/lib/read-all-rows";
 import { createNoteSearchIndex } from "@/lib/note-search";
 import { isNoteDraftChanged, noteDraftSnapshot, noteDraftStatus } from "@/lib/note-draft";
 import {
@@ -102,6 +104,11 @@ export default function Home() {
   const [utilisateur, setUtilisateur] = useState(null);
   const [notes, setNotes] = useState([]);
   const notesRef = useRef([]);
+  const [noteScopeId, setNoteScopeId] = useState("active");
+  const [scopePickerOpen, setScopePickerOpen] = useState(false);
+  const scopeContextsRef = useRef({});
+  const paletteReturnRef = useRef(null);
+  const lifecycleBusyRef = useRef(false);
   const [titre, setTitre] = useState("");
   const [contenu, setContenu] = useState("");
   const [couleurNote, setCouleurNote] = useState(null);
@@ -214,6 +221,9 @@ export default function Home() {
     failed: draftFailure, creating: modeCreation,
   });
   const paletteNoteIndex = useMemo(() => createNoteSearchIndex(notes, notesTags, tags), [notes, notesTags, tags]);
+  const scopeCounts = noteScopeCounts(notes);
+  const currentScopeLabel = NOTE_SCOPES.find(scope => scope.id === noteScopeId)?.label || "Notes";
+  const confirmationNote = notes.find(note => note.id === confirmSuppId);
   const actionNote = actionNoteId ? notes.find((note) => note.id === actionNoteId) : null;
 
   // La garde navigateur reste temporaire ; aucun brouillon n'est persisté localement.
@@ -261,6 +271,7 @@ export default function Home() {
   // Filtrer et trier les notes
   const notesFiltrees = notes
     .filter((note) => {
+      if (noteScope(note) !== noteScopeId) return false;
       if (recherche.trim()) {
         const terme = normaliser(recherche);
         const searchableContent = stripImagesForText(note.contenu);
@@ -407,7 +418,7 @@ export default function Home() {
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aboutOpen || aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || editorOpen || actionNoteId || pendingNavigation;
+      const hasBlockingDialog = scopePickerOpen || confirmSuppId || aboutOpen || aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || editorOpen || actionNoteId || pendingNavigation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -573,11 +584,11 @@ export default function Home() {
   // === CHARGEMENT DES DONNÉES ===
 
   async function chargerNotes(userId) {
-    const { data, error } = await supabase
+    const { data, error } = await readAllRows(() => supabase
       .from("notes")
       .select("*")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }).order("id"));
 
     if (error) {
       setErreur("Impossible de charger les notes : " + error.message);
@@ -601,9 +612,9 @@ export default function Home() {
   }
 
   async function chargerNotesTags() {
-    const { data, error } = await supabase
+    const { data, error } = await readAllRows(() => supabase
       .from("notes_tags")
-      .select("*");
+      .select("*").order("note_id").order("tag_id"));
 
     if (error) {
       setErreur("Impossible de charger les associations : " + error.message);
@@ -619,10 +630,10 @@ export default function Home() {
   }
 
   async function chargerNoteImages() {
-    const { data, error } = await supabase
+    const { data, error } = await readAllRows(() => supabase
       .from("note_images")
-      .select("id, note_id, storage_path, original_name, mime_type, size_bytes, created_at")
-      .order("created_at", { ascending: true });
+      .select("id, note_id, storage_path, original_name, mime_type, size_bytes, created_at, cleanup_started_at, upload_started_at")
+      .order("created_at", { ascending: true }).order("id"));
 
     if (error) {
       setNoteImages({});
@@ -692,6 +703,7 @@ export default function Home() {
   function openPaletteNote(noteId) {
     requestDraftExit(() => {
       closeDraft();
+      paletteReturnRef.current = { selectedNoteId };
       if (viewMode === "list") {
         selectionnerNote(noteId);
       } else {
@@ -726,6 +738,10 @@ export default function Home() {
     requestDraftExit(() => {
       closeDraft();
       setMobileDetail(false);
+      if (paletteReturnRef.current) {
+        setSelectedNoteId(paletteReturnRef.current.selectedNoteId);
+        paletteReturnRef.current = null;
+      }
       requestAnimationFrame(() => {
         if (listScrollRef.current) listScrollRef.current.scrollTop = listScrollPositionRef.current;
       });
@@ -744,6 +760,72 @@ export default function Home() {
   // Fermer la modale de création (sans créer, avec protection)
     function fermerModaleCreation() {
     leaveEditor();
+  }
+
+  function changeScope(scopeId) {
+    requestDraftExit(() => {
+      scopeContextsRef.current[noteScopeId] = { recherche, filtreTagId, triAscendant, selectedNoteId, scroll: listScrollRef.current?.scrollTop ?? listScrollPositionRef.current };
+      const context = scopeContextsRef.current[scopeId] || {};
+      closeDraft();
+      setScopePickerOpen(false);
+      setNoteScopeId(scopeId);
+      setRecherche(context.recherche || "");
+      setFiltreTagId(context.filtreTagId || null);
+      setTriAscendant(context.triAscendant || false);
+      setSelectedNoteId(context.selectedNoteId || null);
+      setNoteDetailId(null);
+      setMobileDetail(false);
+      paletteReturnRef.current = null;
+      listScrollPositionRef.current = context.scroll || 0;
+    });
+  }
+
+  useLayoutEffect(() => {
+    if (listScrollRef.current) listScrollRef.current.scrollTop = listScrollPositionRef.current;
+  }, [noteScopeId, viewMode]);
+
+  async function changeNoteLifecycle(note, action, allowUndo = true) {
+    if (!note || noteBusy || lifecycleBusyRef.current) return;
+    lifecycleBusyRef.current = true;
+    setNoteSaving(true);
+    try {
+      const result = await transitionNote(supabase, note, action);
+      if (!result?.id) throw new Error("L’état de la note n’a pas pu être confirmé.");
+      const changed = { ...note, ...result };
+      const undo = allowUndo ? lifecycleUndo(note, action) : null;
+      setConfirmSuppId(null);
+      setActionNoteId(null);
+      if (noteScope(changed) !== noteScopeId) {
+        if (selectedNoteId === note.id) { setSelectedNoteId(null); setMobileDetail(false); }
+        if (noteDetailId === note.id) setNoteDetailId(null);
+      }
+      await chargerNotes(utilisateur.id);
+      const messages = { archive: "Note archivée.", unarchive: "Note remise dans Notes.", trash: "Note mise à la corbeille. Son partage est désactivé.", restore: "Note restaurée dans " + (changed.archived_at ? "Archives" : "Notes") + ". Son partage reste désactivé." };
+      pushToast(messages[action], { tone: "success", duration: 8000, ...(undo ? {
+        actionLabel: "Annuler",
+        onAction: () => changeNoteLifecycle(changed, undo, false),
+      } : action === "restore" ? {
+        actionLabel: "Voir la note",
+        onAction: () => {
+          changeScope(noteScope(changed));
+          requestAnimationFrame(() => requestAnimationFrame(() => openPaletteNote(changed.id)));
+        },
+      } : {}) });
+    } catch (error) {
+      setErreur(error.message);
+      await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
+    } finally { lifecycleBusyRef.current = false; setNoteSaving(false); }
+  }
+
+  async function cleanupNoteImages(note) {
+    if (noteBusy || !noteIsWritable(note)) return;
+    setNoteSaving(true);
+    try {
+      const referenced = new Set(extractImageIds(note.contenu));
+      await removeStoredImages(supabase, (noteImages[note.id] || []).filter(image => !referenced.has(image.id)));
+      setSucces("Nettoyage des images terminé.");
+    } catch (error) { setErreur(error.message); }
+    finally { await chargerNoteImages(); setNoteSaving(false); }
   }
 
   // === CRUD NOTES ===
@@ -765,7 +847,7 @@ export default function Home() {
       const { error } = await supabase.from("notes").insert({
         id: noteId,
         titre: titre.trim(),
-        contenu: contenu.trim(),
+        contenu: creationPendingImages.reduce((text, image) => removeImageReference(text, image.id), contenu).trim(),
         couleur: couleurNote,
         user_id: utilisateur.id,
       });
@@ -782,6 +864,10 @@ export default function Home() {
         onProgress: (progress) => setImageUploadProgress(formatImageOperationProgress(progress)),
       });
 
+      if (creationPendingImages.length) {
+        const { error: contentError } = await supabase.from("notes").update({ contenu: contenu.trim() }).eq("id", noteId).select("id").single();
+        if (contentError) throw new Error("Les images sont prêtes, mais le contenu n’a pas pu être confirmé.");
+      }
       setImageUploadProgress({ percent: 96, label: "Actualisation de la galerie…" });
 
       setTitre("");
@@ -789,12 +875,19 @@ export default function Home() {
       setCouleurNote(null);
       setModeCreation(false);
       clearPendingImagePreviews(creationPendingImages, setCreationPendingImages);
-      setSucces("Note ajout\u00e9e !");
+      pushToast("Note ajoutée dans Notes.", { tone: "success", ...(noteScopeId !== "active" ? {
+        actionLabel: "Voir la note",
+        onAction: () => {
+          changeScope("active");
+          requestAnimationFrame(() => requestAnimationFrame(() => openPaletteNote(noteId)));
+        },
+      } : {}) });
       await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
     } catch (saveError) {
       setDraftFailure(true);
       if (noteCreated) {
-        await supabase.from("notes").delete().eq("id", noteId);
+        await transitionNote(supabase, { id: noteId, lifecycle_version: 0 }, "trash").catch(() => {});
+        await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
       }
       setErreur("Erreur lors de l'ajout : " + saveError.message);
     } finally {
@@ -806,48 +899,33 @@ export default function Home() {
   }
 
   async function supprimerNote(noteId) {
-    setErreur(null);
-    if (noteBusy) return;
+    const note = notesRef.current.find(item => item.id === noteId);
+    if (!note || noteBusy) return;
+    if (noteScope(note) !== "trash") return changeNoteLifecycle(note, "trash");
     setNoteSaving(true);
-
     try {
-      await removeStoredImageFiles(supabase, noteImages[noteId] || []);
-      const { error } = await supabase.from("notes").delete().eq("id", noteId);
-      if (error) throw new Error(error.message);
-
+      await noteOperationRequest(supabase, noteId, "purge", { expectedVersion: Number(note.lifecycle_version || 0) });
       setConfirmSuppId(null);
-      // Désélectionner si c'est la note active
-      if (selectedNoteId === noteId) {
-        setSelectedNoteId(null);
-        setMobileDetail(false);
-      }
-      // Fermer la modale si c'est la note affichée
-      if (noteDetailId === noteId) {
-        setNoteDetailId(null);
-      }
-      setSucces("Note supprimée.");
-      await Promise.all([
-        chargerNotes(utilisateur.id),
-        chargerNotesTags(),
-        chargerNoteImages(),
-      ]);
-    } catch (deleteError) {
-      setErreur("Erreur lors de la suppression : " + deleteError.message);
-    } finally {
+      setSelectedNoteId(null);
+      setNoteDetailId(null);
+      setMobileDetail(false);
+      setSucces("Note et images définitivement supprimées.");
+    } catch (error) { setErreur(error.message); }
+    finally {
+      await Promise.all([chargerNotes(utilisateur.id), chargerNotesTags(), chargerNoteImages()]);
       setNoteSaving(false);
     }
   }
 
   async function dupliquerNote(note) {
     setErreur(null);
-    if (noteBusy) return;
+    if (noteBusy || !noteIsWritable(note)) return;
     setNoteSaving(true);
     setImageUploadProgress({ percent: 3, label: "Création de la copie…" });
 
     const targetNoteId = crypto.randomUUID();
     const sourceImages = noteImages[note.id] || [];
     const containsImages = extractImageIds(note.contenu).length > 0;
-    let duplicatedImages = [];
     let targetCreated = false;
 
     try {
@@ -859,7 +937,7 @@ export default function Home() {
       const { error: insertError } = await supabase.from("notes").insert({
         id: targetNoteId,
         titre: "Copie de — " + note.titre,
-        contenu: containsImages ? stripImagesForText(note.contenu) : note.contenu,
+        contenu: extractImageIds(note.contenu).reduce((text, id) => removeImageReference(text, id), note.contenu),
         couleur: note.couleur,
         user_id: utilisateur.id,
       });
@@ -875,13 +953,12 @@ export default function Home() {
         sourceImages,
         onProgress: (progress) => setImageUploadProgress(formatImageOperationProgress(progress)),
       });
-      duplicatedImages = duplicateResult.images;
 
       if (containsImages) {
         const { error: updateError } = await supabase
           .from("notes")
           .update({ contenu: duplicateResult.content })
-          .eq("id", targetNoteId);
+          .eq("id", targetNoteId).select("id").single();
         if (updateError) throw new Error(updateError.message);
       }
 
@@ -900,11 +977,10 @@ export default function Home() {
         chargerNoteImages(),
       ]);
     } catch (duplicateError) {
-      if (duplicatedImages.length > 0) {
-        await removeStoredImages(supabase, duplicatedImages).catch(() => {});
-      }
       if (targetCreated) {
-        await supabase.from("notes").delete().eq("id", targetNoteId);
+        // La copie incomplète reste récupérable avec ses fichiers déjà copiés.
+        await transitionNote(supabase, { id: targetNoteId, lifecycle_version: 0 }, "trash").catch(() => {});
+        await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
       }
       setErreur("Erreur lors de la duplication : " + duplicateError.message);
     } finally {
@@ -914,6 +990,7 @@ export default function Home() {
   }
 
     function commencerEdition(note) {
+    if (!noteIsWritable(note)) return;
     requestDraftExit(() => {
       clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
       setEditorBaseline(noteDraftSnapshot({ title: note.titre, content: note.contenu || "", color: note.couleur }));
@@ -962,9 +1039,9 @@ export default function Home() {
       const { error } = await supabase
         .from("notes")
         .update({ titre: editionTitre.trim(), contenu: editionContenu.trim(), couleur: editionCouleur })
-        .eq("id", noteId);
+        .eq("id", noteId).select("id").single();
 
-      if (error) throw new Error(error.message);
+      if (error) throw new Error("La sauvegarde n’a pas pu être confirmée. Actualise l’état de la note.");
 
       const referencedIds = new Set(extractImageIds(editionContenu));
       const removedImages = (noteImages[noteId] || []).filter((image) => !referencedIds.has(image.id));
@@ -1345,6 +1422,7 @@ export default function Home() {
   // Épingler / désépingler une note
   async function toggleEpingle(note) {
     setErreur(null);
+    if (!noteIsWritable(note)) return;
     const nouvelleValeur = !note.epinglee;
     const { error } = await supabase
       .from("notes")
@@ -1386,6 +1464,7 @@ export default function Home() {
   // Partager / désactiver le partage d'une note
   async function togglePartage(note) {
     setErreur(null);
+    if (!noteIsWritable(note)) return;
 
     if (note.share_token) {
       // Déjà partagée → demander confirmation pour désactiver
@@ -1453,7 +1532,7 @@ export default function Home() {
   // Déplacer une note dans le kanban (colonne + ordre)
   async function deplacerNoteKanban(noteId, nouvelleColonne) {
     const noteAvant = notesRef.current.find((n) => n.id === noteId);
-    if (!noteAvant) return;
+    if (!noteIsWritable(noteAvant)) return;
 
     const ancienneColonne = noteAvant.kanban_colonne || "todo";
     const ancienOrdre = noteAvant.kanban_ordre || 0;
@@ -1511,7 +1590,7 @@ export default function Home() {
   }
 
   function commencerGlisserKanban(event, noteId) {
-    if (noteBusy) return;
+    if (noteBusy || !noteIsWritable(notesRef.current.find(note => note.id === noteId))) return;
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -1578,7 +1657,7 @@ export default function Home() {
     const tagIds = notesTags[note.id] || [];
     const tagsDeNote = tagIds.map(getTag).filter(Boolean);
 
-    const canRemove = opts.canRemove !== false;
+    const canRemove = opts.canRemove !== false && noteIsWritable(note);
 
     return (
       <>
@@ -1635,9 +1714,13 @@ export default function Home() {
 
   // === RENDU — Boutons d'action d'une note (réutilisable modale + détail) ===
     function renderNoteActions(note) {
+    const writable = noteIsWritable(note);
     return (
       <div className="note-reading-actions">
-        <button type="button" className="btn-brutal primary" disabled={noteBusy} onClick={() => commencerEdition(note)}>Modifier</button>
+        {writable ? <button type="button" className="btn-brutal primary" disabled={noteBusy} onClick={() => commencerEdition(note)}>Modifier</button>
+          : <button type="button" className="btn-brutal primary" disabled={noteBusy || !noteCanRestore(note)} onClick={() => changeNoteLifecycle(note, "restore")}>{note.purge_started_at ? "Nettoyage engagé" : "Restaurer"}</button>}
+        {noteScope(note) !== "active" && <span className="note-lifecycle-badge">{noteScope(note) === "trash" ? "Corbeille · lecture seule" : "Archive"}{note.share_token ? " · lien public actif" : ""}</span>}
+        {noteScope(note) !== noteScopeId && <button type="button" className="btn-brutal ghost" onClick={() => viewMode === "list" ? retourListe() : fermerModale()}>Retour aux {currentScopeLabel.toLowerCase()}</button>}
         <button type="button" className="btn-brutal ghost" disabled={noteBusy} onClick={() => setActionNoteId(note.id)} aria-haspopup="dialog">Plus <span aria-hidden="true">···</span></button>
       </div>
     );
@@ -1645,7 +1728,15 @@ export default function Home() {
 
   function getActionsForNote(note) {
     if (!note) return [];
+    if (!noteIsWritable(note)) return [
+      { id: "copy", label: "Copier le contenu", onSelect: () => copierNote(note) },
+      { id: "restore", label: "Restaurer dans " + (note.archived_at ? "Archives" : "Notes"), disabled: !noteCanRestore(note), onSelect: () => changeNoteLifecycle(note, "restore") },
+      { id: "purge", label: note.purge_started_at ? "Reprendre la suppression définitive…" : "Supprimer définitivement…", danger: true, onSelect: () => setConfirmSuppId(note.id) },
+    ];
+    const referenced = new Set(extractImageIds(note.contenu));
     return [
+      { id: "archive", label: note.archived_at ? "Remettre dans Notes" : "Archiver", description: note.share_token ? "Le lien public reste actif après archivage." : null, onSelect: () => changeNoteLifecycle(note, note.archived_at ? "unarchive" : "archive") },
+      ...((noteImages[note.id] || []).some(image => !referenced.has(image.id)) ? [{ id: "cleanup", label: "Terminer le nettoyage des images", onSelect: () => cleanupNoteImages(note) }] : []),
       { id: "pin", label: note.epinglee ? "Désépingler" : "Épingler", icon: "cards", onSelect: () => toggleEpingle(note) },
       { id: "copy", label: "Copier le contenu", icon: "command", onSelect: () => copierNote(note) },
       { id: "duplicate", label: "Dupliquer", icon: "cards", onSelect: () => dupliquerNote(note) },
@@ -1655,7 +1746,7 @@ export default function Home() {
         { id: "share", label: "Partager le lien", icon: "chevron", onSelect: () => copierLienPartage(note) },
         { id: "revoke", label: "Désactiver le partage", icon: "close", onSelect: () => togglePartage(note) },
       ] : [{ id: "share", label: "Activer le partage", icon: "chevron", onSelect: () => togglePartage(note) }]),
-      { id: "delete", label: "Supprimer…", icon: "close", danger: true, onSelect: () => setConfirmSuppId(note.id) },
+      { id: "delete", label: "Mettre à la corbeille…", icon: "close", danger: true, onSelect: () => note.share_token ? setConfirmSuppId(note.id) : changeNoteLifecycle(note, "trash") },
     ];
   }
 
@@ -1975,6 +2066,7 @@ export default function Home() {
   }
 
   const commandItems = [
+    ...NOTE_SCOPES.map(scope => ({ id: "scope-" + scope.id, label: "Afficher " + scope.label.toLowerCase(), description: "Changer le périmètre", onSelect: () => changeScope(scope.id) })),
     {
       id: "new-note",
       label: "Nouvelle note",
@@ -2079,7 +2171,9 @@ export default function Home() {
 
       {/* === HEADER === */}
       <AppHeader
-        noteCount={notes.length}
+        noteCount={scopeCounts[noteScopeId]}
+        scopeLabel={currentScopeLabel}
+        onOpenScopes={() => setScopePickerOpen(true)}
         viewMode={viewMode}
         onViewChange={changerVue}
         onNewNote={openNewNote}
@@ -2285,14 +2379,14 @@ export default function Home() {
           </div>
 
           {/* Grille de cards */}
-          {notes.length === 0 ? (
+          {scopeCounts[noteScopeId] === 0 ? (
             <div className="glass-card">
               <EmptyState
                 icon="plus"
-                title="Ta première capsule commence ici"
-                description="Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l'auras pas partagée."
-                actionLabel="Créer une note"
-                onAction={openNewNote}
+                title={noteScopeId === "active" ? "Ta première capsule commence ici" : currentScopeLabel + " vides"}
+                description={noteScopeId === "trash" ? "Les notes mises à la corbeille restent récupérables jusqu’à suppression manuelle." : noteScopeId === "archived" ? "Archive une note depuis Plus pour la ranger ici." : "Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l’auras pas partagée."}
+                actionLabel={noteScopeId === "active" ? "Créer une note" : "Afficher Notes"}
+                onAction={noteScopeId === "active" ? openNewNote : () => changeScope("active")}
                 secondaryActionLabel="Découvrir Capsule"
                 onSecondaryAction={() => openHelp("quick-start")}
               />
@@ -2580,6 +2674,7 @@ export default function Home() {
                             <div className="kanban-card-footer" onClick={(event) => event.stopPropagation()}>
                               <select
                                 className="kanban-move-select"
+                                disabled={!noteIsWritable(note) || noteBusy}
                                 value={note.kanban_colonne || "todo"}
                                 aria-label={`Déplacer ${note.titre} vers une colonne`}
                                 onChange={(event) => void deplacerNoteKanban(note.id, event.target.value)}
@@ -2679,14 +2774,14 @@ export default function Home() {
 
             {/* Liste des notes */}
             <div className="panel-left-scroll" ref={listScrollRef}>
-              {notes.length === 0 ? (
+              {scopeCounts[noteScopeId] === 0 ? (
                 <EmptyState
                   compact
                   icon="plus"
-                  title="Aucune note"
-                  description="Crée ta première capsule."
-                  actionLabel="Créer"
-                  onAction={openNewNote}
+                  title={noteScopeId === "active" ? "Aucune note" : currentScopeLabel + " vides"}
+                  description={noteScopeId === "trash" ? "Conservation jusqu’à suppression manuelle." : noteScopeId === "archived" ? "Range une note avec Archiver." : "Crée ta première capsule."}
+                  actionLabel={noteScopeId === "active" ? "Créer" : "Afficher Notes"}
+                  onAction={noteScopeId === "active" ? openNewNote : () => changeScope("active")}
                 />
               ) : notesFiltrees.length === 0 ? (
                 <EmptyState
@@ -2788,7 +2883,7 @@ export default function Home() {
       )}
 
       {/* Modale card/kanban view (portail) */}
-      {(viewMode === "card" || viewMode === "kanban") && renderModale()}
+      {renderModale()}
 
       <AppFooter onOpenAbout={() => setAboutOpen(true)} />
 
@@ -2832,6 +2927,7 @@ export default function Home() {
         onManageTags={() => setPanneauTagsOuvert(true)}
         sizeControls={renderBoutonsTaille()}
         busy={noteBusy}
+        readOnly={!noteIsWritable(actionNote)}
       />
 
       <Dialog
@@ -2851,21 +2947,30 @@ export default function Home() {
       <Dialog
         open={Boolean(confirmSuppId)}
         onClose={() => { if (!noteBusy) setConfirmSuppId(null); }}
-        title="Supprimer cette note ?"
-        description="La note et ses images seront définitivement supprimées."
+        title={confirmationNote && noteScope(confirmationNote) === "trash" ? "Supprimer définitivement ?" : "Mettre à la corbeille ?"}
+        description={confirmationNote && noteScope(confirmationNote) === "trash" ? "Cette action est irréversible. La note et ses images seront effacées." : "La note et ses images restent récupérables jusqu’à une suppression manuelle. Le partage public sera désactivé."}
         footer={(
           <div className="draft-exit-actions">
             <button type="button" className="btn-brutal ghost" disabled={noteBusy} onClick={() => setConfirmSuppId(null)}>Conserver la note</button>
-            <button type="button" className="btn-brutal danger" disabled={noteBusy} onClick={() => supprimerNote(confirmSuppId)}>Oui, supprimer</button>
+            <button type="button" className="btn-brutal danger" disabled={noteBusy} onClick={() => supprimerNote(confirmSuppId)}>{confirmationNote && noteScope(confirmationNote) === "trash" ? "Supprimer définitivement" : "Mettre à la corbeille"}</button>
           </div>
         )}
-      />
+      >
+        <p className="purge-note-summary"><strong>{confirmationNote?.titre}</strong><br />{(noteImages[confirmSuppId] || []).length} image(s) attachée(s)</p>
+        {confirmationNote?.purge_started_at && <p>Un nettoyage a déjà commencé. La restauration est bloquée ; cette action reprend le nettoyage.</p>}
+      </Dialog>
+
+      <Dialog open={scopePickerOpen} onClose={() => setScopePickerOpen(false)} title="Mes notes" description="Ranger, retrouver et récupérer sans perdre." className="note-scope-dialog">
+        <div className="note-scope-options">
+          {NOTE_SCOPES.map(scope => <button type="button" key={scope.id} aria-pressed={noteScopeId === scope.id} onClick={() => changeScope(scope.id)}><strong>{scope.label}</strong><span>{scopeCounts[scope.id]}</span><small>{scope.id === "trash" ? "Conservées jusqu’à suppression manuelle" : scope.id === "archived" ? "Rangées et toujours modifiables" : "Tes notes du quotidien"}</small></button>)}
+        </div>
+      </Dialog>
 
       {/* Drawer statistiques */}
       <StatsDrawer
         ouvert={statsOuvert}
         onFermer={() => setStatsOuvert(false)}
-        notes={notes}
+        notes={notes.filter(noteIsWritable)}
         tags={tags}
         notesTags={notesTags}
         sombre={sombre}

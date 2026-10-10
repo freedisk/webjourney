@@ -382,3 +382,33 @@ Une release est refusée si :
   automatique n'est autorisé ;
 - Docker Desktop absent du poste de reprise ; le `db reset` local complet est
   suivi par `TOOL-002`.
+
+
+## 14. Recette DATA-001
+
+- `npm run test:ui:lifecycle` : 8 scénarios Chromium/WebKit à 320, 390,
+  667 et 1416 px. Session, notes, mutations et Storage entièrement simulés.
+  Contrôle archive/Annuler, corbeille/restauration, partage restant révoqué,
+  périmètres de recherche, retour au scroll et reprise d’une purge interrompue.
+- `supabase/tests/note_lifecycle_transaction.sql` doit s’exécuter dans une
+  transaction suivie de ROLLBACK : deux utilisateurs et notes fictifs,
+  propriétés, droits, image réservée, conflits et purge. Aucun fichier réel
+  Storage n’est créé. Ce contrôle SQL ne remplace pas une recette HTTP Storage.
+- `supabase/tests/note_lifecycle_security_audit.sql` est read-only et ne
+  retourne que des résultats de contrôles de schéma, droits, RLS et Storage.
+- Préserver les recettes scroll et éditeur existantes ; la validation mobile
+  physique avec clavier reste un résultat utilisateur distinct.
+
+Pour ce lot seulement, l’utilisateur autorise explicitement Supabase production
+sans projet isolé ni stack locale. La sauvegarde de schéma est ignorée par Git.
+La CLI refusant login-role en 403 après connexion renouvelée, la tentative de
+`db push --dry-run --linked` est tracée séparément du préflight SQL annulé
+réalisé dans le navigateur connecté ; ne pas annoncer un dry-run CLI réussi.
+
+
+Recette réelle DATA-001 du 2026-10-10 : 21/21 via Auth/RLS/Storage et routes
+serveur du candidat, avec fixtures synthétiques seulement. Nettoyage vérifié
+à zéro utilisateur, note et objet. Pour contrôler une suppression, utiliser
+la liste Storage puis un téléchargement sans cache ; un GET déjà téléchargé
+peut encore retourner sa copie en cache et ne prouve pas la présence en base.
+Préflight combiné annulé : 18 cycles/droits + 12 schéma + 20 sécurité = 50/50.

@@ -252,6 +252,27 @@ journal avec un lien vers celle qui la remplace.
   tests de limites ; la CI garde son nom et son seuil élevés. Retirer
   l'exception après correction amont, puis reprendre l'audit npm brut.
 
+## ADR-018 — Archive et corbeille récupérable
+
+- **Statut** : accepté le 2026-10-10 après validation du plan et des maquettes.
+- **Contexte** : DATA-001 et le lot « Organiser et retrouver sans perdre ».
+  La suppression actuelle retire les images avant la ligne de note.
+- **Décision** : états active/archive/corbeille, conservation des
+  objets et métadonnées jusqu'à suppression définitive manuelle d'une note.
+  Restaurer rend l'état d'origine sans réactiver un partage. Archiver
+  conserve un partage déjà actif, avec repère explicite. Purge engagée
+  non restaurable et nettoyage réessayable.
+- **Raison** : rendre la suppression accidentelle récupérable et distinguer
+  rangement, retrait et effacement irréversible sans refaire les vues.
+- **Conséquences** : migration forward-only, RPC et droits ciblés ; protéger
+  les fichiers contre les DELETE d'anciens clients et adapter les suppressions
+  d'images/compensations. Production explicitement autorisée à la place du Supabase isolé, avec
+  sauvegarde de schéma et démonstration transactionnelle annulée ; déploiement
+  coordonné et rollback applicatif compatible ; aucune purge automatique.
+- **Référence** : sprints/PLAN_ORGANIZE_RECOVER_2026-10-10.md.
+- **Phase actuelle** : implémentation ; SQL préparé et première recette
+  transactionnelle 15/15 avec ROLLBACK, sans migration appliquée.
+
 ## Modèle ADR
 
 ```markdown

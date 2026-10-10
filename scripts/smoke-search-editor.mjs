@@ -70,7 +70,7 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
           }
           const id = url.searchParams.get("id")?.replace(/^eq\./, "");
           Object.assign(data.notes.find((note) => note.id === id), request.postDataJSON());
-          return route.fulfill({ status: 204, headers });
+          return route.fulfill({ status: 200, headers, json: { id } });
         }
         assert.equal(request.method(), "GET", "Mutation hors scénario : " + url.pathname);
         const payload = {
@@ -131,7 +131,7 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
         else assert.equal(await page.locator(".view-switcher").getByRole("button", { name: "Liste", exact: true }).getAttribute("aria-pressed"), "true");
         await page.locator(".detail-footer").getByRole("button", { name: "Plus", exact: false }).click();
         const actions = page.getByRole("dialog", { name: "Actions de la note", exact: true });
-        for (const name of ["Dupliquer", "Imprimer / PDF", "Copier le contenu", "Ajouter un tag", "Activer le partage", "Supprimer…"]) {
+        for (const name of ["Dupliquer", "Imprimer / PDF", "Copier le contenu", "Ajouter un tag", "Activer le partage", "Mettre à la corbeille…"]) {
           await actions.getByRole("button", { name, exact: true }).waitFor();
         }
         await actions.getByRole("button", { name: "Fermer", exact: true }).click();

@@ -391,7 +391,51 @@ présente après correction afin d'éviter la répétition du problème.
   le retour après effacement, sans confondre WebKit simulé et clavier iOS réel.
 - **Statut** : correctif déployé en 1.1.1 par PR #30, 348fe4d ; gates verts,
   smoke 21/21, recettes locales 24/24 et recherche/éditeur live 12/12.
-  Confirmation du comportement sur la PWA physique encore attendue.
+  Correctif confirmé par l'utilisateur sur mobile le 2026-10-10 ; appareil
+  et OS non précisés, sans recette complète Safari/PWA présumée.
+
+## M-026 — Remplacement partiel dans l’éditeur SQL Monaco
+
+- **Date constatée** : 2026-10-10, préflight DATA-001 avec ROLLBACK.
+- **Symptôme** : deuxième script de recette refusé avec erreur de syntaxe.
+- **Cause observée** : le remplissage du textbox virtualisé ne remplace pas
+  fiablement tout le modèle Monaco déjà long.
+- **Impact** : recette annulée/refusée ; aucun schéma appliqué.
+- **Correction** : sélectionner tout, coller le script complet via le
+  presse-papiers du navigateur, recopier la sélection et comparer les textes
+  avec normalisation CRLF avant toute exécution. Préflight renforcé 18/18.
+- **Prévention** : vérifier le script entier et sa terminaison transactionnelle,
+  puis vérifier le résultat et l’absence de résidu ; jamais « Success » seul.
+- **Statut** : corrigé dans le workflow de cette tâche.
+
+## M-027 — CLI Supabase connectée mais login-role refusé
+
+- **Date constatée** : 2026-10-10, reprise de connexion demandée par l’utilisateur.
+- **Symptôme** : connexion annoncée réussie puis endpoint login-role HTTP 403,
+  projet lié absent de la liste accessible, même avec essai CLI 2.120.
+- **Cause** : indéterminée. L’utilisateur confirme le même compte et le profil
+  navigateur est comparé ; ne pas conclure à un compte erroné.
+- **Correction provisoire** : navigateur autorisé pour sauvegarde de schéma,
+  préflight transactionnel annulé et contrôles ; aucun reset ou élargissement
+  de droits, aucun secret ou code de connexion consigné.
+- **Prévention** : distinguer authentification, accès Management API et accès
+  SQL, et tracer une tentative de dry-run refusée sans la dire réussie.
+- **Statut** : accès CLI à diagnostiquer ; accès SQL navigateur fonctionnel.
+
+## M-028 — Délimiteurs SQL altérés par remplacement JavaScript
+
+- **Date constatée** : 2026-10-10, préparation d’application DATA-001.
+- **Symptôme** : préambule de comparaison d’historique refusé en 42601.
+- **Cause** : une chaîne de remplacement de String.replace interprète $$
+  comme un dollar littéral ; le wrapper avait donc altéré le dollar-quoting SQL.
+- **Impact** : requête refusée ; migration source inchangée, aucun schéma appliqué.
+- **Correction** : utiliser un callback de remplacement, comparer le texte
+  entier et tester le wrapper complet (DDL, audits, historique) avec ROLLBACK.
+  Le contrôle confirme trois versions et zéro colonne nouvelle après annulation,
+  puis quatre versions après le COMMIT réel.
+- **Prévention** : tester l’assemblage réellement exécuté, pas seulement ses
+  fragments ; ne jamais annoncer un succès avant contrôle du catalogue.
+- **Statut** : corrigé, application et recette HTTP 21/21 ensuite confirmées.
 
 ## Modèle d'entrée
 

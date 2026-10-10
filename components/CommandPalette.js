@@ -9,15 +9,17 @@ export default function CommandPalette({ open, onClose, commands, noteIndex = []
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [resultLimit, setResultLimit] = useState(20);
+  const [scope, setScope] = useState("active");
   const inputRef = useRef(null);
   const activeOptionRef = useRef(null);
-  const matches = useMemo(() => searchNoteIndex(noteIndex, query, {
+  const matches = useMemo(() => searchNoteIndex(noteIndex.filter((note) => scope === "all"
+    ? note.scope !== "trash" : (note.scope || "active") === scope), query, {
     excerptCount: query.trim() ? resultLimit : 8,
-  }), [noteIndex, query, resultLimit]);
+  }), [noteIndex, query, resultLimit, scope]);
   const visibleNotes = matches.slice(0, query.trim() ? resultLimit : 8);
   const noteCommands = visibleNotes.map((note) => ({
     id: "note-" + note.id, label: note.title,
-    description: [note.tag, note.excerpt].filter(Boolean).join(" · "),
+    description: [note.scope === "archived" ? "Archive" : note.scope === "trash" ? "Corbeille" : null, note.tag, note.excerpt].filter(Boolean).join(" · "),
     icon: "chevron", onSelect: () => onOpenNote?.(note.id),
   }));
   const filteredCommands = useMemo(() => {
@@ -67,7 +69,7 @@ export default function CommandPalette({ open, onClose, commands, noteIndex = []
       open={open}
       onClose={onClose}
       title="Rechercher"
-      description="Toutes les notes de ton compte et les actions de Capsule."
+      description="Choisis où rechercher. Les notes à la corbeille restent récupérables."
       className="command-palette"
       initialFocusRef={inputRef}
       showClose={false}
@@ -98,6 +100,11 @@ export default function CommandPalette({ open, onClose, commands, noteIndex = []
           aria-activedescendant={activeOption ? "command-option-" + activeOption.id : undefined}
         />
         <button type="button" className="command-close" onClick={onClose} aria-label="Fermer la recherche">Échap</button>
+      </div>
+      <div className="search-scope-controls" role="group" aria-label="Périmètre de recherche">
+        {[["active", "Notes"], ["all", "Notes + archives"], ["trash", "Corbeille"]].map(([id, label]) => (
+          <button type="button" key={id} aria-pressed={scope === id} onClick={() => { setScope(id); setActiveIndex(0); setResultLimit(20); }}>{label}</button>
+        ))}
       </div>
       <p className="command-result-count" role="status" aria-live="polite">
         {query.trim() ? matches.length + " note(s) trouvée(s)" : "Notes récentes"}

@@ -215,3 +215,25 @@ Avant clôture :
 - promouvoir les faits stables dans la mémoire ;
 - enregistrer tout incident dans `MISTAKES.md` ;
 - vérifier `git status` et le commit déployé.
+
+
+## 12. Corbeille et nettoyage DATA-001
+
+Corbeille conserve les notes jusqu’à effacement manuel, sans tâche automatique.
+Avant suppression définitive, confirmer le titre et les images affichés. En cas
+d’erreur, actualiser le corpus ; une purge engagée est non restaurable et se
+reprend depuis Plus. Le serveur traite seulement les chemins du dossier de la
+note possédée et vérifie qu’il est vide avant d’effacer la ligne de note.
+
+Après une erreur d’upload ou de nettoyage d’images, les actions d’une note
+active/archive proposent « Terminer le nettoyage des images ». Le serveur
+refuse un fichier encore référencé ; aucun nettoyage arbitraire ou suppression
+SQL de `storage.objects` n’est autorisé. Conserver le brouillon tant que sa
+sauvegarde n’est pas confirmée.
+
+Déploiement coordonné : valider le candidat et son Quality gate, prévisualiser
+le SQL puis appliquer la migration versionnée avant le nouveau client. Les
+anciens clients peuvent continuer l’édition texte ; leurs suppressions et
+uploads incompatibles sont refusés. Ne pas remettre un client antérieur aux
+nouveaux droits : rollback applicatif par correctif compatible et PR, sans
+retirer les colonnes ni rouvrir le DELETE. Une correction SQL est forward-only.
