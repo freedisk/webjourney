@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import IconButton from "@/components/ui/IconButton";
 import {
@@ -22,6 +22,9 @@ export default function Dialog({
   closeOnBackdrop = true,
   showClose = true,
   description,
+  headerActions,
+  closeLabel = "Fermer",
+  closeIcon = "close",
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -31,7 +34,7 @@ export default function Dialog({
   const previousFocusRef = useRef(null);
   const onCloseRef = useRef(onClose);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
@@ -53,6 +56,7 @@ export default function Dialog({
     });
 
     function handleKeyDown(event) {
+      if (overlayRef.current?.inert) return;
       if (!isWithinModalFocus(panelRef.current, document.activeElement)) return;
 
       if (event.key === "Escape") {
@@ -118,11 +122,12 @@ export default function Dialog({
               <p id={descriptionId} className="modal-description">{description}</p>
             )}
           </div>
+          {headerActions}
           {showClose && (
             <IconButton
               ref={closeButtonRef}
-              label="Fermer"
-              icon="close"
+              label={closeLabel}
+              icon={closeIcon}
               size="small"
               onClick={onClose}
             />

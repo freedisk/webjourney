@@ -65,6 +65,11 @@ cache.
 
 | Module | Responsabilité | Frontière importante |
 |---|---|---|
+| components/NoteEditorDialog.js | Édition commune et surface visible du clavier | Saisie en mémoire, sauvegarde explicite |
+| components/NoteActionDialog.js | Commandes secondaires de lecture | Réutilise les opérations existantes et leur confirmation |
+| lib/note-search.js | Index et classement des notes chargées | Aucune persistance, aucune source d'image privée dans l'extrait |
+| lib/note-draft.js | Snapshot et état de saisie | Compare à l'ouverture, sans dépendre d'un rafraîchissement |
+| lib/editor-viewport.js | Ajustement conditionnel au viewport visible | Repli CSS, zoom respecté, aucun changement du shell liste |
 | `app/page.js` | Orchestration principale et UI historique | Client Component, monolithe à réduire progressivement |
 | `app/login/page.js` | Connexion et inscription | Clé publique seulement |
 | `components/AppHeader.js` | Hiérarchie, vues et actions prioritaires | Responsive sans perdre les noms accessibles |
@@ -281,6 +286,16 @@ recette multi-appareil.
 - le Kanban utilise Pointer Events au tactile et conserve un sélecteur explicite
   de colonne comme solution clavier/accessibilité ;
 - la palette et les dialogues n'enregistrent ni requête ni contenu de note ;
+- la palette sépare notes/actions, cherche dans tout le corpus chargé,
+  garde huit notes récentes à vide et expose les résultats par groupes de 20 ;
+- la lecture garde Modifier/Plus, avec les commandes existantes dans une
+  couche modale accessible ; l'éditeur est commun aux trois vues ;
+- la garde de saisie compare un snapshot initial et se retire immédiatement
+  après enregistrement/abandon. beforeunload dépend des capacités du navigateur
+  et ne remplace pas une récupération persistante de brouillon ;
+- la feuille d'édition suit VisualViewport seulement lorsqu'un clavier réduit
+  la surface visible sur un appareil mobile/tactile, avec repli et nettoyage
+  des événements ; les règles de hauteur UX-003 ne changent pas ;
 - l'aide embarquée filtre localement ses rubriques ; seule la checklist de
   démarrage peut persister dans `localStorage`, sans identifiant ni donnée
   métier ;

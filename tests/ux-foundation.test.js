@@ -18,10 +18,11 @@ describe("fondations UX-002", () => {
   });
 
   it("expose navigation, palette et action principale avec des noms accessibles", async () => {
-    const [header, page, toasts] = await Promise.all([
+    const [header, page, toasts, editorDialog] = await Promise.all([
       source("components/AppHeader.js"),
       source("app/page.js"),
       source("components/ui/ToastViewport.js"),
+      source("components/NoteEditorDialog.js"),
     ]);
 
     expect(header).toContain('aria-label="Nouvelle note"');
@@ -32,7 +33,7 @@ describe("fondations UX-002", () => {
     expect(page).toContain("notesRef.current.find");
     expect(page).toContain('(noteActuelle.kanban_colonne || "todo") !== nouvelleColonne');
     expect(page).toContain('aria-label="Rechercher dans les notes"');
-    expect(page).toContain('aria-label="Titre de la note"');
+    expect(editorDialog).toContain('aria-label="Titre de la note"');
     expect(toasts).toContain("createPortal");
     expect(toasts).toContain('data-modal-exempt="true"');
   });

@@ -15,11 +15,18 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
+- UX-004, Recherche et édition confortables, est en validation sur
+  codex/search-editor-comfort, candidat 1.1.0. Palette sur tout le corpus chargé,
+  lecture Modifier/Plus, éditeur commun et sauvegarde manuelle avec reprise
+  après erreur. Aucun nouveau schéma ou cache privé. La référence publique
+  précédente reste 1.0.1 / 4397f81 tant que la livraison n'est pas confirmée.
+
 - UX-003 est livré le 2026-10-10 en version `1.0.1` : panneau liste mobile
   borné, défilement interne et viewport dynamique. PR #26 fusionnée en
   `6325b7f`, Vercel Production `dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs` READY
   sur ce SHA, 113 tests, smoke public 21/21 et recette synthétique live
-  Chromium/WebKit 12/12. Safari/PWA physique reste une validation utilisateur.
+  Chromium/WebKit 12/12. Défilement de la vue liste confirmé conforme par
+  l'utilisateur le 2026-10-10 ; appareil et mode Safari/PWA non précisés.
 
 - Images par fichier et copier/coller fonctionnelles en local et production.
 - Pipeline image amélioré déployé : glisser-déposer, compression WebP 2 048 px /

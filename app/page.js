@@ -1,7 +1,7 @@
 "use client";
 
 // Page principale — Card view + List view avec toggle, tags colorés, recherche, design brutalism + glassmorphism
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -14,7 +14,9 @@ import CommandPalette from "@/components/CommandPalette";
 import HelpCenterDialog from "@/components/HelpCenterDialog";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import MobileNavigation from "@/components/MobileNavigation";
-import NoteContentEditor from "@/components/NoteContentEditor";
+import NoteActionDialog from "@/components/NoteActionDialog";
+import NoteEditorDialog from "@/components/NoteEditorDialog";
+import Dialog from "@/components/ui/Dialog";
 import PrintNoteDialog from "@/components/PrintNoteDialog";
 import StatsDrawer from "@/components/StatsDrawer";
 import EmptyState from "@/components/ui/EmptyState";
@@ -32,6 +34,8 @@ import { extractImageIds, stripImagesForText } from "@/lib/note-images";
 import { getModalFocusable, isolateBodyContent, isWithinModalFocus } from "@/lib/modal-isolation";
 import { runViewTransition, shareOrCopy } from "@/lib/ui-capabilities";
 import { ANTHROPIC_KEY_HEADER } from "@/lib/ai-config";
+import { createNoteSearchIndex } from "@/lib/note-search";
+import { isNoteDraftChanged, noteDraftSnapshot, noteDraftStatus } from "@/lib/note-draft";
 import {
   AI_FORMAT_CLIENT_TIMEOUT_MS,
   containsFormattableText,
@@ -113,6 +117,12 @@ export default function Home() {
   const [editionTitre, setEditionTitre] = useState("");
   const [editionContenu, setEditionContenu] = useState("");
   const [editionCouleur, setEditionCouleur] = useState(null);
+  const [editorBaseline, setEditorBaseline] = useState(null);
+  const [draftFailure, setDraftFailure] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
+  const draftSubmitRef = useRef(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [actionNoteId, setActionNoteId] = useState(null);
 
   // Confirmation de suppression
   const [confirmSuppId, setConfirmSuppId] = useState(null);
@@ -127,10 +137,10 @@ export default function Home() {
   const [nouveauTagNom, setNouveauTagNom] = useState("");
   const [nouveauTagCouleur, setNouveauTagCouleur] = useState(COULEURS_TAGS[0].hex);
   const [confirmSuppTagId, setConfirmSuppTagId] = useState(null);
-  const [dropdownTagNoteId, setDropdownTagNoteId] = useState(null);
-  const dropdownRef = useRef(null);
+
+
   const rechercheRef = useRef(null);
-  const titreRef = useRef(null);
+
   const modalPanelRef = useRef(null);
   const modalOverlayRef = useRef(null);
   const modalCloseRef = useRef(null);
@@ -147,6 +157,8 @@ export default function Home() {
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [triAscendant, setTriAscendant] = useState(false);
   const [mobileDetail, setMobileDetail] = useState(false);
+  const listScrollRef = useRef(null);
+  const listScrollPositionRef = useRef(0);
 
   // --- Centre d’aide contextuel ---
   const [aideOuverte, setAideOuverte] = useState(false);
@@ -192,6 +204,28 @@ export default function Home() {
   const [imageUploadProgress, setImageUploadProgress] = useState(null);
   const [imageFeatureError, setImageFeatureError] = useState(null);
   const noteBusy = noteSaving || imagePreparing;
+  const editorOpen = modeCreation || Boolean(editionId);
+  const activeDraft = modeCreation
+    ? { title: titre, content: contenu, color: couleurNote, pendingImages: creationPendingImages }
+    : { title: editionTitre, content: editionContenu, color: editionCouleur, pendingImages: editionPendingImages };
+  const draftChanged = editorOpen && isNoteDraftChanged(activeDraft, modeCreation ? null : editorBaseline);
+  const draftStatus = noteDraftStatus({
+    changed: draftChanged, saving: draftSaving, preparing: imagePreparing,
+    failed: draftFailure, creating: modeCreation,
+  });
+  const paletteNoteIndex = useMemo(() => createNoteSearchIndex(notes, notesTags, tags), [notes, notesTags, tags]);
+  const actionNote = actionNoteId ? notes.find((note) => note.id === actionNoteId) : null;
+
+  // La garde navigateur reste temporaire ; aucun brouillon n'est persisté localement.
+  useLayoutEffect(() => {
+    if (!draftChanged) return undefined;
+    function protectUnload(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", protectUnload);
+    return () => window.removeEventListener("beforeunload", protectUnload);
+  }, [draftChanged]);
 
   useEffect(() => {
     notesRef.current = notes;
@@ -313,15 +347,7 @@ export default function Home() {
   }, [router]);
 
   // Fermer le dropdown de tags au clic extérieur
-  useEffect(() => {
-    function handleClickExterieur(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownTagNoteId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickExterieur);
-    return () => document.removeEventListener("mousedown", handleClickExterieur);
-  }, []);
+
 
   // Maintenir le callback de fermeture à jour sans réinitialiser le focus à chaque saisie.
   useEffect(() => {
@@ -332,7 +358,7 @@ export default function Home() {
 
   // Modales historiques : scroll, focus initial, confinement et restitution.
   useEffect(() => {
-    if (!noteDetailId && !modeCreation) return undefined;
+    if (!noteDetailId) return undefined;
 
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
@@ -345,6 +371,7 @@ export default function Home() {
     });
 
     function handleModalKeyDown(event) {
+      if (modalOverlayRef.current?.inert) return;
       if (document.querySelector(".image-lightbox")) return;
       if (!isWithinModalFocus(modalPanelRef.current, document.activeElement)) return;
       if (event.key === "Escape") {
@@ -374,13 +401,13 @@ export default function Home() {
       document.removeEventListener("keydown", handleModalKeyDown);
       if (document.contains(previousFocus)) previousFocus?.focus({ preventScroll: true });
     };
-  }, [noteDetailId, modeCreation]);
+  }, [noteDetailId]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
     function handleKeyDown(e) {
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-      const hasBlockingDialog = aboutOpen || aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || modeCreation;
+      const hasBlockingDialog = aboutOpen || aideOuverte || statsOuvert || aiSettingsOpen || aiFormatting || printNoteId || noteDetailId || editorOpen || actionNoteId || pendingNavigation;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         if (hasBlockingDialog && !commandPaletteOpen) {
@@ -396,8 +423,7 @@ export default function Home() {
 
       // Échap — fermer aide, annuler édition (modale gérée séparément)
       if (e.key === "Escape") {
-        if (aboutOpen || aideOuverte || aiSettingsOpen || aiFormatting || printNoteId) return;
-        if (!noteDetailId && editionId) { annulerEdition(); return; }
+        if (aboutOpen || aideOuverte || aiSettingsOpen || aiFormatting || printNoteId || editorOpen || actionNoteId || pendingNavigation) return;
         return;
       }
 
@@ -410,7 +436,7 @@ export default function Home() {
       // N → ouvrir la modale de création
       if (e.key === "n" || e.key === "N") {
         e.preventDefault();
-        setModeCreation(true);
+        openNewNote();
         return;
       }
 
@@ -482,11 +508,13 @@ export default function Home() {
   // Basculer le thème sombre/clair
   function changerVue(nextView) {
     if (nextView === viewMode) return;
-    runViewTransition(() => {
-      setViewMode(nextView);
-      annulerEdition();
-      if (nextView !== "card") setNoteDetailId(null);
-      if (nextView !== "list") setMobileDetail(false);
+    requestDraftExit(() => {
+      closeDraft();
+      runViewTransition(() => {
+        setViewMode(nextView);
+        if (nextView !== "card") setNoteDetailId(null);
+        if (nextView !== "list") setMobileDetail(false);
+      });
     });
   }
 
@@ -634,76 +662,88 @@ export default function Home() {
 
   // === SÉLECTION DE NOTE (list view, avec protection édition) ===
 
-  function selectionnerNote(noteId) {
-    if (noteBusy) return;
-    if (editionId) {
-      const note = notes.find((n) => n.id === selectedNoteId);
-      const titreModifie = note && editionTitre !== note.titre;
-      const contenuModifie = note && editionContenu !== (note.contenu || "");
-      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
-        if (!window.confirm("Tu as des modifications non sauvegardées. Changer de note quand même ?")) {
-          return;
-        }
-      }
-      annulerEdition();
+  function requestDraftExit(action) {
+    if (noteBusy) return false;
+    if (draftChanged) {
+      setPendingNavigation({ action });
+      return false;
     }
-    setSelectedNoteId(noteId);
-    setConfirmSuppId(null);
-    setMobileDetail(true);
+    action();
+    return true;
   }
 
-  // Retour à la liste sur mobile (list view)
-  function retourListe() {
-    if (noteBusy) return;
-    if (editionId) {
-      const note = notes.find((n) => n.id === selectedNoteId);
-      const titreModifie = note && editionTitre !== note.titre;
-      const contenuModifie = note && editionContenu !== (note.contenu || "");
-      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
-        if (!window.confirm("Tu as des modifications non sauvegardées. Revenir quand même ?")) {
-          return;
-        }
-      }
-      annulerEdition();
-    }
-    setMobileDetail(false);
-  }
-
-  // Fermer la modale (card view, avec protection édition)
-  function fermerModale() {
-    if (noteBusy) return;
-    if (editionId) {
-      const note = notes.find((n) => n.id === noteDetailId);
-      const titreModifie = note && editionTitre !== note.titre;
-      const contenuModifie = note && editionContenu !== (note.contenu || "");
-      const couleurModifiee = note && editionCouleur !== (note.couleur || null);
-      if (titreModifie || contenuModifie || couleurModifiee || editionPendingImages.length > 0) {
-        if (!window.confirm("Tu as des modifications non sauvegardées. Fermer quand même ?")) {
-          return;
-        }
-      }
-      annulerEdition();
-    }
-    setNoteDetailId(null);
-    setConfirmSuppId(null);
-  }
-
-  // Fermer la modale de création (sans créer, avec protection)
-  function fermerModaleCreation() {
-    if (noteBusy) return;
-    const modifie = titre.trim() !== "" || contenu.trim() !== "" || couleurNote !== null || creationPendingImages.length > 0;
-    if (modifie) {
-      if (!window.confirm("Des modifications non sauvegard\u00e9es seront perdues. Quitter quand m\u00eame ?")) {
-        return;
-      }
-    }
+  function closeDraft() {
+    annulerEdition();
     setModeCreation(false);
     setTitre("");
     setContenu("");
     setCouleurNote(null);
     clearPendingImagePreviews(creationPendingImages, setCreationPendingImages);
+    setDraftFailure(false);
+  }
+
+  function openNewNote() {
+    requestDraftExit(() => {
+      closeDraft();
+      setModeCreation(true);
+    });
+  }
+
+  function openPaletteNote(noteId) {
+    requestDraftExit(() => {
+      closeDraft();
+      if (viewMode === "list") {
+        selectionnerNote(noteId);
+      } else {
+        setNoteDetailId(noteId);
+      }
+    });
+  }
+
+  function leaveEditor() {
+    requestDraftExit(closeDraft);
+  }
+
+  function confirmDraftDiscard() {
+    const action = pendingNavigation?.action;
+    setPendingNavigation(null);
+    // Fermer la couche de confirmation avant de restaurer/fermer l'éditeur.
+    requestAnimationFrame(() => requestAnimationFrame(() => action?.()));
+  }
+
+    function selectionnerNote(noteId) {
+    requestDraftExit(() => {
+      closeDraft();
+      if (!mobileDetail && listScrollRef.current) listScrollPositionRef.current = listScrollRef.current.scrollTop;
+      setSelectedNoteId(noteId);
+      setConfirmSuppId(null);
+      setMobileDetail(true);
+    });
+  }
+
+  // Retour à la liste sur mobile (list view)
+    function retourListe() {
+    requestDraftExit(() => {
+      closeDraft();
+      setMobileDetail(false);
+      requestAnimationFrame(() => {
+        if (listScrollRef.current) listScrollRef.current.scrollTop = listScrollPositionRef.current;
+      });
+    });
+  }
+
+  // Fermer la modale (card view, avec protection édition)
+    function fermerModale() {
+    requestDraftExit(() => {
+      closeDraft();
+      setNoteDetailId(null);
+      setConfirmSuppId(null);
+    });
+  }
+
+  // Fermer la modale de création (sans créer, avec protection)
+    function fermerModaleCreation() {
+    leaveEditor();
   }
 
   // === CRUD NOTES ===
@@ -711,8 +751,11 @@ export default function Home() {
   async function ajouterNote(e) {
     if (e) e.preventDefault();
     setErreur(null);
-    if (!titre.trim() || noteBusy) return;
+    if (!titre.trim() || noteBusy || draftSubmitRef.current) return;
+    draftSubmitRef.current = true;
 
+    setDraftFailure(false);
+    setDraftSaving(true);
     setNoteSaving(true);
     setImageUploadProgress({ percent: 3, label: "Création de la note…" });
     const noteId = crypto.randomUUID();
@@ -749,11 +792,14 @@ export default function Home() {
       setSucces("Note ajout\u00e9e !");
       await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
     } catch (saveError) {
+      setDraftFailure(true);
       if (noteCreated) {
         await supabase.from("notes").delete().eq("id", noteId);
       }
       setErreur("Erreur lors de l'ajout : " + saveError.message);
     } finally {
+      draftSubmitRef.current = false;
+      setDraftSaving(false);
       setNoteSaving(false);
       setImageUploadProgress(null);
     }
@@ -867,26 +913,35 @@ export default function Home() {
     }
   }
 
-  function commencerEdition(note) {
-    clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
-    setEditionId(note.id);
-    setEditionTitre(note.titre);
-    setEditionContenu(note.contenu || "");
-    setEditionCouleur(note.couleur || null);
-    setConfirmSuppId(null);
+    function commencerEdition(note) {
+    requestDraftExit(() => {
+      clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
+      setEditorBaseline(noteDraftSnapshot({ title: note.titre, content: note.contenu || "", color: note.couleur }));
+      setDraftFailure(false);
+      setEditionId(note.id);
+      setEditionTitre(note.titre);
+      setEditionContenu(note.contenu || "");
+      setEditionCouleur(note.couleur || null);
+      setConfirmSuppId(null);
+    });
   }
 
-  function annulerEdition() {
+    function annulerEdition() {
     setEditionId(null);
     setEditionTitre("");
     setEditionContenu("");
     setEditionCouleur(null);
+    setEditorBaseline(null);
+    setDraftFailure(false);
     clearPendingImagePreviews(editionPendingImages, setEditionPendingImages);
   }
 
   async function sauvegarderEdition(noteId) {
     setErreur(null);
-    if (!editionTitre.trim() || noteBusy) return;
+    if (!editionTitre.trim() || noteBusy || draftSubmitRef.current) return;
+    draftSubmitRef.current = true;
+    setDraftFailure(false);
+    setDraftSaving(true);
     setNoteSaving(true);
     setImageUploadProgress({ percent: 3, label: "Préparation de la sauvegarde…" });
 
@@ -928,15 +983,19 @@ export default function Home() {
       setEditionTitre("");
       setEditionContenu("");
       setEditionCouleur(null);
+      setEditorBaseline(null);
       setSucces(cleanupWarning ? "Note modifiée, avec un nettoyage d'image à reprendre." : "Note modifiée !");
       if (cleanupWarning) setErreur(cleanupWarning);
       await Promise.all([chargerNotes(utilisateur.id), chargerNoteImages()]);
     } catch (saveError) {
+      setDraftFailure(true);
       if (uploadedImages.length > 0) {
         await removeStoredImages(supabase, uploadedImages).catch(() => {});
       }
       setErreur("Erreur lors de la modification : " + saveError.message);
     } finally {
+      draftSubmitRef.current = false;
+      setDraftSaving(false);
       setNoteSaving(false);
       setImageUploadProgress(null);
     }
@@ -1507,16 +1566,18 @@ export default function Home() {
   }
 
   // Déconnexion
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
+    function handleLogout() {
+    requestDraftExit(() => {
+      closeDraft();
+      void supabase.auth.signOut().then(() => router.push("/login"));
+    });
   }
 
   // === RENDU — Tags d'une note (réutilisable) ===
   function renderTagsBadges(note, opts = {}) {
     const tagIds = notesTags[note.id] || [];
     const tagsDeNote = tagIds.map(getTag).filter(Boolean);
-    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
+
     const canRemove = opts.canRemove !== false;
 
     return (
@@ -1573,208 +1634,29 @@ export default function Home() {
   }
 
   // === RENDU — Boutons d'action d'une note (réutilisable modale + détail) ===
-  function renderNoteActions(note) {
-    const tagIds = notesTags[note.id] || [];
-    const tagsDisponibles = tags.filter((t) => !tagIds.includes(t.id));
-    const enEdition = editionId === note.id;
-
+    function renderNoteActions(note) {
     return (
-      <>
-        {/* Confirmation de suppression */}
-        {confirmSuppId === note.id ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>
-              Supprimer ?
-            </span>
-            <button
-              onClick={() => supprimerNote(note.id)}
-              className="btn-brutal danger"
-              style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-            >
-              Oui
-            </button>
-            <button
-              onClick={() => setConfirmSuppId(null)}
-              className="btn-brutal ghost"
-              style={{ fontSize: "0.65rem", padding: "0.25rem 0.6rem" }}
-            >
-              Non
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {enEdition ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => sauvegarderEdition(note.id)}
-                  disabled={noteBusy}
-                  className="btn-brutal primary disabled:opacity-50"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  {imagePreparing ? "Optimisation..." : noteSaving ? "Sauvegarde..." : "Sauver"}
-                </button>
-                <button
-                  onClick={annulerEdition}
-                  disabled={noteBusy}
-                  className="btn-brutal ghost disabled:opacity-50"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  Annuler
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* Ligne 1 — Actions principales */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => toggleEpingle(note)}
-                    className="btn-brutal ghost"
-                    style={{
-                      fontSize: "0.85rem",
-                      padding: "0.35rem 0.5rem",
-                      color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
-                      lineHeight: 1,
-                    }}
-                    title={note.epinglee ? "Désépingler" : "Épingler"}
-                    aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
-                    aria-pressed={note.epinglee}
-                  >
-                    {"\uD83D\uDCCC"}
-                  </button>
-                  <button
-                    onClick={() => commencerEdition(note)}
-                    className="btn-brutal primary"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    onClick={() => dupliquerNote(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Dupliquer
-                  </button>
-                  <button
-                    onClick={() => copierNote(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    Copier
-                  </button>
-                  <button
-                    onClick={() => ouvrirImpression(note)}
-                    className="btn-brutal ghost"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    <Icon name="printer" size={15} />
-                    Imprimer / PDF
-                  </button>
-                  <button
-                    onClick={() => resumerNote(note)}
-                    disabled={!note.contenu || resumes[note.id]?.chargement}
-                    className="btn-brutal ghost disabled:opacity-30"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
-                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                  >
-                    Résumer
-                  </button>
-                  {/* Bouton + tag */}
-                  <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                    <button
-                      onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                      className="btn-brutal ghost"
-                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.5rem", color: "var(--accent)" }}
-                      title="Ajouter un tag"
-                    >
-                      + Tag
-                    </button>
-                    {dropdownTagNoteId === note.id && (
-                      <div
-                        className="absolute left-0 bottom-full mb-1"
-                        style={{
-                          background: "var(--glass-bg)",
-                          backdropFilter: "blur(16px)",
-                          WebkitBackdropFilter: "blur(16px)",
-                          border: "2px solid var(--glass-border)",
-                          borderRadius: "2px",
-                          boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                          padding: "0.4rem",
-                          minWidth: "120px",
-                          zIndex: 50,
-                        }}
-                      >
-                        {tagsDisponibles.length === 0 ? (
-                          <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                            {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                          </p>
-                        ) : (
-                          tagsDisponibles.map((tag) => (
-                            <button
-                              key={tag.id}
-                              onClick={() => ajouterTagANote(note.id, tag.id)}
-                              className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                              style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                            >
-                              <span
-                                style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }}
-                              />
-                              {tag.nom}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Ligne 2 — Partage + Supprimer */}
-                <div className="flex items-center gap-2">
-                  {note.share_token ? (
-                    <>
-                      <button
-                        onClick={() => copierLienPartage(note)}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }}
-                        title="Partager ou copier le lien"
-                      >
-                        {"\uD83D\uDD17"} Partager le lien
-                      </button>
-                      <button
-                        onClick={() => togglePartage(note)}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
-                        title="Désactiver le partage public"
-                      >
-                        Désactiver
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => togglePartage(note)}
-                      className="btn-brutal ghost"
-                      style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }}
-                      title="Partager cette note"
-                    >
-                      {"\uD83D\uDD17"} Partager
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
-                    className="btn-brutal ghost ml-auto"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }}
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </>
+      <div className="note-reading-actions">
+        <button type="button" className="btn-brutal primary" disabled={noteBusy} onClick={() => commencerEdition(note)}>Modifier</button>
+        <button type="button" className="btn-brutal ghost" disabled={noteBusy} onClick={() => setActionNoteId(note.id)} aria-haspopup="dialog">Plus <span aria-hidden="true">···</span></button>
+      </div>
     );
+  }
+
+  function getActionsForNote(note) {
+    if (!note) return [];
+    return [
+      { id: "pin", label: note.epinglee ? "Désépingler" : "Épingler", icon: "cards", onSelect: () => toggleEpingle(note) },
+      { id: "copy", label: "Copier le contenu", icon: "command", onSelect: () => copierNote(note) },
+      { id: "duplicate", label: "Dupliquer", icon: "cards", onSelect: () => dupliquerNote(note) },
+      { id: "print", label: "Imprimer / PDF", icon: "printer", onSelect: () => ouvrirImpression(note) },
+      { id: "summary", label: "Résumer avec l’IA", icon: "sparkles", disabled: !note.contenu || resumes[note.id]?.chargement, onSelect: () => resumerNote(note) },
+      ...(note.share_token ? [
+        { id: "share", label: "Partager le lien", icon: "chevron", onSelect: () => copierLienPartage(note) },
+        { id: "revoke", label: "Désactiver le partage", icon: "close", onSelect: () => togglePartage(note) },
+      ] : [{ id: "share", label: "Activer le partage", icon: "chevron", onSelect: () => togglePartage(note) }]),
+      { id: "delete", label: "Supprimer…", icon: "close", danger: true, onSelect: () => setConfirmSuppId(note.id) },
+    ];
   }
 
   // === RENDU — Résumé IA d'une note ===
@@ -1825,7 +1707,8 @@ export default function Home() {
   }
 
   // === RENDU — Éditeur de couleur de note ===
-  function renderCouleurEditor() {
+  function renderCouleurEditor(creating = false) {
+    const currentColor = creating ? couleurNote : editionCouleur;
     return (
       <div>
         <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
@@ -1836,16 +1719,16 @@ export default function Home() {
             <button
               key={c.nom}
               type="button"
-              onClick={() => setEditionCouleur(c.hex)}
+              onClick={() => creating ? setCouleurNote(c.hex) : setEditionCouleur(c.hex)}
               title={c.nom}
               aria-label={`Couleur ${c.nom}`}
-              aria-pressed={editionCouleur === c.hex}
+              aria-pressed={currentColor === c.hex}
               style={{
                 width: "1.75rem",
                 height: "1.75rem",
                 borderRadius: "50%",
                 background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                border: editionCouleur === c.hex
+                border: currentColor === c.hex
                   ? "3px solid var(--accent)"
                   : "2px solid var(--input-border)",
                 cursor: "pointer",
@@ -1854,7 +1737,7 @@ export default function Home() {
                 justifyContent: "center",
                 fontSize: "0.7rem",
                 color: "var(--text-muted)",
-                boxShadow: editionCouleur === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
+                boxShadow: currentColor === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
                 transition: "all 0.15s",
               }}
             >
@@ -1880,13 +1763,13 @@ export default function Home() {
     }
 
     const note = noteSelectionnee;
-    const enEdition = editionId === note.id;
+
 
     return (
       <div
         key={note.id}
         className="flex flex-col h-full fade-in-fast"
-        style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) }}
+        style={{ backgroundColor: getCouleurFond(note.couleur) || "var(--surface-solid)" }}
       >
         {/* Header détail */}
         <div className="detail-header">
@@ -1899,48 +1782,15 @@ export default function Home() {
             &larr; Notes
           </button>
 
-          {enEdition ? (
-            <input
-              type="text"
-              aria-label="Titre de la note"
-              value={editionTitre}
-              onChange={(e) => setEditionTitre(e.target.value)}
-              className="input-glass"
-              style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
-            />
-          ) : (
-            <h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+          {<h2 className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
               {note.titre}
-            </h2>
-          )}
-          {!enEdition && renderBoutonsTaille()}
+            </h2>}
+
         </div>
 
         {/* Body */}
         <div className="detail-body flex-1 overflow-y-auto">
-          {enEdition ? (
-            <div className="space-y-3">
-              <NoteContentEditor
-                value={editionContenu}
-                onChange={setEditionContenu}
-                pendingImages={editionPendingImages}
-                onPendingImagesChange={setEditionPendingImages}
-                existingImages={noteImages[note.id] || []}
-                imageUrls={imageUrls}
-                rows={12}
-                minHeight="200px"
-                disabled={noteSaving}
-                imageDisabled={Boolean(imageFeatureError)}
-                uploadProgress={imageUploadProgress}
-                onProcessingChange={setImagePreparing}
-                onOpenHelp={openHelp}
-                onSmartFormat={() => ouvrirMiseEnFormeEdition(note.id)}
-                smartFormatBusy={aiFormatting?.loading}
-              />
-              {renderCouleurEditor()}
-            </div>
-          ) : (
-            <>
+          {<>
               {renderTagsBadges(note)}
 
               {note.share_token && (
@@ -1997,8 +1847,7 @@ export default function Home() {
                   minute: "2-digit",
                 })}
               </p>
-            </>
-          )}
+            </>}
         </div>
 
         {/* Footer actions */}
@@ -2014,7 +1863,7 @@ export default function Home() {
     if (!noteModale) return null;
 
     const note = noteModale;
-    const enEdition = editionId === note.id;
+
 
     return createPortal(
       <div
@@ -2030,30 +1879,19 @@ export default function Home() {
           ref={modalPanelRef}
           className="modal-content"
           onClick={(e) => e.stopPropagation()}
-          style={{ backgroundColor: enEdition ? getCouleurFond(editionCouleur) : getCouleurFond(note.couleur) || "var(--modal-bg)" }}
+          style={{ backgroundColor: getCouleurFond(note.couleur) || "var(--modal-bg)" }}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={enEdition ? undefined : "note-detail-title"}
-          aria-label={enEdition ? "Modifier la note" : undefined}
+          aria-labelledby={"note-detail-title"}
+          aria-label={undefined}
           tabIndex={-1}
         >
           {/* Header modale */}
           <div className="modal-header" style={{ flexDirection: "column", gap: "0.5rem" }}>
             <div className="flex items-start justify-between gap-2 w-full">
-              {enEdition ? (
-                <input
-                  type="text"
-                  aria-label="Titre de la note"
-                  value={editionTitre}
-                  onChange={(e) => setEditionTitre(e.target.value)}
-                  className="input-glass"
-                  style={{ fontWeight: 700, fontSize: "1rem", flex: 1, minWidth: 0 }}
-                />
-              ) : (
-                <h2 id="note-detail-title" className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+              {<h2 id="note-detail-title" className="font-black text-base" style={{ color: "var(--text-primary)", flex: 1, minWidth: 0, wordBreak: "break-word" }}>
                   {note.titre}
-                </h2>
-              )}
+                </h2>}
               <button
                 onClick={fermerModale}
                 aria-label="Fermer la note"
@@ -2063,98 +1901,12 @@ export default function Home() {
                 &times;
               </button>
             </div>
-            {!enEdition && (
-              <div className="flex items-center gap-2 w-full">
-                {/* + Tag */}
-                <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                  <button
-                    onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem", color: "var(--accent)" }}
-                    title="Ajouter un tag"
-                  >
-                    + Tag
-                  </button>
-                  {dropdownTagNoteId === note.id && (
-                    <div
-                      className="absolute left-0 top-full mt-1"
-                      style={{
-                        background: "var(--modal-bg)",
-                        border: "2px solid var(--modal-border)",
-                        borderRadius: "2px",
-                        boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                        padding: "0.4rem",
-                        minWidth: "120px",
-                        zIndex: 50,
-                      }}
-                    >
-                      {tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).length === 0 ? (
-                        <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                          {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                        </p>
-                      ) : (
-                        tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).map((tag) => (
-                          <button
-                            key={tag.id}
-                            onClick={() => ajouterTagANote(note.id, tag.id)}
-                            className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                            style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                          >
-                            <span style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }} />
-                            {tag.nom}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-                {/* Supprimer */}
-                {confirmSuppId === note.id ? (
-                  <div className="flex items-center gap-1 ml-auto">
-                    <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)" }}>Supprimer ?</span>
-                    <button onClick={() => supprimerNote(note.id)} className="btn-brutal danger" style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem" }}>Oui</button>
-                    <button onClick={() => setConfirmSuppId(null)} className="btn-brutal ghost" style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem" }}>Non</button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setConfirmSuppId(note.id); setEditionId(null); }}
-                    className="btn-brutal ghost ml-auto"
-                    style={{ fontSize: "0.65rem", padding: "0.25rem 0.5rem", color: "var(--danger)" }}
-                  >
-                    Supprimer
-                  </button>
-                )}
-              </div>
-            )}
+
           </div>
 
           {/* Body modale */}
           <div className="modal-body">
-            {enEdition ? (
-              <div className="space-y-3">
-                <NoteContentEditor
-                  value={editionContenu}
-                  onChange={setEditionContenu}
-                  pendingImages={editionPendingImages}
-                  onPendingImagesChange={setEditionPendingImages}
-                  existingImages={noteImages[note.id] || []}
-                  imageUrls={imageUrls}
-                  rows={10}
-                  minHeight="150px"
-                  disabled={noteSaving}
-                  imageDisabled={Boolean(imageFeatureError)}
-                  uploadProgress={imageUploadProgress}
-                  onProcessingChange={setImagePreparing}
-                  onOpenHelp={openHelp}
-                  onSmartFormat={() => ouvrirMiseEnFormeEdition(note.id)}
-                  smartFormatBusy={aiFormatting?.loading}
-                />
-                {renderCouleurEditor()}
-              </div>
-            ) : (
-              <>
+            {<>
                 {renderTagsBadges(note)}
 
                 {note.share_token && (
@@ -2211,77 +1963,11 @@ export default function Home() {
                     minute: "2-digit",
                   })}
                 </p>
-              </>
-            )}
+              </>}
           </div>
 
           {/* Footer modale */}
-          <div className="modal-footer space-y-2">
-            {enEdition ? (
-              <div className="flex items-center gap-2">
-                <button onClick={() => sauvegarderEdition(note.id)} disabled={noteBusy} className="btn-brutal primary disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                  {imagePreparing ? "Optimisation..." : noteSaving ? "Sauvegarde..." : "Sauver"}
-                </button>
-                <button onClick={annulerEdition} disabled={noteBusy} className="btn-brutal ghost disabled:opacity-50" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                  Annuler
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                  {renderBoutonsTaille()}
-                  <button
-                    onClick={() => toggleEpingle(note)}
-                    className="btn-brutal ghost"
-                    style={{ fontSize: "0.85rem", padding: "0.35rem 0.5rem", color: note.epinglee ? "var(--accent)" : "var(--text-muted)", lineHeight: 1 }}
-                    title={note.epinglee ? "Désépingler" : "Épingler"}
-                    aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
-                    aria-pressed={note.epinglee}
-                  >
-                    {"\uD83D\uDCCC"}
-                  </button>
-                  <button onClick={() => commencerEdition(note)} className="btn-brutal primary" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                    Modifier
-                  </button>
-                  <button onClick={() => dupliquerNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                    Dupliquer
-                  </button>
-                  {note.share_token ? (
-                    <>
-                      <button onClick={() => copierLienPartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--success)" }} title="Partager ou copier le lien">
-                        {"\uD83D\uDD17"} Lien
-                      </button>
-                      <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--danger)" }} title="Désactiver le partage">
-                        Désactiver
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={() => togglePartage(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--text-muted)" }} title="Partager cette note">
-                      {"\uD83D\uDD17"} Partager
-                    </button>
-                  )}
-                  <button
-                    onClick={() => resumerNote(note)}
-                    disabled={!note.contenu || resumes[note.id]?.chargement}
-                    className="btn-brutal ghost disabled:opacity-30"
-                    style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem", color: "var(--accent)" }}
-                    title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                  >
-                    Résumer
-                  </button>
-                  <button onClick={() => copierNote(note)} className="btn-brutal ghost" style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}>
-                    Copier
-                  </button>
-                  <button
-                    onClick={() => ouvrirImpression(note)}
-                    className="btn-brutal ghost"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                  >
-                    <Icon name="printer" size={15} />
-                    Imprimer / PDF
-                  </button>
-                </div>
-            )}
-          </div>
+          <div className="modal-footer">{renderNoteActions(note)}</div>
         </div>
       </div>,
       document.body
@@ -2296,7 +1982,7 @@ export default function Home() {
       keywords: "ajouter créer écrire",
       icon: "plus",
       shortcut: "N",
-      onSelect: () => setModeCreation(true),
+      onSelect: openNewNote,
     },
     {
       id: "focus-search",
@@ -2371,17 +2057,7 @@ export default function Home() {
       icon: "info",
       onSelect: () => setAboutOpen(true),
     },
-    ...notes.slice(0, 8).map((note) => ({
-      id: `note-${note.id}`,
-      label: note.titre,
-      description: "Ouvrir une note récente",
-      keywords: `${stripImagesForText(note.contenu)} ${(notesTags[note.id] || []).map((tagId) => getTag(tagId)?.nom || "").join(" ")}`,
-      icon: "chevron",
-      onSelect: () => {
-        changerVue("card");
-        setNoteDetailId(note.id);
-      },
-    })),
+
   ];
 
   // État de chargement
@@ -2406,7 +2082,7 @@ export default function Home() {
         noteCount={notes.length}
         viewMode={viewMode}
         onViewChange={changerVue}
-        onNewNote={() => setModeCreation(true)}
+        onNewNote={openNewNote}
         onOpenCommand={() => setCommandPaletteOpen(true)}
         tagsOpen={panneauTagsOuvert}
         onToggleTags={() => setPanneauTagsOuvert((open) => !open)}
@@ -2616,7 +2292,7 @@ export default function Home() {
                 title="Ta première capsule commence ici"
                 description="Crée une note, ajoute du Markdown ou dépose une image. Elle restera privée tant que tu ne l'auras pas partagée."
                 actionLabel="Créer une note"
-                onAction={() => setModeCreation(true)}
+                onAction={openNewNote}
                 secondaryActionLabel="Découvrir Capsule"
                 onSecondaryAction={() => openHelp("quick-start")}
               />
@@ -2656,14 +2332,7 @@ export default function Home() {
                         {note.epinglee && <span style={{ marginRight: "0.3rem" }}>{"\uD83D\uDCCC"}</span>}
                         {note.titre}
                       </h3>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); copierNote(note); }}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", flexShrink: 0 }}
-                        title="Copier la note"
-                      >
-                        Copier
-                      </button>
+
                     </div>
 
                     {/* Tags */}
@@ -2746,138 +2415,7 @@ export default function Home() {
                     </div>
 
                     {/* Boutons d'action */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-2" style={{ borderTop: "1px solid var(--panel-border)" }} onClick={(e) => e.stopPropagation()}>
-                      {renderBoutonsTaille()}
-                      <button
-                        onClick={() => toggleEpingle(note)}
-                        className="btn-brutal ghost"
-                        style={{
-                          fontSize: "0.75rem",
-                          padding: "0.2rem 0.4rem",
-                          color: note.epinglee ? "var(--accent)" : "var(--text-muted)",
-                          lineHeight: 1,
-                        }}
-                        title={note.epinglee ? "Désépingler" : "Épingler"}
-                        aria-label={note.epinglee ? "Désépingler la note" : "Épingler la note"}
-                        aria-pressed={note.epinglee}
-                      >
-                        {"\uD83D\uDCCC"}
-                      </button>
-                      <button
-                        onClick={() => { setNoteDetailId(note.id); commencerEdition(note); }}
-                        className="btn-brutal primary"
-                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => dupliquerNote(note)}
-                        className="btn-brutal ghost"
-                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}
-                      >
-                        Dupliquer
-                      </button>
-                      {note.share_token ? (
-                        <>
-                          <button
-                            onClick={() => copierLienPartage(note)}
-                            className="btn-brutal ghost"
-                            style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--success)" }}
-                            title="Copier le lien de partage"
-                          >
-                            {"\uD83D\uDD17"} Lien
-                          </button>
-                          <button
-                            onClick={() => togglePartage(note)}
-                            className="btn-brutal ghost"
-                            style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--danger)" }}
-                            title="Désactiver le partage"
-                          >
-                            {"\u00d7"} Partage
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => togglePartage(note)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--text-muted)" }}
-                          title="Partager"
-                          aria-label="Partager la note"
-                        >
-                          {"\uD83D\uDD17"}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => resumerNote(note)}
-                        disabled={!note.contenu || resumes[note.id]?.chargement}
-                        className="btn-brutal ghost disabled:opacity-30"
-                        style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--accent)" }}
-                        title={note.contenu ? "Résumer avec l'IA" : "Ajoute du contenu pour résumer"}
-                      >
-                        Résumer
-                      </button>
-                      <div className="relative" ref={dropdownTagNoteId === note.id ? dropdownRef : null}>
-                        <button
-                          onClick={() => setDropdownTagNoteId(dropdownTagNoteId === note.id ? null : note.id)}
-                          className="btn-brutal ghost"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--accent)" }}
-                          title="Ajouter un tag"
-                        >
-                          + Tag
-                        </button>
-                        {dropdownTagNoteId === note.id && (
-                          <div
-                            className="absolute left-0 bottom-full mb-1"
-                            style={{
-                              background: "var(--glass-bg)",
-                              backdropFilter: "blur(16px)",
-                              WebkitBackdropFilter: "blur(16px)",
-                              border: "2px solid var(--glass-border)",
-                              borderRadius: "2px",
-                              boxShadow: "4px 4px 0 var(--brutal-shadow)",
-                              padding: "0.4rem",
-                              minWidth: "120px",
-                              zIndex: 50,
-                            }}
-                          >
-                            {tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).length === 0 ? (
-                              <p className="text-xs px-1" style={{ color: "var(--text-muted)" }}>
-                                {tags.length === 0 ? "Crée un tag d'abord" : "Tous assignés"}
-                              </p>
-                            ) : (
-                              tags.filter((t) => !(notesTags[note.id] || []).includes(t.id)).map((tag) => (
-                                <button
-                                  key={tag.id}
-                                  onClick={() => ajouterTagANote(note.id, tag.id)}
-                                  className="flex items-center gap-1.5 w-full text-left px-2 py-1 text-xs font-bold"
-                                  style={{ color: tag.couleur, borderRadius: "1px", cursor: "pointer" }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = tag.couleur + "15"}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                                >
-                                  <span style={{ width: "0.5rem", height: "0.5rem", background: tag.couleur, borderRadius: "1px", display: "inline-block", flexShrink: 0 }} />
-                                  {tag.nom}
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {confirmSuppId === note.id ? (
-                        <div className="flex items-center gap-1 ml-auto">
-                          <span className="text-xs font-bold uppercase" style={{ color: "var(--danger)", fontSize: "0.6rem" }}>Supprimer ?</span>
-                          <button onClick={() => supprimerNote(note.id)} className="btn-brutal danger" style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}>Oui</button>
-                          <button onClick={() => setConfirmSuppId(null)} className="btn-brutal ghost" style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}>Non</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmSuppId(note.id)}
-                          className="btn-brutal ghost ml-auto"
-                          style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem", color: "var(--danger)" }}
-                        >
-                          Supprimer
-                        </button>
-                      )}
-                    </div>
+                    <div className="note-card-actions" onClick={(event) => event.stopPropagation()}>{renderNoteActions(note)}</div>
                   </div>
                 );
               })}
@@ -3140,7 +2678,7 @@ export default function Home() {
             </div>
 
             {/* Liste des notes */}
-            <div className="panel-left-scroll">
+            <div className="panel-left-scroll" ref={listScrollRef}>
               {notes.length === 0 ? (
                 <EmptyState
                   compact
@@ -3148,7 +2686,7 @@ export default function Home() {
                   title="Aucune note"
                   description="Crée ta première capsule."
                   actionLabel="Créer"
-                  onAction={() => setModeCreation(true)}
+                  onAction={openNewNote}
                 />
               ) : notesFiltrees.length === 0 ? (
                 <EmptyState
@@ -3255,148 +2793,73 @@ export default function Home() {
       <AppFooter onOpenAbout={() => setAboutOpen(true)} />
 
       {/* Modale de création */}
-      {modeCreation && createPortal(
-        <div
-          ref={modalOverlayRef}
-          className="modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) fermerModaleCreation();
-          }}
-        >
-          <div
-            ref={modalPanelRef}
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{ backgroundColor: getCouleurFond(couleurNote) || "var(--modal-bg)" }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="new-note-title"
-            tabIndex={-1}
-          >
-            {/* Header */}
-            <div className="modal-header">
-              <h2 id="new-note-title" className="font-black text-sm" style={{ color: "var(--text-primary)" }}>
-                Nouvelle note
-              </h2>
-              <button
-                onClick={fermerModaleCreation}
-                aria-label="Fermer la création"
-                className="btn-brutal ghost"
-                style={{ fontSize: "1.2rem", padding: "0.15rem 0.4rem", lineHeight: 1, flexShrink: 0 }}
-              >
-                &times;
-              </button>
-            </div>
+            <NoteEditorDialog
+        key={modeCreation ? "creation" : editionId || "closed-editor"}
+        open={editorOpen}
+        creating={modeCreation}
+        title={activeDraft.title}
+        content={activeDraft.content}
+        onTitleChange={modeCreation ? setTitre : setEditionTitre}
+        onContentChange={modeCreation ? setContenu : setEditionContenu}
+        onSave={() => modeCreation ? ajouterNote() : sauvegarderEdition(editionId)}
+        onClose={leaveEditor}
+        pendingImages={activeDraft.pendingImages}
+        onPendingImagesChange={modeCreation ? setCreationPendingImages : setEditionPendingImages}
+        existingImages={modeCreation ? [] : noteImages[editionId] || []}
+        imageUrls={imageUrls}
+        busy={draftSaving}
+        preparing={imagePreparing}
+        progress={imageUploadProgress}
+        imageDisabled={Boolean(imageFeatureError)}
+        onProcessingChange={setImagePreparing}
+        onOpenHelp={openHelp}
+        onSmartFormat={modeCreation ? ouvrirMiseEnFormeCreation : () => ouvrirMiseEnFormeEdition(editionId)}
+        smartFormatBusy={aiFormatting?.loading}
+        status={draftStatus}
+        changed={draftChanged}
+        failed={draftFailure}
+        colors={renderCouleurEditor(modeCreation)}
+      />
 
-            {/* Body */}
-            <div className="modal-body">
-              <div className="space-y-3">
-                <div>
-                  <label htmlFor="new-note-title-input" className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
-                    Titre
-                  </label>
-                  <input
-                    id="new-note-title-input"
-                    ref={titreRef}
-                    type="text"
-                    value={titre}
-                    onChange={(e) => setTitre(e.target.value)}
-                    placeholder="Titre de la note"
-                    className="input-glass"
-                    style={{ fontWeight: 700, fontSize: "1rem" }}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: "var(--text-muted)" }}>
-                    Contenu
-                  </label>
-                  <NoteContentEditor
-                    value={contenu}
-                    onChange={setContenu}
-                    pendingImages={creationPendingImages}
-                    onPendingImagesChange={setCreationPendingImages}
-                    existingImages={[]}
-                    imageUrls={imageUrls}
-                    placeholder="Contenu (optionnel) — supporte le Markdown"
-                    rows={8}
-                    minHeight="120px"
-                    disabled={noteSaving}
-                    imageDisabled={Boolean(imageFeatureError)}
-                    uploadProgress={imageUploadProgress}
-                    onProcessingChange={setImagePreparing}
-                    onOpenHelp={openHelp}
-                    onSmartFormat={ouvrirMiseEnFormeCreation}
-                    smartFormatBusy={aiFormatting?.loading}
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-                    Couleur de la note
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {COULEURS_NOTES.map((c) => (
-                      <button
-                        key={c.nom}
-                        type="button"
-                        onClick={() => setCouleurNote(c.hex)}
-                        title={c.nom}
-                        aria-label={`Couleur ${c.nom}`}
-                        aria-pressed={couleurNote === c.hex}
-                        style={{
-                          width: "1.75rem",
-                          height: "1.75rem",
-                          borderRadius: "50%",
-                          background: c.hex ? (sombre ? c.hexDark : c.hex) : "transparent",
-                          border: couleurNote === c.hex
-                            ? "3px solid var(--accent)"
-                            : "2px solid var(--input-border)",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.7rem",
-                          color: "var(--text-muted)",
-                          boxShadow: couleurNote === c.hex ? "0 0 0 2px var(--accent-glow)" : "none",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {c.hex === null && "\u00d7"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+      <NoteActionDialog
+        key={actionNoteId || "closed-actions"}
+        open={Boolean(actionNote)}
+        onClose={() => setActionNoteId(null)}
+        note={actionNote}
+        actions={getActionsForNote(actionNote)}
+        tags={tags.filter((tag) => !(notesTags[actionNoteId] || []).includes(tag.id))}
+        onAddTag={(tagId) => ajouterTagANote(actionNoteId, tagId)}
+        onManageTags={() => setPanneauTagsOuvert(true)}
+        sizeControls={renderBoutonsTaille()}
+        busy={noteBusy}
+      />
 
-            {/* Footer */}
-            <div className="modal-footer">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => ajouterNote()}
-                  disabled={!titre.trim() || noteBusy}
-                  className="btn-brutal primary disabled:opacity-30"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  {imagePreparing ? "Optimisation..." : noteSaving ? "Enregistrement..." : "Créer"}
-                </button>
-                <button
-                  onClick={fermerModaleCreation}
-                  disabled={noteBusy}
-                  className="btn-brutal ghost disabled:opacity-50"
-                  style={{ fontSize: "0.7rem", padding: "0.35rem 0.75rem" }}
-                >
-                  Annuler
-                </button>
-              </div>
-              <p className="text-xs mt-2" style={{ color: "var(--text-muted)", fontSize: "0.65rem" }}>
-                Supporte le Markdown &mdash; **gras**, *italique*, # titre, - liste
-              </p>
-            </div>
+      <Dialog
+        open={Boolean(pendingNavigation)}
+        onClose={() => setPendingNavigation(null)}
+        title="Quitter sans enregistrer ?"
+        description="Les modifications de cette saisie seront perdues."
+        className="draft-exit-dialog"
+        footer={(
+          <div className="draft-exit-actions">
+            <button type="button" className="btn-brutal primary" onClick={() => setPendingNavigation(null)}>Continuer l’édition</button>
+            <button type="button" className="btn-brutal ghost" onClick={confirmDraftDiscard}>Quitter sans enregistrer</button>
           </div>
-        </div>,
-        document.body
-      )}
+        )}
+      />
+
+      <Dialog
+        open={Boolean(confirmSuppId)}
+        onClose={() => { if (!noteBusy) setConfirmSuppId(null); }}
+        title="Supprimer cette note ?"
+        description="La note et ses images seront définitivement supprimées."
+        footer={(
+          <div className="draft-exit-actions">
+            <button type="button" className="btn-brutal ghost" disabled={noteBusy} onClick={() => setConfirmSuppId(null)}>Conserver la note</button>
+            <button type="button" className="btn-brutal danger" disabled={noteBusy} onClick={() => supprimerNote(confirmSuppId)}>Oui, supprimer</button>
+          </div>
+        )}
+      />
 
       {/* Drawer statistiques */}
       <StatsDrawer
@@ -3449,7 +2912,7 @@ export default function Home() {
           open
           onClose={() => setAideOuverte(false)}
           initialSection={helpInitialSection}
-          onCreateNote={() => setModeCreation(true)}
+          onCreateNote={openNewNote}
           onOpenAISettings={() => setAISettingsOpen(true)}
         />
       )}
@@ -3460,12 +2923,14 @@ export default function Home() {
         open={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
         commands={commandItems}
+        noteIndex={paletteNoteIndex}
+        onOpenNote={openPaletteNote}
       />
 
       <MobileNavigation
         viewMode={viewMode}
         onViewChange={changerVue}
-        onNewNote={() => setModeCreation(true)}
+        onNewNote={openNewNote}
         onOpenCommand={() => setCommandPaletteOpen(true)}
         busy={noteBusy}
       />
