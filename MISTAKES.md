@@ -325,7 +325,7 @@ présente après correction afin d'éviter la répétition du problème.
 - **Prévention** : recette du vrai écran avec 60 notes, dernière note, contenu
   long, recherche, retour et deux moteurs navigateur. Une capture seule ne
   prouve pas le défilement : mesurer la plage et faire défiler réellement.
-- **Statut** : corrigé localement ; livraison en cours.
+- **Statut** : corrigé et validé en production, PR #26, smoke 21/21 et recette live 12/12.
 
 ## M-022 — Audit bloqué par une dépendance de lint sans correctif publié
 
@@ -348,6 +348,19 @@ présente après correction afin d'éviter la répétition du problème.
   Une nouvelle version publiée de braces ou une erreur d'audit bloque à nouveau.
 - **Statut** : surveillé, retrait suivi dans SEC-001 ; aucune exception production.
 - **Source** : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
+
+## M-023 — Échec de récupération Git Vercel avant build
+
+- **Date constatée** : 2026-10-10.
+- **Symptôme** : preview Error, aucun log de build et Builds à 0 ms, malgré
+  lint, 113 tests, build et audit GitHub verts.
+- **Cause observée** : API Vercel `errorCode=git_info_fail`, informations Git
+  non récupérées ; aucun build lancé. La cause interne amont n'est pas exposée.
+- **Correction** : relance contrôlée du même commit GitHub en preview après
+  renouvellement de la session CLI ; preview READY, puis fusion normale.
+- **Prévention** : lire errorCode/readyStateReason via l'API officielle,
+  vérifier le SHA et READY avant fusion ; protéger le gate et la production.
+- **Statut** : résolu par relance, production ensuite READY.
 
 ## Modèle d'entrée
 
