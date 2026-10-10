@@ -389,8 +389,9 @@ présente après correction afin d'éviter la répétition du problème.
   écran étroit ou pointeur tactile ; zoom choisi par l'utilisateur conservé.
 - **Prévention** : mesurer le style calculé de chaque recherche tactile et
   le retour après effacement, sans confondre WebKit simulé et clavier iOS réel.
-- **Statut** : candidat 1.1.1 validé localement (126 tests, recettes 24/24) ;
-  PR/livraison puis confirmation PWA physique attendues.
+- **Statut** : correctif déployé en 1.1.1 par PR #30, 348fe4d ; gates verts,
+  smoke 21/21, recettes locales 24/24 et recherche/éditeur live 12/12.
+  Confirmation du comportement sur la PWA physique encore attendue.
 
 ## Modèle d'entrée
 

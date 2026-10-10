@@ -797,7 +797,7 @@ et retour aux notes ; modèle et OS non précisés. Conserver identité et scrol
 
 ### Changements et décisions
 
-Version candidate 1.1.1. Recherche globale à 0,92 rem et filtres des trois vues
+Version 1.1.1. Recherche globale à 0,92 rem et filtres des trois vues
 à 0,8 rem avant correction ; contrôle live synthétique rouge à 12,8 px.
 Style ciblé max(16px, 1rem) sur écran <= 767 px ou any-pointer:coarse.
 La branche codex/mobile-search-focus conserve l'ascendance documentaire.
@@ -815,8 +815,16 @@ des notes, retour du scroll et viewport permettant le zoom utilisateur.
 Validate vert : lint, 126 tests et build optimisé ; audit production zéro,
 seule exception dev de lint inchangée. Recette étendue 12/12 et recette
 UX-003 de défilement 12/12 en local Chromium/WebKit, données simulées.
-PR/gate et smoke de production restent à exécuter.
+PR #30 fusionnée après deux gates verts et preview READY sur 7e738b8,
+GitHub mergeable=true/clean. Squash 348fe4dc75c1fb2158406571f4643aa5363d0ffa,
+CI main verte et Vercel Production READY sur ce SHA. Identité publique 1.1.1,
+builtAt 2026-10-10T19:35:34.994Z ; smoke public 21/21 et recette recherche/
+éditeur sur assets live 12/12, Supabase intégralement simulé.
 La confirmation physique sur la PWA de l'utilisateur est encore attendue.
+
+Les conflits de fusion sont uniquement documentaires ; bilans précédents et
+commits d'origine préservés. Clôture sur codex/mobile-search-close, sans
+changement de code, de schéma ou de configuration.
 
 ### Références
 
