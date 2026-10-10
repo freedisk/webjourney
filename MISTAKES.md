@@ -341,7 +341,12 @@ présente après correction afin d'éviter la répétition du problème.
   un recul majeur d'ESLint Next vers 14.x ; ne pas affaiblir silencieusement
   le gate. Une éventuelle exception doit être autorisée, documentée, limitée
   à cette cause de développement et réévaluée à la publication d'un correctif.
-- **Statut** : ouvert, décision utilisateur sollicitée.
+- **Décision du 2026-10-10** : exception explicitement autorisée, limitée à la
+  cause, aux cinq versions dev observées, avec expiration UTC le
+  2026-10-24T23:59:59Z. Contrôle indépendant de production, validation du
+  graphe/lockfile et huit tests empêchent toute extension silencieuse.
+  Une nouvelle version publiée de braces ou une erreur d'audit bloque à nouveau.
+- **Statut** : surveillé, retrait suivi dans SEC-001 ; aucune exception production.
 - **Source** : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
 
 ## Modèle d'entrée

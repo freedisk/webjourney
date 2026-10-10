@@ -95,6 +95,12 @@ git push -u origin codex/<sujet>
 
 Créer la PR, attendre `Quality gate`, fusionner, puis contrôler :
 
+`security:audit` contrôle séparément la production et l'ensemble des
+dépendances. L'unique exception temporaire du lint est décrite dans
+`../SECURITY.md` et ADR-017. Ne pas masquer un échec par un audit production
+seul : un nouveau correctif braces, l'expiration ou une autre alerte exige
+une revue et une mise à jour avant fusion.
+
 ```powershell
 vercel ls webjourney
 vercel inspect https://webjourney-one.vercel.app --format=json

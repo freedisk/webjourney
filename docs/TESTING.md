@@ -14,6 +14,8 @@ npm run security:audit -- --audit-level=high
 
 `npm test` couvre actuellement :
 
+- audit de dépendances : périmètre dev exact, aucune exception production,
+  versions/chemins, causes nouvelles, expiration, criticité et rapports invalides ;
 - validation des types et des limites source/finale des images ;
 - dimensionnement, compression WebP, tentatives de réduction et garde-fou pixels ;
 - création, parsing, insertion et remplacement des références Markdown ;

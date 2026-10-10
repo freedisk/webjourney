@@ -656,6 +656,19 @@ que l'audit complet bloque le gate. Les notes et réglages réels sont intacts.
 - Incident : M-021 ; suivi de dépendance : M-022.
 - Source amont : https://github.com/advisories/GHSA-vfj7-8cjw-p6xm.
 
+### 2026-10-10 — autorisation et levée ciblée du blocage
+
+Le propriétaire autorise explicitement l'exception temporaire et le déploiement.
+`security:audit` conserve un audit production sans exception et n'accepte
+dans l'audit complet que la chaîne exacte GHSA-vfj7-8cjw-p6xm, après vérification
+des versions, chemins, indicateurs dev, sévérité et causes. Expiration UTC le
+2026-10-24T23:59:59Z ; publication d'une autre version de braces bloquante.
+Huit tests de non-extension sont verts ; validation complète : lint,
+113/113 tests dans 19 fichiers et build Next.js 16.4.0 réussi. Audit local
+production à zéro, audit complet sans autre alerte. Le workflow et les
+protections main sont conservés.
+ADR-017 et ticket de retrait SEC-001 versionnent la décision.
+
 ## Modèle d'entrée
 
 ```markdown

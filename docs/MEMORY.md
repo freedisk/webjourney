@@ -117,6 +117,10 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
     apparaître dans les métadonnées de son propre lien public.
 16. L'identité publique d'un build contient seulement SemVer, SHA Git et date ;
     sa vérification est manuelle, `no-store` et hors cache PWA.
+17. L'audit production n'a aucune exception. L'unique exception de lint
+    GHSA-vfj7-8cjw-p6xm, autorisée le 2026-10-10, est limitée aux cinq versions
+    exactes en développement et expire le 2026-10-24T23:59:59Z ; une nouvelle
+    version de braces ou toute autre cause impose une revue avant livraison.
 
 ## Environnement
 
@@ -169,10 +173,9 @@ Ne jamais lancer `supabase db reset --linked` sur la production.
 
 ## Prochaines priorités
 
-0. Finaliser UX-003 : défilement mobile corrigé et recette locale verte ; lever
-   explicitement le blocage d'audit du lint avant toute fusion de production.
-   PR #26 ouverte, `ba465c2`, 105 tests, 12 scénarios navigateur et preview
-   construite ; seul l'audit complet bloque la CI et la fusion.
+0. Finaliser UX-003 : exception de lint autorisée et contrôlée, audit local vert ;
+   relancer le gate de la PR #26 puis fusionner et vérifier la version 1.0.1.
+   `SEC-001` suit le retrait obligatoire de l'exception temporaire.
 1. `QA-001` — E2E des parcours critiques.
 2. `OPS-002` — observabilité sans données de note ni secret.
 3. `TOOL-002` — validation locale Supabase conteneurisée.

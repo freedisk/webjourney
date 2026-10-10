@@ -24,11 +24,23 @@
 - **PR** : [#26](https://github.com/freedisk/webjourney/pull/26), commit
   fonctionnel `ba465c2`. GitHub confirme lint, tests et build verts, audit en
   échec ; Vercel Preview en succès. Production non modifiée.
-- **Blocage de livraison** : GHSA-vfj7-8cjw-p6xm, chaîne de lint `braces`, sans
-  version corrigée publiée ; décision utilisateur sollicitée sur une exception
-  temporaire strictement limitée au développement. Audit production : zéro.
+- **Décision de livraison** : exception GHSA-vfj7-8cjw-p6xm explicitement
+  autorisée le 2026-10-10, bornée au lint et au 2026-10-24T23:59:59Z ;
+  audit production à zéro, contrôle ciblé et huit tests supplémentaires verts.
+  Relance du gate avant fusion, puis vérification de production.
 
 ## Prochaines priorités
+
+### SEC-001 — Retirer l'exception temporaire du lint
+
+- **Priorité** : P1.
+- **État** : `TODO`.
+- **Périmètre** : GHSA-vfj7-8cjw-p6xm uniquement ; mettre à jour le correctif
+  amont compatible puis supprimer le périmètre d'exception et synchroniser
+  SECURITY/ADR-017. Le contrôleur bloque dès nouvelle version de braces ou
+  à l'échéance UTC 2026-10-24T23:59:59Z.
+- **Sortie** : `npm audit --audit-level=high` brut vert, exception supprimée,
+  gate et production validés.
 
 ### QA-001 — E2E des parcours critiques
 

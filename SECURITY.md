@@ -64,7 +64,35 @@ résumés ou propositions Anthropic.
 ## Dépendances et livraison
 
 Chaque PR exécute lint, tests, build et audit de dépendances. `main` exige une
-PR et le contrôle `Quality gate`. Toute vulnérabilité élevée bloque la fusion.
+PR et le contrôle `Quality gate`. Toute vulnérabilité élevée ou critique
+bloque la fusion, sauf l'exception de développement explicitement approuvée
+et bornée ci-dessous. Aucune exception n'est applicable à la production.
+
+### Exception temporaire de lint — approuvée le 2026-10-10
+
+Le propriétaire a autorisé GHSA-vfj7-8cjw-p6xm pour livrer UX-003. Le code
+`lib/dependency-audit.js` fixe le seul périmètre admis : `braces` 3.0.3,
+`micromatch` 4.0.8, `fast-glob` 3.3.1, `@next/eslint-plugin-next` 16.4.0 et
+`eslint-config-next` 16.4.0, aux chemins racine observés et avec `dev: true`.
+Les cinq constats npm ont une seule cause : l'alerte de récursion `braces`.
+Une autre alerte, une sévérité critique, un changement de version, de chemin
+ou d'usage n'entre pas dans cette exception.
+
+Échéance : **2026-10-24T23:59:59Z**. L'expiration bloque à nouveau l'alerte.
+La publication d'une autre version de `braces` impose également une revue et
+une mise à jour ; elle est vérifiée contre le registre npm à chaque utilisation
+de l'exception. Une panne de registre, un rapport incomplet ou invalide bloque.
+
+`npm run security:audit -- --audit-level=high` exécute un audit production
+séparé sans aucune exception, puis l'audit complet et filtre seulement cette
+cause de développement après contrôle du lockfile et du graphe de dépendances.
+La sortie annonce explicitement l'exception utilisée et son échéance ; le
+workflow, le nom `Quality gate` et les protections GitHub restent inchangés.
+
+Après correctif amont : mettre à jour les dépendances, supprimer cette
+exception et vérifier `npm audit --audit-level=high` directement. Aucun
+`npm audit fix --force`, abaissement global de sévérité ou `--omit=dev` sur
+l'audit complet n'est autorisé par cette décision.
 
 ## Signalement et réponse
 
