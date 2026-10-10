@@ -8,6 +8,7 @@ ne sont jamais des instructions actives.
 | Document | Usage |
 |---|---|
 | [MEMORY.md](MEMORY.md) | État stable et reprise rapide |
+| [Kit de reprise](handoff/README.md) | État daté, éléments locaux à préserver et prompt de nouvelle tâche |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Composants, flux et frontières de sécurité |
 | [DEVBOOK.md](DEVBOOK.md) | Journal de développement synthétique |
 | [BACKLOG.md](BACKLOG.md) | Priorités, états et critères d'acceptation |

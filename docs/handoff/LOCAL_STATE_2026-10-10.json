@@ -1,0 +1,66 @@
+{
+  "snapshotKind": "before-handoff-files-and-commit",
+  "recordedAtUtc": "2026-10-10T13:32:04Z",
+  "recordedAtLocal": "2026-10-10 11:32:04 -02:00",
+  "timezone": "America/Miquelon",
+  "project": {
+    "label": "Webjourney Capsule - Prise de note",
+    "projectId": "48de0e20-870b-4b18-9f3b-f06a3df0e99d",
+    "hostId": "local",
+    "root": "C:\\Users\\Pc\\Downloads\\Claude Code Webjourney Tuto\\webjourney"
+  },
+  "sourceTask": {
+    "title": "Reprise et continuation du projet ClaudeCode",
+    "threadId": "01a03dfe-6db3-7673-a10b-5262ef0df3aa",
+    "journal": "docs/journal/SESSION_2026-08-26.md"
+  },
+  "git": {
+    "branch": "codex/ux-003-session-close",
+    "upstream": "origin/main",
+    "headBeforeKit": "4ff6aa5a535a9e3b2e1c3e8e76e8d81b65d8e3b7",
+    "observedMain": "4397f81404b68180f9a33dd415b2313efac6d5f0",
+    "aheadBeforeKit": 2,
+    "behindBeforeKit": 0,
+    "workingTreeCleanBeforeKit": true,
+    "unpublishedCommitsBeforeKit": [
+      {
+        "sha": "e39a5b346ac9f5e1027f27c537d54ca469a0d76c",
+        "subject": "docs: log final UX-003 deployment verification"
+      },
+      {
+        "sha": "4ff6aa5a535a9e3b2e1c3e8e76e8d81b65d8e3b7",
+        "subject": "docs: record user acceptance of mobile list scrolling"
+      }
+    ],
+    "kitAddsAnotherLocalCommit": true,
+    "functionalCodeUndeployed": false
+  },
+  "production": {
+    "url": "https://webjourney-one.vercel.app/",
+    "version": "1.0.1",
+    "buildId": "4397f81404b68180f9a33dd415b2313efac6d5f0",
+    "builtAt": "2026-10-10T12:52:28.727Z",
+    "lastVerifiedDeploymentId": "dpl_C88r5nUV26cftPujcV2AEYQgewW5",
+    "pullRequests": [26, 27],
+    "lastReleaseTests": 113,
+    "lastReleasePublicSmokeChecks": 21,
+    "lastReleaseLiveUiScenarios": 12,
+    "listScrollingAcceptedByUserOn": "2026-10-10",
+    "acceptanceDeviceSpecified": false
+  },
+  "configurationPresenceOnly": {
+    "envLocalExists": true,
+    "vercelProjectLinkExists": true,
+    "nodeVersion": "24.19.0",
+    "npmVersion": "11.17.0"
+  },
+  "nextPriority": {
+    "id": "SEC-001",
+    "advisory": "GHSA-vfj7-8cjw-p6xm",
+    "exceptionExpiresAtUtc": "2026-10-24T23:59:59Z",
+    "productionExceptionAllowed": false
+  },
+  "newTaskCreated": false,
+  "initialResumeMode": "local-same-checkout-read-only-preflight",
+  "secretsIncluded": false
+}

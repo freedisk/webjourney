@@ -701,6 +701,26 @@ La conformité fonctionnelle du défilement est donc confirmée après livraison
 Cette acceptation concerne la vue liste ; l'appareil et le mode Safari/PWA
 ne sont pas précisés dans le retour. Aucun changement applicatif n'est requis.
 
+## 2026-10-10 — Kit de reprise pour une nouvelle tâche
+
+À la demande de l'utilisateur, préparation de docs/handoff : guide de
+démarrage, état vérifié, prompt prêt à copier et photographie JSON locale.
+Projet et association à la tâche contrôlés ; production 1.0.1 / 4397f81.
+Deux commits documentaires locaux non publiés sont recensés avant le kit.
+
+La reprise recommandée utilise le même checkout en mode Local, conserve ces
+commits et crée son propre journal. Les priorités distinguent SEC-001, urgent
+avant l'échéance de l'exception, et les évolutions futures à demander ensuite.
+Les secrets et contenus privés sont exclus ; aucun changement applicatif,
+écriture de base, nouvelle tâche ou déploiement n'est déclenché par le kit.
+Les fichiers datés sont des photographies à revalider, pas des sources
+remplaçant les documents vivants et les observations actuelles.
+
+Validation du kit : quatre fichiers, 18 liens locaux vérifiés, JSON valide,
+scan de secrets propre et diff exclusivement documentaire. Lint, 113 tests
+et build réussis ; audit production à zéro, seule exception dev annoncée et
+aucune autre alerte. Enregistrement local pour une reprise dans le même dossier.
+
 ## Modèle d'entrée
 
 ```markdown
