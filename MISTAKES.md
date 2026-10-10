@@ -375,7 +375,7 @@ présente après correction afin d'éviter la répétition du problème.
   le callback de fermeture du dialogue avant les nouveaux événements.
 - **Prévention** : recette d'erreur/reprise, un seul envoi, puis garde absente
   dès le succès. Les mesures de viewport attendent séparément le layout effectif.
-- **Statut** : corrigé dans le candidat et couvert par la recette du lot.
+- **Statut** : corrigé et livré par PR #28, avec recette éditeur local/live 12/12.
 
 ## Modèle d'entrée
 

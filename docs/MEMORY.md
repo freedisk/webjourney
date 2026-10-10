@@ -15,11 +15,13 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
-- UX-004, Recherche et édition confortables, est en validation sur
-  codex/search-editor-comfort, candidat 1.1.0. Palette sur tout le corpus chargé,
-  lecture Modifier/Plus, éditeur commun et sauvegarde manuelle avec reprise
-  après erreur. Aucun nouveau schéma ou cache privé. La référence publique
-  précédente reste 1.0.1 / 4397f81 tant que la livraison n'est pas confirmée.
+- UX-004 est livré le 2026-10-10 en 1.1.0, PR #28 fusionnée en 3ab6a20,
+  gates et Vercel verts, 126 tests, smoke public 21/21 et recette éditeur
+  synthétique local/live Chromium/WebKit 12/12. Palette sur tout le corpus
+  chargé, lecture Modifier/Plus, éditeur commun et sauvegarde manuelle avec
+  reprise après erreur. Aucun nouveau schéma ou cache privé. Défilement
+  UX-003 conservé et testé 12/12 localement ; Safari/PWA physique avec clavier
+  ouvert reste une recette utilisateur distincte, non exécutée.
 
 - UX-003 est livré le 2026-10-10 en version `1.0.1` : panneau liste mobile
   borné, défilement interne et viewport dynamique. PR #26 fusionnée en
@@ -143,7 +145,7 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 - Supabase CLI 2.116.0 est une dépendance de développement versionnée.
 - Projet Supabase lié : Webjourney, référence `yteconbqwmozpxjaxxey`.
 - JavaScript uniquement, pas de TypeScript.
-- Version produit publique confirmée `1.0.1`.
+- Version produit publique confirmée `1.1.0`.
   Le SHA système Vercel identifie le build.
 - `.env.local` n'est jamais versionné.
 - Variables publiques : URL et clé publishable/anon Supabase.

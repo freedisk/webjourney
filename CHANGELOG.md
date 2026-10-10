@@ -5,7 +5,11 @@ sémantique déclarée dans `package.json`.
 
 ## Non publié
 
-### Candidat 1.1.0 — Recherche et édition confortables
+Aucun changement pour le moment.
+
+## 1.1.0 — 2026-10-10
+
+### UX-004 — Recherche et édition confortables
 
 - Recherche globale des notes chargées et des tags, avec résultats séparés
   des actions, extraits sans références d'images privées et pagination.
@@ -16,6 +20,13 @@ sémantique déclarée dans `package.json`.
 - Surface d'édition adaptée au clavier des appareils tactiles, avec repli ;
   navigation et défilement UX-003 conservés.
 - Aucune migration, dépendance ou persistance navigateur de contenu privé.
+
+### Déployé
+
+- PR #28, fusion 3ab6a20, Quality gate et Vercel en succès.
+- 126 tests, défilement UX-003 12/12 local, recette éditeur 12/12 local/live,
+  smoke public 21/21. Les mutations de recette sont simulées.
+- Safari/PWA sur appareil réel avec clavier ouvert reste à vérifier.
 
 ## 1.0.1 — 2026-10-10
 

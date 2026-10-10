@@ -11,16 +11,8 @@
 
 ## En cours
 
-### UX-004 — Recherche et édition confortables
-
-- **Priorité** : P1, lot validé par l'utilisateur le 2026-10-10.
-- **État** : REVIEW_REQUIRED.
-- **Périmètre** : palette globale en mémoire, lecture Modifier/Plus, éditeur
-  mobile ample, état de sauvegarde et protection des sorties ; identité,
-  navigation et défilement UX-003 conservés. Aucune migration.
-- **Sortie** : critères du plan SEARCH_EDITOR, validations locales, recette
-  synthétique Chromium/WebKit, PR et Quality gate ; contrôle de livraison.
-- **Plan** : docs/sprints/PLAN_SEARCH_EDITOR_2026-10-10.md.
+Aucun sprint actif. UX-004 est livré ; la recette physique Safari/PWA avec
+clavier ouvert reste à réaliser par l'utilisateur, distincte des simulations.
 
 ## Prochaines priorités
 
@@ -88,6 +80,7 @@
 
 | ID | Sujet | Date | Preuve |
 |---|---|---|---|
+| UX-004 | Recherche et édition confortables | 2026-10-10 | 1.1.0, PR #28, 3ab6a20, gates verts, 126 tests, défilement local 12/12, recette éditeur local/live 12/12, smoke public 21/21 ; aucun schéma/cache privé nouveau ; physique Safari/PWA non effectué |
 | UX-003 | Défilement mobile de la vue liste | 2026-10-10 | Version 1.0.1, PR #26, `6325b7f`, 113 tests, smoke public 21/21, recette live 12/12, Vercel READY ; défilement confirmé conforme par l'utilisateur ; exception lint suivie dans SEC-001 |
 | REL-001 | Version, À propos et mises à jour | 2026-08-28 | PR #24, `3abbf81`, 105 tests, preview 8/8, smoke public 21/21, Vercel `READY` |
 | SHARE-001 | Aperçu social Open Graph | 2026-08-27 | PR #22, `bb0afc4`, 98 tests, smoke robot 34/34, Vercel `READY` |
