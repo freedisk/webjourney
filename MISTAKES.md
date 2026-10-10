@@ -363,6 +363,20 @@ présente après correction afin d'éviter la répétition du problème.
   vérifier le SHA et READY avant fusion ; protéger le gate et la production.
 - **Statut** : résolu par relance, production ensuite READY.
 
+## M-024 — Garde de saisie retirée après l'affichage du succès
+
+- **Date constatée** : 2026-10-10, recette du candidat UX-004 avant production.
+- **Symptôme** : après sauvegarde réussie et fermeture de l'éditeur, la
+  première vérification de beforeunload trouvait encore la garde active.
+- **Cause** : nettoyage via useEffect, différé après le commit d'interface.
+- **Impact** : avertissement de sortie transitoire malgré une note enregistrée ;
+  aucune perte de contenu, aucun effet en production.
+- **Correction** : attacher/nettoyer la garde en useLayoutEffect, et actualiser
+  le callback de fermeture du dialogue avant les nouveaux événements.
+- **Prévention** : recette d'erreur/reprise, un seul envoi, puis garde absente
+  dès le succès. Les mesures de viewport attendent séparément le layout effectif.
+- **Statut** : corrigé dans le candidat et couvert par la recette du lot.
+
 ## Modèle d'entrée
 
 ```markdown

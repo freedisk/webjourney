@@ -15,6 +15,12 @@ détails chronologiques vont dans `DEVBOOK.md` et les incidents dans
 
 ## État livré et validé
 
+- UX-004, Recherche et édition confortables, est en validation sur
+  codex/search-editor-comfort, candidat 1.1.0. Palette sur tout le corpus chargé,
+  lecture Modifier/Plus, éditeur commun et sauvegarde manuelle avec reprise
+  après erreur. Aucun nouveau schéma ou cache privé. La référence publique
+  précédente reste 1.0.1 / 4397f81 tant que la livraison n'est pas confirmée.
+
 - UX-003 est livré le 2026-10-10 en version `1.0.1` : panneau liste mobile
   borné, défilement interne et viewport dynamique. PR #26 fusionnée en
   `6325b7f`, Vercel Production `dpl_6UDgdNTRwB6zFpgvHFP1hg46iHNs` READY

@@ -11,7 +11,16 @@
 
 ## En cours
 
-Aucun sprint actif.
+### UX-004 — Recherche et édition confortables
+
+- **Priorité** : P1, lot validé par l'utilisateur le 2026-10-10.
+- **État** : REVIEW_REQUIRED.
+- **Périmètre** : palette globale en mémoire, lecture Modifier/Plus, éditeur
+  mobile ample, état de sauvegarde et protection des sorties ; identité,
+  navigation et défilement UX-003 conservés. Aucune migration.
+- **Sortie** : critères du plan SEARCH_EDITOR, validations locales, recette
+  synthétique Chromium/WebKit, PR et Quality gate ; contrôle de livraison.
+- **Plan** : docs/sprints/PLAN_SEARCH_EDITOR_2026-10-10.md.
 
 ## Prochaines priorités
 

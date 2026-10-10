@@ -5,7 +5,17 @@ sémantique déclarée dans `package.json`.
 
 ## Non publié
 
-Aucun changement pour le moment.
+### Candidat 1.1.0 — Recherche et édition confortables
+
+- Recherche globale des notes chargées et des tags, avec résultats séparés
+  des actions, extraits sans références d'images privées et pagination.
+- Lecture centrée sur Modifier/Plus ; les opérations existantes restent
+  accessibles, avec confirmation pour la suppression.
+- Éditeur commun aux trois vues, feuille mobile ample, état de sauvegarde,
+  protection des sorties et reprise après erreur sans double envoi.
+- Surface d'édition adaptée au clavier des appareils tactiles, avec repli ;
+  navigation et défilement UX-003 conservés.
+- Aucune migration, dépendance ou persistance navigateur de contenu privé.
 
 ## 1.0.1 — 2026-10-10
 

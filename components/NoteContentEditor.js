@@ -306,7 +306,7 @@ export default function NoteContentEditor({
         <div className="markdown-editor-topbar">
           {editorMode !== "preview" ? (
             <div className="markdown-format-toolbar" role="toolbar" aria-label="Mise en forme Markdown">
-              {markdownFormats.map((format) => (
+              {markdownFormats.filter((format) => ["bold", "italic", "heading", "bullet"].includes(format.type)).map((format) => (
                 <button
                   key={format.type}
                   type="button"
@@ -318,6 +318,13 @@ export default function NoteContentEditor({
                   {format.text}
                 </button>
               ))}
+              <details className="markdown-format-more">
+                <summary>Format</summary>
+                <div className="markdown-more-options">
+                  {markdownFormats.filter((format) => !["bold", "italic", "heading", "bullet"].includes(format.type)).map((format) => (
+                    <button key={format.type} type="button" onClick={() => applyFormat(format.type)}
+                      disabled={disabled || isPreparing} aria-label={format.label}>{format.label}</button>
+                  ))}
               {onSmartFormat && (
                 <button
                   type="button"
@@ -342,6 +349,8 @@ export default function NoteContentEditor({
                   <Icon name="help" size={15} />
                 </button>
               )}
+                </div>
+              </details>
             </div>
           ) : <span />}
           <div className="markdown-view-switcher" role="group" aria-label="Mode de l'éditeur">
@@ -397,6 +406,7 @@ export default function NoteContentEditor({
           ref={fileInputRef}
           id={inputId}
           type="file"
+          tabIndex={-1}
           accept="image/jpeg,image/png,image/webp"
           multiple
           disabled={disabled || imageDisabled || isPreparing}

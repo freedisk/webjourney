@@ -2696,7 +2696,8 @@ kbd {
   padding: 0.15rem;
 }
 
-.command-results > button {
+.command-results > button,
+.command-results > [role="group"] > button {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -2712,7 +2713,8 @@ kbd {
   text-align: left;
 }
 
-.command-results > button.is-active {
+.command-results > button.is-active,
+.command-results > [role="group"] > button.is-active {
   background: var(--panel-active);
   border-color: var(--accent);
 }
@@ -3714,4 +3716,71 @@ kbd {
   ::view-transition-new(*) {
     animation: none !important;
   }
+}
+
+/* === UX-004 — Recherche et édition confortables === */
+.command-group-title {
+  margin: .6rem .5rem .35rem;
+  color: var(--text-secondary);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.command-result-count { margin: .8rem .25rem .4rem; color: var(--text-secondary); font-size: .8rem; }
+.command-label small { overflow-wrap: anywhere; }
+.command-result-tools { display: flex; gap: .5rem; flex-wrap: wrap; padding-top: .75rem; }
+.command-result-tools button, .command-close { min-height: 44px; }
+.command-close { flex-shrink: 0; padding: .25rem .6rem; border: 1px solid var(--input-border); background: var(--surface-solid); font-size: .75rem; }
+.note-reading-actions { display: flex; gap: .75rem; align-items: center; }
+.note-reading-actions > button { min-height: 44px; padding: .55rem 1rem; font-size: .8rem; }
+.note-card-actions { border-top: 1px solid var(--panel-border); padding-top: .75rem; margin-top: .5rem; }
+.note-actions-dialog { max-width: 460px; background: var(--surface-solid); }
+.note-action-options { display: flex; flex-direction: column; gap: .35rem; }
+.note-action-options > button { display: flex; align-items: center; gap: .7rem; min-height: 44px; text-align: left; padding: .65rem .75rem; border: 1px solid var(--panel-border); background: var(--surface-solid); font-size: .9rem; font-weight: 600; }
+.note-action-options > button:hover { background: var(--panel-active); }
+.note-action-options > .is-danger { margin-top: .6rem; border-color: var(--danger); color: var(--danger); }
+.note-action-tag-dot { width: .6rem; height: .6rem; border-radius: 2px; }
+.note-action-reading-size { display: flex; gap: .6rem; align-items: center; padding: .5rem .75rem; font-size: .85rem; }
+.note-action-reading-size button { min-width: 44px; min-height: 44px; }
+.note-editor-dialog { max-width: 840px; width: min(840px, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); background: var(--surface-solid); }
+.note-editor-overlay { height: var(--note-editor-height, 100dvh); bottom: auto; }
+.note-editor-overlay .note-editor-dialog { max-height: calc(var(--note-editor-height, 100dvh) - 2rem); }
+.note-editor-dialog > .modal-header { flex-shrink: 0; align-items: center; gap: .7rem; }
+.note-editor-dialog > .modal-header > div { flex: 1; min-width: 0; }
+.note-editor-save { min-height: 44px; padding: .5rem .75rem; white-space: nowrap; }
+.note-editor-leave { min-height: 44px; min-width: 44px; padding: .5rem; }
+.editor-close-mobile { display: none; }
+.note-editor-dialog > .modal-body { min-height: 0; overflow-y: auto; }
+.note-editor-label { display: block; font-size: .8rem; font-weight: 700; margin-bottom: .4rem; }
+.note-editor-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+.note-save-status { margin: 0 0 .8rem; font-size: .8rem; color: var(--text-secondary); }
+.note-save-status.is-error, .note-save-error { color: var(--danger); }
+.note-save-error { font-size: .85rem; margin-bottom: .8rem; }
+.note-editor-colors { margin-top: 1rem; }
+.note-editor-colors > summary { min-height: 44px; display: list-item; padding: .6rem .25rem; font-size: .85rem; }
+.note-editor-colors button { min-height: 44px; min-width: 44px; }
+.note-editor-dialog .markdown-editor-pane textarea { font-size: 16px; }
+.note-editor-dialog .markdown-view-switcher button { min-height: 44px; }
+.draft-exit-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.draft-exit-actions button { min-height: 44px; }
+.markdown-format-more { position: relative; flex-shrink: 0; }
+.markdown-format-more > summary { display: list-item; min-height: 36px; padding: .5rem .65rem; border: 1px solid var(--input-border); background: var(--surface-solid); font-size: .8rem; font-weight: 700; }
+.markdown-more-options { position: absolute; z-index: 10; right: 0; top: calc(100% + .3rem); display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; width: min(260px, calc(100vw - 3rem)); padding: .5rem; border: 2px solid var(--brutal-border); background: var(--surface-solid); box-shadow: 3px 3px 0 var(--brutal-shadow); }
+.markdown-more-options button { min-height: 44px; }
+@media (max-width: 767px) {
+  .note-editor-overlay { padding: 0; align-items: stretch; height: var(--note-editor-height, 100dvh); bottom: auto; }
+  .note-editor-overlay .note-editor-dialog { width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .note-editor-dialog > .modal-header { padding: calc(.7rem + env(safe-area-inset-top, 0px)) .75rem .7rem; }
+  .note-editor-dialog .modal-title { font-size: .85rem; }
+  .note-editor-leave { order: -1; }
+  .editor-close-desktop { display: none; }
+  .editor-close-mobile { display: inline-flex; }
+  .note-editor-dialog > .modal-body { padding: .85rem .75rem calc(1rem + env(safe-area-inset-bottom, 0px)); }
+  .note-editor-dialog .markdown-format-toolbar { width: 100%; overflow: visible; flex-wrap: wrap; }
+  .note-editor-dialog .markdown-format-toolbar > button, .note-editor-dialog .markdown-format-more > summary { min-height: 44px; min-width: 44px; }
+  .note-editor-dialog .markdown-editor-pane textarea { font-size: 16px; }
+  .note-editor-dialog .note-image-help { font-size: .75rem; line-height: 1.55; }
+  .note-editor-dialog .note-image-toolbar > button { min-height: 44px; }
+  .note-reading-actions > .primary { flex: 1; }
 }

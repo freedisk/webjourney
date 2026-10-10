@@ -304,7 +304,51 @@ Suivre `docs/VERSIONING.md` et contrôler :
 8. après une nouvelle production, un ancien build ouvert annonce la nouvelle
    livraison et **Recharger maintenant** charge le nouveau SHA.
 
-## 11. Critères de release
+## 11. Recette Recherche et édition UX-004
+
+La recette du lot utilise exclusivement des données fictives et intercepte
+toutes les requêtes Supabase prévues. Le scénario d'enregistrement simule
+une erreur puis une reprise ; les 24 mutations attendues restent locales
+aux routes Playwright, sans données ou compte créés en production.
+
+Serveur local distinct, avec configuration publique fictive :
+
+    $env:NEXT_PUBLIC_SUPABASE_URL = 'https://scroll-test.supabase.co'
+    $env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'scroll-test-public-key'
+    $env:NEXT_PUBLIC_SUPABASE_ANON_KEY = 'scroll-test-public-key'
+    npm run build
+    npm run start -- --hostname 127.0.0.1 --port 3112
+
+Second terminal, désigner Playwright fourni par le runtime Codex :
+
+    $env:CAPSULE_PLAYWRIGHT_MODULE = '<chemin du runtime>/node_modules/playwright'
+    $env:CAPSULE_EDITOR_BASE_URL = 'http://127.0.0.1:3112'
+    npm run test:ui:editor
+
+Le chargeur de dépendances Codex fournit le chemin du runtime. Le script
+accepte CAPSULE_EDITOR_STORAGE_KEY pour un build dont le nom de stockage
+Supabase public diffère. Si la cible est un build de production local ou
+des assets live, toutes les réponses Supabase restent simulées ; ne pas
+utiliser une session réelle pour cette commande.
+
+La recette de référence emploie le build de production : l'indicateur de
+développement Next.js peut recouvrir la première action de navigation mobile
+et ne doit pas être masqué par un clic forcé dans la recette.
+
+Le scénario couvre huit récentes puis tout le corpus, classement sans accents,
+pagination, références privées masquées, vue conservée, défilement/retour,
+menu Plus, sortie modifiée, garde navigateur, sauvegarde simple, erreur/reprise
+sans double envoi, thèmes et absence d'erreurs JS. Le complément Cartes/Kanban
+vérifie le même éditeur et une image en attente avec sa visionneuse, puis
+l'abandon sans upload. Les surfaces de clavier
+réduites sont simulées dans Chromium/WebKit, y compris la tablette tactile :
+attendre le layout effectif avant la mesure du bouton.
+
+Compléter par Safari/PWA sur appareil réel identifié, clavier ouvert :
+retour, saisie longue, sauvegarde visible, annulation, photo/collage et rotation.
+Ce contrôle physique est distinct des résultats synthétiques.
+
+## 12. Critères de release
 
 Une release est refusée si :
 
@@ -314,7 +358,7 @@ Une release est refusée si :
 - une clé serveur apparaît dans le client, Git ou les logs ;
 - les tests manuels requis ne sont pas tracés.
 
-## 12. Lacunes connues
+## 13. Lacunes connues
 
 - aucun E2E automatisé avec session Supabase réelle ;
 - pas de tests SQL pgTAP des policies ;

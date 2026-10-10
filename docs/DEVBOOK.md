@@ -721,6 +721,60 @@ scan de secrets propre et diff exclusivement documentaire. Lint, 113 tests
 et build réussis ; audit production à zéro, seule exception dev annoncée et
 aucune autre alerte. Enregistrement local pour une reprise dans le même dossier.
 
+## 2026-10-10 — UX-004 Recherche et édition confortables
+
+### Objectif
+
+Implémenter le plan et les maquettes validés par l'utilisateur, avec PR et
+Quality gate, en conservant identité, navigation et défilement UX-003.
+
+### Changements
+
+- Palette sur toutes les notes chargées et les tags, extraits sans sources
+  d'images privées, huit récentes à vide et résultats par groupes de 20.
+- Éditeur commun extrait des formulaires répétés de app/page.js ; lecture
+  Modifier/Plus et opérations existantes conservées dans un dialogue.
+- Snapshot initial, état de saisie/envoi/erreur, reprises sans double envoi,
+  garde de sortie et absence de persistance de contenu privé dans le navigateur.
+- Feuille mobile et adaptation conditionnelle au viewport réduit par le
+  clavier, avec repli CSS et prise en compte des capacités tactiles.
+- Candidat 1.1.0, aide et documentation synchronisées ; aucune migration
+  ni nouvelle dépendance.
+
+### Décisions
+
+Index uniquement en mémoire. Les notes et commandes sont séparées ; seuls
+les résultats affichés calculent leurs extraits. Les sources d'images restent
+hors de ces extraits. La vue courante et ses filtres ne sont pas modifiés
+par l'ouverture d'une note dans la palette.
+
+Les contrôles de fermeture sont attachés/nettoyés avant les nouveaux événements
+de l'interface. La mesure du clavier attend un frame de layout stabilisé ;
+elle ne transforme pas une simulation en preuve physique Safari/PWA.
+L'exception SEC-001 garde sa cause et ses versions exactes, sans extension.
+
+### Validation du candidat
+
+Lint, 126 tests et build optimisé verts ; audit production zéro et seule
+exception de lint annoncée. Recette UX-003 : 12/12 ; recette du lot : 12/12
+sur le build de production, avec tablette tactile, trois vues, image en
+attente et couches de focus. Contrôle visuel desktop/mobile et filtres de
+liste conservés depuis la recherche globale.
+
+L'indicateur Next de développement recouvrait Cartes sur petit écran :
+la recette utilise le build optimisé, sans clic forcé. Le viewport simulé
+attend le layout effectif avant de mesurer la sauvegarde. WebKit peut annoncer
+zéro maxTouchPoints malgré le mode tactile ; la détection inclut pointer:coarse.
+Les tests physiques Safari/PWA ne sont pas encore effectués.
+
+### Références
+
+- Branche : codex/search-editor-comfort, depuis 2ef1936 ; trois commits locaux
+  documentaires conservés.
+- Plan : docs/sprints/PLAN_SEARCH_EDITOR_2026-10-10.md.
+- Recettes : scripts/smoke-list-scroll.mjs et scripts/smoke-search-editor.mjs.
+- Incident de candidat : M-024, corrigé avant production.
+
 ## Modèle d'entrée
 
 ```markdown
