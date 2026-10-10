@@ -829,6 +829,10 @@ Les conflits de fusion sont uniquement documentaires ; bilans précédents et
 commits d'origine préservés. Clôture sur codex/mobile-search-close, sans
 changement de code, de schéma ou de configuration.
 
+Les conflits de fusion sont uniquement documentaires ; bilans précédents et
+commits d'origine préservés. Clôture sur codex/mobile-search-close, sans
+changement de code, de schéma ou de configuration.
+
 ### Références
 
 M-025 ; docs/TESTING.md ; scripts/smoke-search-editor.mjs.

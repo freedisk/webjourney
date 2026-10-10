@@ -31,6 +31,12 @@ Aucun changement pour le moment.
 - 126 tests, recettes locales 24/24 et recherche/éditeur live 12/12 avec
   données simulées ; smoke public 21/21.
 
+### Déployé
+
+- PR #30, squash 348fe4d, Quality gates et Vercel READY.
+- 126 tests, recettes locales 24/24 et recherche/éditeur live 12/12 avec
+  données simulées ; smoke public 21/21.
+
 ## 1.1.0 — 2026-10-10
 
 ### UX-004 — Recherche et édition confortables
