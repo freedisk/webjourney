@@ -100,10 +100,21 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
         const openSearch = () => mobile
           ? page.locator(".mobile-navigation").getByRole("button", { name: "Chercher", exact: true }).click()
           : page.getByRole("button", { name: "Ouvrir la palette de commandes", exact: true }).click();
+        const assertSearchSize = async (field) => {
+          if (!mobile && !tablet) return;
+          const size = await field.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
+          assert.ok(size >= 16, "Champ de recherche tactile trop petit : " + size + " px");
+        };
+        await assertSearchSize(page.getByRole("textbox", { name: "Rechercher dans les notes", exact: true }));
         await openSearch();
         await page.getByRole("group", { name: "Notes récentes", exact: true }).getByRole("option").nth(7).waitFor();
         assert.equal(await page.getByRole("group", { name: "Notes récentes", exact: true }).getByRole("option").count(), 8);
         const query = page.getByRole("combobox", { name: "Rechercher dans toutes les notes", exact: true });
+        await assertSearchSize(query);
+        const viewportMeta = await page.locator('meta[name="viewport"]').getAttribute("content");
+        assert.ok(!/user-scalable\s*=\s*(no|0)/i.test(viewportMeta), "Zoom utilisateur désactivé");
+        const maximumScale = viewportMeta.match(/maximum-scale\s*=\s*([\d.]+)/i);
+        assert.ok(!maximumScale || Number(maximumScale[1]) >= 2, "Zoom utilisateur limité");
         await query.fill("paragraphe");
         assert.equal(await page.locator("#command-results [role=option]").count(), 20);
         await page.getByRole("button", { name: /Afficher les autres résultats/ }).click();
@@ -198,9 +209,32 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
         if (mobile) {
           await page.getByRole("button", { name: "← Notes", exact: true }).click();
         }
+        const beforeEmptySearch = await list.evaluate((node) => ({
+          width: node.getBoundingClientRect().width, top: node.scrollTop,
+          itemWidth: node.querySelector(".note-item").getBoundingClientRect().width,
+          scale: window.visualViewport?.scale || 1,
+        }));
         await openSearch();
         assert.equal(await query.inputValue(), "archives d'ete");
+        await page.getByRole("button", { name: "Effacer la recherche", exact: true }).click();
+        assert.equal(await query.inputValue(), "");
+        assert.equal(await page.getByRole("group", { name: "Notes récentes", exact: true }).getByRole("option").count(), 8);
+        await assertSearchSize(query);
         await page.getByRole("button", { name: "Fermer la recherche", exact: true }).click();
+        await page.waitForFunction((before) => {
+          const node = document.querySelector(".panel-left-scroll");
+          return Math.abs(node.scrollTop - before.top) <= 2
+            && Math.abs(node.getBoundingClientRect().width - before.width) <= 1;
+        }, beforeEmptySearch);
+        const afterEmptySearch = await list.evaluate((node) => ({
+          itemWidth: node.querySelector(".note-item").getBoundingClientRect().width,
+          scale: window.visualViewport?.scale || 1,
+          pageWidth: document.documentElement.scrollWidth, viewportWidth: window.innerWidth,
+        }));
+        assert.equal(afterEmptySearch.itemWidth, beforeEmptySearch.itemWidth, "Notes agrandies après effacement et retour");
+        assert.equal(afterEmptySearch.scale, beforeEmptySearch.scale, "Échelle modifiée après effacement et retour");
+        assert.ok(afterEmptySearch.pageWidth <= afterEmptySearch.viewportWidth + 1, "Débordement après recherche vide");
+        assert.equal(await page.getByRole("textbox", { name: "Rechercher dans les notes", exact: true }).inputValue(), "");
         await page.getByRole("button", { name: "Plus d'actions", exact: true }).click();
         await page.getByRole("menuitem", { name: "Thème sombre", exact: true }).click();
         const width = await page.evaluate(() => ({ actual: document.documentElement.scrollWidth, expected: window.innerWidth }));
@@ -210,12 +244,14 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
         if (viewport.width === 390 || viewport.width === 1416) {
           const switcher = page.locator(mobile ? ".mobile-navigation" : ".view-switcher");
           await switcher.getByRole("button", { name: "Cartes", exact: true }).click();
+          await assertSearchSize(page.getByRole("textbox", { name: "Rechercher dans les notes", exact: true }));
           await page.locator(".note-card-actions").getByRole("button", { name: "Modifier", exact: true }).first().click();
           const cardEditor = page.getByRole("dialog", { name: "Modifier la note", exact: true });
           await cardEditor.waitFor();
           await cardEditor.getByRole("button", { name: "Quitter l’édition", exact: true }).click();
           await cardEditor.waitFor({ state: "hidden" });
           await switcher.getByRole("button", { name: "Kanban", exact: true }).click();
+          await assertSearchSize(page.getByRole("textbox", { name: "Rechercher dans les notes", exact: true }));
           await page.locator(".kanban-card").first().click();
           const reading = page.locator(".modal-content").filter({ has: page.locator("#note-detail-title") });
           await reading.getByRole("button", { name: "Modifier", exact: true }).click();
@@ -250,7 +286,7 @@ for (const [engineName, engine] of [["chromium", chromium], ["webkit", webkit]])
         results.push({ engine: engineName, viewport, globalSearch: true, pagination: true, privateReferencesHidden: true,
           currentViewPreserved: true, scrollRestored: true, actionsAvailable: true, dirtyExitProtected: true,
           saveRetry: true, singleSubmission: true, keyboardViewport: mobile || tablet ? "synthetic" : "not-applicable", darkTheme: true, syntheticWrites: writes,
-          extraViews, pendingImage });
+          extraViews, pendingImage, emptySearchReturn: true, touchSearchFont: mobile || tablet ? "at-least-16px" : "desktop", userZoomAllowed: true });
       } finally { await context.close(); }
     }
   } finally { await browser.close(); }

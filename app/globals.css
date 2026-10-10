@@ -188,6 +188,10 @@ body::before {
   color: var(--text-muted);
 }
 
+.input-glass.note-search-input {
+  font-size: 0.8rem;
+}
+
 /* --- Split panel layout --- */
 .split-container {
   display: flex;
@@ -3719,6 +3723,14 @@ kbd {
 }
 
 /* === UX-004 — Recherche et édition confortables === */
+/* Éviter le zoom au focus iOS, en conservant le zoom choisi par l'utilisateur. */
+@media (max-width: 767px), (any-pointer: coarse) {
+  .command-search input,
+  .input-glass.note-search-input {
+    font-size: max(16px, 1rem);
+  }
+}
+
 .command-group-title {
   margin: .6rem .5rem .35rem;
   color: var(--text-secondary);

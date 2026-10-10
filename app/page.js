@@ -2228,8 +2228,8 @@ export default function Home() {
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
-                  className="input-glass"
-                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                  className="input-glass note-search-input"
+                  style={{ paddingRight: "2.5rem", padding: "0.5rem 0.7rem" }}
                 />
                 {recherche && (
                   <button
@@ -2438,8 +2438,8 @@ export default function Home() {
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
-                  className="input-glass"
-                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                  className="input-glass note-search-input"
+                  style={{ paddingRight: "2.5rem", padding: "0.5rem 0.7rem" }}
                 />
                 {recherche && (
                   <button
@@ -2619,8 +2619,8 @@ export default function Home() {
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher..."
-                  className="input-glass"
-                  style={{ paddingRight: "2.5rem", fontSize: "0.8rem", padding: "0.5rem 0.7rem" }}
+                  className="input-glass note-search-input"
+                  style={{ paddingRight: "2.5rem", padding: "0.5rem 0.7rem" }}
                 />
                 {recherche && (
                   <button
